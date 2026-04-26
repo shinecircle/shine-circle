@@ -10,7 +10,7 @@ const db = new sqlite3.Database('./data.db');
 // =========================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('.'));
+app.use(express.static(__dirname));
 
 app.use(
   session({
@@ -21,7 +21,14 @@ app.use(
 );
 
 // =========================
-// DATABASE
+// ✅ ROOT ROUTE (FIXES RENDER ERROR)
+// =========================
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/login.html');
+});
+
+// =========================
+// DATABASE SETUP
 // =========================
 db.serialize(() => {
 
@@ -57,16 +64,16 @@ db.serialize(() => {
     )
   `);
 
-  // USER
+  // DEFAULT USER
   db.run(`
-    INSERT OR IGNORE INTO users 
+    INSERT OR IGNORE INTO users
     (id, username, password, role, parentId, firstName, lastName, nickname)
     VALUES (1,'user','1234','user',NULL,'John','Smith','Johnny')
   `);
 
-  // FAMILY
+  // FAMILY USER
   db.run(`
-    INSERT OR IGNORE INTO users 
+    INSERT OR IGNORE INTO users
     (username,password,role,parentId,firstName,lastName)
     VALUES ('family','1234','family',1,'Sarah','Smith')
   `);
@@ -75,20 +82,22 @@ db.serialize(() => {
 // =========================
 // LOGIN
 // =========================
-app.post('/login', (req,res)=>{
-  const {username,password} = req.body;
+app.post('/login', (req, res) => {
+
+  const { username, password } = req.body;
 
   db.get(
     `SELECT * FROM users WHERE username=? AND password=?`,
-    [username,password],
-    (err,user)=>{
-      if(!user) return res.json({success:false});
+    [username, password],
+    (err, user) => {
+
+      if (!user) return res.json({ success: false });
 
       req.session.user = user;
 
       res.json({
-        success:true,
-        role:user.role
+        success: true,
+        role: user.role
       });
     }
   );
@@ -97,49 +106,53 @@ app.post('/login', (req,res)=>{
 // =========================
 // AUTH / LOGOUT
 // =========================
-app.get('/auth',(req,res)=>{
+app.get('/auth', (req, res) => {
   res.json(req.session.user || null);
 });
 
-app.get('/logout',(req,res)=>{
-  req.session.destroy(()=>res.json({success:true}));
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => res.json({ success: true }));
 });
 
 // =========================
-// CHECKIN SAVE
+// CHECK-IN SAVE
 // =========================
-app.post('/checkin',(req,res)=>{
-  const user = req.session.user;
-  if(!user || user.role!=='user') return res.json({success:false});
+app.post('/checkin', (req, res) => {
 
-  const {mood,meds} = req.body;
+  const user = req.session.user;
+
+  if (!user || user.role !== 'user') {
+    return res.json({ success: false });
+  }
+
+  const { mood, meds } = req.body;
 
   db.run(
-    `INSERT INTO checkins (userId,mood,meds,timestamp)
-     VALUES (?,?,?,?)`,
-    [user.id,mood,meds,new Date().toISOString()]
+    `INSERT INTO checkins (userId, mood, meds, timestamp)
+     VALUES (?, ?, ?, ?)`,
+    [user.id, mood, meds, new Date().toISOString()]
   );
 
-  res.json({success:true});
+  res.json({ success: true });
 });
 
 // =========================
-// CHECKIN TODAY
+// CHECK IF ALREADY CHECKED IN TODAY
 // =========================
-app.get('/checkin-today',(req,res)=>{
+app.get('/checkin-today', (req, res) => {
 
   const user = req.session.user;
-  if(!user) return res.json({checkedIn:false});
+  if (!user) return res.json({ checkedIn: false });
 
   db.get(
-    `SELECT * FROM checkins 
-     WHERE userId=? 
-     ORDER BY timestamp DESC 
+    `SELECT * FROM checkins
+     WHERE userId=?
+     ORDER BY timestamp DESC
      LIMIT 1`,
     [user.id],
-    (err,row)=>{
+    (err, row) => {
 
-      if(!row) return res.json({checkedIn:false});
+      if (!row) return res.json({ checkedIn: false });
 
       const today = new Date().toDateString();
       const rowDate = new Date(row.timestamp).toDateString();
@@ -157,58 +170,60 @@ app.get('/checkin-today',(req,res)=>{
 // =========================
 // ACTIVITIES
 // =========================
-app.get('/activities',(req,res)=>{
+app.get('/activities', (req, res) => {
+
   const user = req.session.user;
-  if(!user) return res.json({});
+  if (!user) return res.json({});
 
   db.get(
-    `SELECT dayForCall,timeForCall,timezone FROM users WHERE id=?`,
+    `SELECT dayForCall, timeForCall, timezone FROM users WHERE id=?`,
     [user.id],
-    (err,row)=>res.json(row || {})
+    (err, row) => res.json(row || {})
   );
 });
 
-app.post('/activities',(req,res)=>{
-  const user = req.session.user;
-  if(!user) return res.json({success:false});
+app.post('/activities', (req, res) => {
 
-  const {dayForCall,timeForCall,timezone} = req.body;
+  const user = req.session.user;
+  if (!user) return res.json({ success: false });
+
+  const { dayForCall, timeForCall, timezone } = req.body;
 
   db.run(
-    `UPDATE users SET dayForCall=?,timeForCall=?,timezone=? WHERE id=?`,
-    [dayForCall,timeForCall,timezone,user.id]
+    `UPDATE users
+     SET dayForCall=?, timeForCall=?, timezone=?
+     WHERE id=?`,
+    [dayForCall, timeForCall, timezone, user.id]
   );
 
-  res.json({success:true});
+  res.json({ success: true });
 });
 
 // =========================
-// 🔥 FAMILY DASHBOARD (FIXED)
+// FAMILY DASHBOARD
 // =========================
-app.get('/family-data',(req,res)=>{
+app.get('/family-data', (req, res) => {
 
   const u = req.session.user;
 
-  if(!u || u.role !== 'family'){
-    return res.json({checkins:[],user:null});
+  if (!u || u.role !== 'family') {
+    return res.json({ checkins: [], user: null });
   }
 
   const targetUserId = u.parentId || 1;
 
-  // GET USER INFO
   db.get(
-    `SELECT firstName,nickname,dayForCall,timeForCall,timezone 
+    `SELECT firstName, nickname, dayForCall, timeForCall, timezone
      FROM users WHERE id=?`,
     [targetUserId],
-    (err,userInfo)=>{
+    (err, userInfo) => {
 
-      // GET CHECKINS
       db.all(
-        `SELECT * FROM checkins 
-         WHERE userId=? 
+        `SELECT * FROM checkins
+         WHERE userId=?
          ORDER BY timestamp DESC`,
         [targetUserId],
-        (err2,rows)=>{
+        (err2, rows) => {
 
           res.json({
             checkins: rows || [],
@@ -221,6 +236,10 @@ app.get('/family-data',(req,res)=>{
 });
 
 // =========================
-// START SERVER
+// START SERVER (RENDER READY)
 // =========================
-app.listen(3000,()=>console.log('Server running on http://localhost:3000'));
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log('Server running on port ' + PORT);
+});

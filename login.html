@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SHINE Circle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    body {
+      text-align:center;
+      padding:20px;
+    }
+
+    .hero {
+      max-width:600px;
+      margin:auto;
+    }
+
+    .big-btn {
+      font-size:20px;
+      padding:18px;
+      width:90%;
+      margin:15px 0;
+      border-radius:10px;
+      border:none;
+      background:#1E6FDB;
+      color:white;
+      cursor:pointer;
+    }
+
+    .small-btn {
+      font-size:14px;
+      padding:10px;
+      margin-top:10px;
+    }
+
+    .card {
+      margin-top:20px;
+      padding:15px;
+      background:#f5f5f5;
+      border-radius:10px;
+    }
+
+    input {
+      width:90%;
+      padding:12px;
+      margin:5px 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<img src="logo.jpg" style="height:60px;">
+
+<div class="hero">
+
+  <h2>SHINE Circle</h2>
+
+  <p><b>A bright spot you can count on.</b></p>
+
+  <p>
+    Daily check-ins, real human connection, and peace of mind for families.
+  </p>
+
+  <!-- BIG CLIENT BUTTON -->
+  <button class="big-btn" onclick="showLogin('user')">
+    I'm Checking In Today
+  </button>
+
+  <!-- FAMILY BUTTON -->
+  <button class="btn small-btn" onclick="showLogin('family')">
+    Family / Caregiver Login
+  </button>
+
+  <!-- LOGIN FORM -->
+  <div id="loginBox" class="card" style="display:none;">
+
+    <input id="username" placeholder="Username"><br>
+    <input id="password" type="password" placeholder="Password"><br>
+
+    <button class="btn" onclick="login()">Login</button>
+
+    <p id="error" style="color:red;"></p>
+
+  </div>
+
+</div>
+
+<script>
+
+let selectedRole = "";
+
+// SHOW LOGIN
+function showLogin(role){
+  selectedRole = role;
+  document.getElementById("loginBox").style.display = "block";
+}
+
+// LOGIN
+function login(){
+
+  fetch('/login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      username: document.getElementById("username").value,
+      password: document.getElementById("password").value
+    })
+  })
+  .then(r=>r.json())
+  .then(data=>{
+
+    if(!data.success){
+      document.getElementById("error").innerText = "Login failed";
+      return;
+    }
+
+    // ROUTING
+    if(data.role === 'user'){
+      window.location = 'home.html';
+    } else {
+      window.location = 'family.html';
+    }
+
+  });
+}
+
+</script>
+
+</body>
+</html>

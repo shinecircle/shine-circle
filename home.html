@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<div class="header">
+  <img src="logo.jpg" class="logo">
+
+  <div>
+    <button class="btn" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div style="text-align:center;padding:20px;" id="content"></div>
+
+<script>
+
+fetch('/auth')
+.then(r=>r.json())
+.then(u=>{
+
+  if(!u) window.location='login.html';
+
+  const name = u.nickname && u.nickname.trim() !== ""
+    ? u.nickname
+    : u.firstName;
+
+  let html = `<h2>Welcome ${name}</h2>`;
+
+  if(u.role === 'user'){
+    html += `
+      <a href="checkin.html"><button class="btn">Daily Check-In</button></a>
+      <a href="activities.html"><button class="btn">Activities</button></a>
+    `;
+  }
+
+  if(u.role === 'family'){
+    html += `
+      <a href="family.html"><button class="btn">Dashboard</button></a>
+    `;
+  }
+
+  document.getElementById("content").innerHTML = html;
+});
+
+function logout(){
+  fetch('/logout')
+  .then(()=>window.location='login.html');
+}
+
+</script>
+
+</body>
+</html>

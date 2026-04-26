@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Activities</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    .day-btn, .time-btn {
+      margin:5px;
+      padding:10px;
+      border-radius:8px;
+      border:1px solid #ccc;
+      cursor:pointer;
+    }
+
+    .selected {
+      background:#1E6FDB;
+      color:white;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="header">
+  <img src="logo.jpg" class="logo">
+  <div>
+    <button class="btn" onclick="goHome()">Home</button>
+    <button class="btn" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div style="padding:20px;text-align:center;">
+
+  <h2>Activities Preferences</h2>
+
+  <p><b>Preferred days for calls</b></p>
+
+  <div id="days">
+    <button class="day-btn" onclick="toggleDay(this)">Mon</button>
+    <button class="day-btn" onclick="toggleDay(this)">Tue</button>
+    <button class="day-btn" onclick="toggleDay(this)">Wed</button>
+    <button class="day-btn" onclick="toggleDay(this)">Thu</button>
+    <button class="day-btn" onclick="toggleDay(this)">Fri</button>
+    <button class="day-btn" onclick="toggleDay(this)">Sat</button>
+    <button class="day-btn" onclick="toggleDay(this)">Sun</button>
+  </div>
+
+  <p><b>Preferred timing for calls</b></p>
+
+  <div id="times">
+    <button class="time-btn" onclick="selectTime(this)">Morning</button>
+    <button class="time-btn" onclick="selectTime(this)">Midday</button>
+    <button class="time-btn" onclick="selectTime(this)">Evening</button>
+  </div>
+
+  <p><b>Select Time Zone</b></p>
+
+  <select id="timezone">
+    <option value="">Select Time Zone</option>
+    <option value="EST">Eastern</option>
+    <option value="CST">Central</option>
+    <option value="MST">Mountain</option>
+    <option value="PST">Pacific</option>
+  </select>
+
+  <br><br>
+
+  <button class="btn" onclick="save()">Save</button>
+
+  <p id="msg"></p>
+
+</div>
+
+<script>
+
+let selectedDays = [];
+let selectedTime = "";
+
+// LOAD
+fetch('/activities')
+.then(r=>r.json())
+.then(d=>{
+
+  if(d.dayForCall){
+    selectedDays = d.dayForCall.split(',');
+  }
+
+  selectedTime = d.timeForCall || "";
+
+  if(d.timezone){
+    document.getElementById("timezone").value = d.timezone;
+  }
+
+  document.querySelectorAll(".day-btn").forEach(btn=>{
+    if(selectedDays.includes(btn.innerText)){
+      btn.classList.add("selected");
+    }
+  });
+
+  document.querySelectorAll(".time-btn").forEach(btn=>{
+    if(btn.innerText === selectedTime){
+      btn.classList.add("selected");
+    }
+  });
+});
+
+// TOGGLE DAY
+function toggleDay(btn){
+  const day = btn.innerText;
+
+  if(selectedDays.includes(day)){
+    selectedDays = selectedDays.filter(d=>d!==day);
+    btn.classList.remove("selected");
+  } else {
+    selectedDays.push(day);
+    btn.classList.add("selected");
+  }
+}
+
+// SELECT TIME
+function selectTime(btn){
+  selectedTime = btn.innerText;
+
+  document.querySelectorAll(".time-btn").forEach(b=>b.classList.remove("selected"));
+  btn.classList.add("selected");
+}
+
+// SAVE (FIXED)
+function save(){
+
+  const order = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+  const cleanDays = [...new Set(selectedDays)]
+    .sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+
+  fetch('/activities',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      dayForCall: cleanDays.join(','),
+      timeForCall: selectedTime,
+      timezone: document.getElementById("timezone").value
+    })
+  })
+  .then(()=>{
+    document.getElementById("msg").innerText = "Saved!";
+  });
+}
+
+function goHome(){ window.location='home.html'; }
+function logout(){ fetch('/logout').then(()=>window.location='login.html'); }
+
+</script>
+
+</body>
+</html>

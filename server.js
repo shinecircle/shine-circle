@@ -24,7 +24,7 @@ app.use(
 // ✅ ROOT ROUTE (FIXES RENDER ERROR)
 // =========================
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/login.html');
+  res.sendFile(__dirname + '/howitworks.html');
 });
 
 // =========================

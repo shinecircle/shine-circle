@@ -1,24 +1,40 @@
+/* =========================
+   GLOBAL
+========================= */
 body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
+  background: #fff9e6; /* light yellow */
+  color: #1a1a1a;
 }
 
-/* HEADER */
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
+
+/* =========================
+   HEADER
+========================= */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
+  padding: 15px 20px;
   border-bottom: 1px solid #ddd;
   flex-wrap: wrap;
+  background: white;
 }
 
 .logo {
-  height: 60px;
+  height: 160px; /* DOUBLE SIZE */
 }
 
-/* BUTTONS */
+/* =========================
+   BUTTONS
+========================= */
 .btn {
   padding: 10px 14px;
   margin: 5px;
@@ -27,10 +43,97 @@ body {
   background: #2d6cdf;
   color: white;
   font-size: 14px;
+  cursor: pointer;
 }
 
-/* MOBILE */
+.btn-primary {
+  background: #1E6FDB;
+}
+
+.btn-light {
+  background: #eef3ff;
+  color: #1a1a1a;
+}
+
+/* =========================
+   HERO
+========================= */
+.hero {
+  text-align: center;
+  padding: 50px 20px 30px;
+}
+
+.hero h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.hero p {
+  font-size: 18px;
+  color: #555;
+}
+
+/* =========================
+   STEPS
+========================= */
+.steps {
+  margin-top: 40px;
+}
+
+.step {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  text-align: left;
+}
+
+.step h3 {
+  margin: 0 0 5px;
+}
+
+.step p {
+  margin: 0;
+  color: #555;
+}
+
+/* =========================
+   WHY SECTION
+========================= */
+.why {
+  text-align: center;
+  margin-top: 50px;
+}
+
+.why p {
+  max-width: 600px;
+  margin: 10px auto;
+  color: #555;
+  font-size: 17px;
+}
+
+/* =========================
+   CTA
+========================= */
+.cta {
+  margin-top: 50px;
+  text-align: center;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.cta h2 {
+  margin-bottom: 15px;
+}
+
+/* =========================
+   MOBILE
+========================= */
 @media (max-width: 600px) {
+
   .header {
     flex-direction: column;
     gap: 10px;
@@ -39,5 +142,13 @@ body {
 
   .btn {
     width: 90%;
+  }
+
+  .hero h1 {
+    font-size: 26px;
+  }
+
+  .logo {
+    height: 90px; /* slightly smaller on mobile */
   }
 }

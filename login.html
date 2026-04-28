@@ -1,88 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SHINE Circle</title>
+  <title>Shine Circle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="stylesheet" href="styles.css">
 
   <style>
-    body {
-      text-align:center;
-      padding:20px;
+    .login-container {
+      text-align: center;
+      padding: 40px 20px;
     }
 
-    .hero {
-      max-width:600px;
-      margin:auto;
-    }
-
-    .big-btn {
-      font-size:20px;
-      padding:18px;
-      width:90%;
-      margin:15px 0;
-      border-radius:10px;
-      border:none;
-      background:#1E6FDB;
-      color:white;
-      cursor:pointer;
-    }
-
-    .small-btn {
-      font-size:14px;
-      padding:10px;
-      margin-top:10px;
-    }
-
-    .card {
-      margin-top:20px;
-      padding:15px;
-      background:#f5f5f5;
-      border-radius:10px;
+    .login-box {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 360px;
+      margin: 20px auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
 
     input {
-      width:90%;
-      padding:12px;
-      margin:5px 0;
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .subtext {
+      color: #555;
+      font-size: 15px;
+      max-width: 400px;
+      margin: 10px auto;
     }
   </style>
 </head>
 
 <body>
 
-<img src="logo.jpg" style="height:60px;">
+<!-- HEADER (MATCHES OTHER PAGES) -->
+<div class="header">
+  <img src="logo.jpg" class="logo">
 
-<div class="hero">
+  <div>
+    <button class="btn btn-light" onclick="goHow()">How It Works</button>
+    <button class="btn btn-primary" onclick="goLogin()">Login</button>
+  </div>
+</div>
 
-  <h2>SHINE Circle</h2>
+<div class="login-container">
 
-  <p><b>A bright spot you can count on.</b></p>
+  <!-- HERO MESSAGE -->
+  <h1>Connection you can count on</h1>
 
-  <p>
-    Daily check-ins, real human connection, and peace of mind for families.
+  <p class="subtext">
+    You can’t always be there. But you can know someone is.
   </p>
 
-  <!-- BIG CLIENT BUTTON -->
-  <button class="big-btn" onclick="showLogin('user')">
-    I'm Checking In Today
-  </button>
+  <!-- LOGIN BOX -->
+  <div class="login-box">
 
-  <!-- FAMILY BUTTON -->
-  <button class="btn small-btn" onclick="showLogin('family')">
-    Family / Caregiver Login
-  </button>
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
 
-  <!-- LOGIN FORM -->
-  <div id="loginBox" class="card" style="display:none;">
+    <button class="btn btn-primary" onclick="login()">Login</button>
 
-    <input id="username" placeholder="Username"><br>
-    <input id="password" type="password" placeholder="Password"><br>
-
-    <button class="btn" onclick="login()">Login</button>
-
-    <p id="error" style="color:red;"></p>
+    <p id="msg" style="color:red;"></p>
 
   </div>
 
@@ -90,35 +76,33 @@
 
 <script>
 
-let selectedRole = "";
-
-// SHOW LOGIN
-function showLogin(role){
-  selectedRole = role;
-  document.getElementById("loginBox").style.display = "block";
+function goHow(){
+  window.location = 'howitworks.html';
 }
 
-// LOGIN
+function goLogin(){
+  window.location = 'login.html';
+}
+
 function login(){
+
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
 
   fetch('/login',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({
-      username: document.getElementById("username").value,
-      password: document.getElementById("password").value
-    })
+    body:JSON.stringify({username,password})
   })
   .then(r=>r.json())
-  .then(data=>{
+  .then(d=>{
 
-    if(!data.success){
-      document.getElementById("error").innerText = "Login failed";
+    if(!d.success){
+      document.getElementById("msg").innerText = "Invalid username or password";
       return;
     }
 
-    // ROUTING
-    if(data.role === 'user'){
+    if(d.role === 'user'){
       window.location = 'home.html';
     } else {
       window.location = 'family.html';

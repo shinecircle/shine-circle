@@ -14,75 +14,49 @@
 
     .login-box {
       background: white;
-      padding: 30px;
+      padding: 25px;
       border-radius: 12px;
-      max-width: 360px;
-      margin: 20px auto;
+      max-width: 350px;
+      margin: auto;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
 
     input {
       width: 90%;
-      padding: 12px;
+      padding: 10px;
       margin: 10px 0;
       border-radius: 8px;
       border: 1px solid #ccc;
-      font-size: 14px;
-    }
-
-    .subtext {
-      color: #555;
-      font-size: 15px;
-      max-width: 400px;
-      margin: 10px auto;
     }
   </style>
 </head>
 
 <body>
 
-<!-- HEADER (MATCHES OTHER PAGES) -->
 <div class="header">
   <img src="logo.jpg" class="logo">
-
-  <div>
-    <button class="btn btn-light" onclick="goHow()">How It Works</button>
-    <button class="btn btn-primary" onclick="goLogin()">Login</button>
-  </div>
 </div>
 
 <div class="login-container">
 
-  <!-- HERO MESSAGE -->
-  <h1>Connection you can count on</h1>
+  <h2>Welcome to Shine Circle</h2>
 
-  <p class="subtext">
-    You can’t always be there. But you can know someone is.
-  </p>
+  <p>Connection you can count on</p>
 
-  <!-- LOGIN BOX -->
   <div class="login-box">
 
     <input id="username" placeholder="Username">
     <input id="password" type="password" placeholder="Password">
 
-    <button class="btn btn-primary" onclick="login()">Login</button>
+    <button class="btn" onclick="login()">Login</button>
 
-    <p id="msg" style="color:red;"></p>
+    <p id="msg"></p>
 
   </div>
 
 </div>
 
 <script>
-
-function goHow(){
-  window.location = 'howitworks.html';
-}
-
-function goLogin(){
-  window.location = 'login.html';
-}
 
 function login(){
 
@@ -98,7 +72,7 @@ function login(){
   .then(d=>{
 
     if(!d.success){
-      document.getElementById("msg").innerText = "Invalid username or password";
+      document.getElementById("msg").innerText = "Login failed";
       return;
     }
 

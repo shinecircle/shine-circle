@@ -12,7 +12,7 @@ body {
 .container {
   max-width: 900px;
   margin: auto;
-  padding: 20px;
+  padding: 10px;
 }
 
 /* =========================
@@ -22,24 +22,24 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
+  padding: 1px 2px;
   border-bottom: 1px solid #ddd;
   flex-wrap: wrap;
   background: white;
 }
 
 .logo {
-  height: 160px; /* DOUBLE SIZE */
+  height: 180px; 
 }
 
 /* =========================
    BUTTONS
 ========================= */
 .btn {
-  padding: 10px 14px;
+  padding: 5px 4px;
   margin: 5px;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   background: #2d6cdf;
   color: white;
   font-size: 14px;
@@ -60,12 +60,12 @@ body {
 ========================= */
 .hero {
   text-align: center;
-  padding: 50px 20px 30px;
+  padding: 10px 5px 10px;
 }
 
 .hero h1 {
   font-size: 32px;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .hero p {
@@ -77,14 +77,14 @@ body {
    STEPS
 ========================= */
 .steps {
-  margin-top: 40px;
+  margin-top: 10px;
 }
 
 .step {
   background: white;
-  padding: 20px;
+  padding: 5px;
   border-radius: 12px;
-  margin-bottom: 15px;
+  margin-bottom: 5px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   text-align: left;
 }
@@ -103,7 +103,7 @@ body {
 ========================= */
 .why {
   text-align: center;
-  margin-top: 50px;
+  margin-top: 5px;
 }
 
 .why p {
@@ -117,16 +117,16 @@ body {
    CTA
 ========================= */
 .cta {
-  margin-top: 50px;
+  margin-top: 5px;
   text-align: center;
   background: white;
-  padding: 30px;
+  padding: 5px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .cta h2 {
-  margin-bottom: 15px;
+  margin-bottom: 5px;
 }
 
 /* =========================

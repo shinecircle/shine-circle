@@ -1,300 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Family Dashboard</title>
+  <title>Family Dashboard | Shine Circle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="styles.css">
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <style>
-    .card {
-      padding: 15px;
-      margin: 10px;
-      border-radius: 10px;
-      background: #f5f5f5;
-    }
-
-    .alert {
-      background: #ffe0e0;
-      color: #900;
-    }
-
-    .chart-wrap {
-      width: 100%;
-      max-width: 500px;
-      margin: auto;
-      height: 250px;
-    }
-
-    h2 { text-align:center; }
-  </style>
 </head>
 
 <body>
 
 <div class="header">
   <img src="logo.jpg" class="logo">
-  <div>
-    <button class="btn" onclick="goHome()">Home</button>
-    <button class="btn" onclick="logout()">Logout</button>
-  </div>
+  <button class="btn" onclick="logout()">Logout</button>
 </div>
 
-<div style="padding:15px;">
+<div class="container">
 
-  <h2 id="welcome"></h2>
+  <h1>Family Dashboard</h1>
 
-  <div id="monitorHeader"></div>
+  <h3>Mood Check-ins</h3>
+  <div id="checkins"></div>
 
-  <!-- CALL SCHEDULE -->
-  <div class="card">
-    <h3>Preferred Call Schedule</h3>
-    <p id="schedule"></p>
-  </div>
+  <h3>Medications</h3>
+  <div id="meds"></div>
 
-  <!-- ALERTS -->
-  <div id="alerts"></div>
-
-  <!-- MEDICATION -->
-  <div class="card">
-    <h3>Medication Compliance (Last 7 Days)</h3>
-    <p id="medRate"></p>
-  </div>
-
-  <!-- CHART -->
-  <div class="card">
-    <h3>Mood Trend</h3>
-    <div class="chart-wrap">
-      <canvas id="chart"></canvas>
-    </div>
-  </div>
-
-  <!-- RECENT ACTIVITY -->
-  <div class="card">
-    <h3>Recent Activity</h3>
-    <div id="list"></div>
-  </div>
+  <h3>Calls</h3>
+  <div id="calls"></div>
 
 </div>
 
 <script>
 
-let dataGlobal = [];
+function loadData(){
 
-// =========================
-// CAREGIVER NAME
-// =========================
-fetch('/auth')
-.then(r=>r.json())
-.then(u=>{
-  if(!u) return;
+  fetch('/family-data')
+  .then(r=>r.json())
+  .then(data=>{
 
-  const name = u.nickname && u.nickname.trim() !== ""
-    ? u.nickname
-    : u.firstName;
+    // CHECKINS
+    const c = document.getElementById("checkins");
+    c.innerHTML = "";
+    data.checkins.forEach(x=>{
+      const div = document.createElement("div");
+      div.innerText = `${x.mood} (${new Date(x.timestamp).toLocaleString()})`;
+      c.appendChild(div);
+    });
 
-  document.getElementById("welcome").innerText =
-    name.endsWith('s') ? name + "' Dashboard" : name + "'s Dashboard";
-});
+    // MEDS
+    const m = document.getElementById("meds");
+    m.innerHTML = "";
+    data.meds.forEach(x=>{
+      const div = document.createElement("div");
+      div.innerText = `${x.medicineName} - ${x.taken} (${x.timeOfDay})`;
+      m.appendChild(div);
+    });
 
-// =========================
-// LOAD DATA
-// =========================
-fetch('/family-data')
-.then(r=>r.json())
-.then(data=>{
+    // CALLS
+    const calls = document.getElementById("calls");
+    calls.innerHTML = "";
+    data.calls.forEach(x=>{
+      const div = document.createElement("div");
+      div.innerText =
+        `Call with ${x.callWith} - ${Math.round(x.duration/60)} min`;
+      calls.appendChild(div);
+    });
 
-  const user = data.user;
-
-  if(!user){
-    document.getElementById("schedule").innerText = "No data available";
-    return;
-  }
-
-  const name = user.nickname && user.nickname.trim() !== ""
-    ? user.nickname
-    : user.firstName;
-
-  document.getElementById("monitorHeader").innerHTML =
-    `<div class="card"><h3>Loved One: ${name}</h3></div>`;
-
-  // =========================
-  // CALL SCHEDULE (FIXED)
-  // =========================
-  const map = {
-    Mon:"Monday", Tue:"Tuesday", Wed:"Wednesday",
-    Thu:"Thursday", Fri:"Friday", Sat:"Saturday", Sun:"Sunday"
-  };
-
-  let days = "Not set";
-
-  if(user.dayForCall){
-    const cleanDays = user.dayForCall
-      .split(',')
-      .map(d => d.trim())
-      .filter(d => d && map[d]);
-
-    if(cleanDays.length){
-      days = cleanDays.map(d=>map[d]).join(', ');
-    }
-  }
-
-  let time = user.timeForCall || "Not set";
-  let tz = user.timezone ? `(${user.timezone})` : "";
-
-  document.getElementById("schedule").innerText =
-    `${days} — ${time} ${tz}`;
-
-  // =========================
-  // CHECKINS
-  // =========================
-  dataGlobal = (data.checkins || []).reverse();
-
-  if(!dataGlobal.length){
-    document.getElementById("list").innerText = "No activity yet.";
-    return;
-  }
-
-  renderChart();
-  renderMedCompliance();
-  renderList();
-  renderAlerts();
-});
-
-// =========================
-// MOOD SCORE
-// =========================
-function moodScore(m){
-  return {
-    "Great":4,
-    "Good":3,
-    "Low":2,
-    "Struggling":1
-  }[m] || 0;
-}
-
-// =========================
-// CHART
-// =========================
-function renderChart(){
-
-  const last10 = dataGlobal.slice(-10);
-
-  const labels = last10.map(d =>
-    new Date(d.timestamp).toLocaleDateString('en-US',{
-      month:'short',
-      day:'numeric'
-    })
-  );
-
-  const values = last10.map(d => moodScore(d.mood));
-
-  new Chart(document.getElementById('chart'),{
-    type:'line',
-    data:{
-      labels,
-      datasets:[{
-        label:'Mood',
-        data:values,
-        borderWidth:2,
-        tension:0.3
-      }]
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      scales:{
-        y:{
-          min:1,
-          max:4,
-          ticks:{
-            callback: v =>
-              ["","Struggling","Low","Good","Great"][v]
-          }
-        }
-      }
-    }
   });
 }
 
-// =========================
-// MED COMPLIANCE
-// =========================
-function renderMedCompliance(){
-
-  const now = new Date();
-
-  const last7 = dataGlobal.filter(d=>{
-    const diff = (now - new Date(d.timestamp)) / (1000*60*60*24);
-    return diff <= 7;
-  });
-
-  const total = last7.length;
-  const taken = last7.filter(d => d.meds === "Yes").length;
-
-  const pct = total ? Math.round((taken/total)*100) : 0;
-
-  document.getElementById("medRate").innerText =
-    `${pct}% compliance (${taken}/${total} days)`;
+function logout(){
+  fetch('/logout').then(()=> window.location='login.html');
 }
 
-// =========================
-// RECENT ACTIVITY
-// =========================
-function renderList(){
-
-  let html = "";
-
-  dataGlobal.slice(-10).forEach(d=>{
-
-    const date = new Date(d.timestamp);
-
-    html += `
-      <div style="margin-bottom:12px;">
-        <b>Mood:</b> ${d.mood}<br>
-        <b>Meds:</b> ${d.meds || "Not recorded"}<br>
-        <small>${date.toLocaleString()}</small>
-      </div>
-    `;
-  });
-
-  document.getElementById("list").innerHTML = html;
-}
-
-// =========================
-// ALERTS
-// =========================
-function renderAlerts(){
-
-  let alerts = "";
-
-  const today = new Date().toISOString().split('T')[0];
-
-  const todayEntry = dataGlobal.find(d =>
-    d.timestamp.startsWith(today)
-  );
-
-  if(!todayEntry){
-    alerts += `<div class="card alert">⚠ No check-in today</div>`;
-  }
-
-  if(dataGlobal.some(d => d.mood === "Struggling")){
-    alerts += `<div class="card alert">⚠ Struggling mood detected</div>`;
-  }
-
-  if(dataGlobal.some(d => d.meds === "No")){
-    alerts += `<div class="card alert">⚠ Medication missed</div>`;
-  }
-
-  document.getElementById("alerts").innerHTML = alerts;
-}
-
-// =========================
-// NAV
-// =========================
-function goHome(){ window.location='home.html'; }
-function logout(){ fetch('/logout').then(()=>window.location='login.html'); }
+loadData();
 
 </script>
 

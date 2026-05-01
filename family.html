@@ -15,7 +15,9 @@
 
 <div class="container">
 
-  <h1>Family Dashboard</h1>
+  <!-- DYNAMIC HEADER -->
+  <h1 id="dashboardTitle">Dashboard</h1>
+  <h3 id="lovedOne"></h3>
 
   <h3>Mood Check-ins</h3>
   <div id="checkins"></div>
@@ -36,27 +38,59 @@ function loadData(){
   .then(r=>r.json())
   .then(data=>{
 
+    // =========================
+    // HEADER PERSONALIZATION
+    // =========================
+
+    // caregiver name from session
+    fetch('/auth')
+      .then(r=>r.json())
+      .then(user=>{
+        if(user && user.firstName){
+          document.getElementById("dashboardTitle").innerText =
+            user.firstName + "'s Dashboard";
+        }
+      });
+
+    // loved one name
+    if(data.user){
+      const name = data.user.nickname || data.user.firstName || "User";
+      document.getElementById("lovedOne").innerText =
+        "Loved One: " + name;
+    }
+
+    // =========================
     // CHECKINS
+    // =========================
     const c = document.getElementById("checkins");
     c.innerHTML = "";
+
     data.checkins.forEach(x=>{
       const div = document.createElement("div");
-      div.innerText = `${x.mood} (${new Date(x.timestamp).toLocaleString()})`;
+      div.innerText =
+        `${x.mood} (${new Date(x.timestamp).toLocaleString()})`;
       c.appendChild(div);
     });
 
+    // =========================
     // MEDS
+    // =========================
     const m = document.getElementById("meds");
     m.innerHTML = "";
+
     data.meds.forEach(x=>{
       const div = document.createElement("div");
-      div.innerText = `${x.medicineName} - ${x.taken} (${x.timeOfDay})`;
+      div.innerText =
+        `${x.medicineName} - ${x.taken} (${x.timeOfDay})`;
       m.appendChild(div);
     });
 
+    // =========================
     // CALLS
+    // =========================
     const calls = document.getElementById("calls");
     calls.innerHTML = "";
+
     data.calls.forEach(x=>{
       const div = document.createElement("div");
       div.innerText =

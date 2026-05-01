@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Home</title>
+  <title>Home | Shine Circle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -10,49 +10,25 @@
 
 <div class="header">
   <img src="logo.jpg" class="logo">
-
-  <div>
-    <button class="btn" onclick="logout()">Logout</button>
-  </div>
+  <button class="btn" onclick="logout()">Logout</button>
 </div>
 
-<div style="text-align:center;padding:20px;" id="content"></div>
+<div class="container">
+
+  <h1>Welcome</h1>
+
+  <button class="btn btn-primary" onclick="goCheckin()">Daily Check-In</button>
+
+</div>
 
 <script>
-
-fetch('/auth')
-.then(r=>r.json())
-.then(u=>{
-
-  if(!u) window.location='login.html';
-
-  const name = u.nickname && u.nickname.trim() !== ""
-    ? u.nickname
-    : u.firstName;
-
-  let html = `<h2>Welcome ${name}</h2>`;
-
-  if(u.role === 'user'){
-    html += `
-      <a href="checkin.html"><button class="btn">Daily Check-In</button></a>
-      <a href="activities.html"><button class="btn">Activities</button></a>
-    `;
-  }
-
-  if(u.role === 'family'){
-    html += `
-      <a href="family.html"><button class="btn">Caregiver Dashboard</button></a>
-    `;
-  }
-
-  document.getElementById("content").innerHTML = html;
-});
-
-function logout(){
-  fetch('/logout')
-  .then(()=>window.location='login.html');
+function goCheckin(){
+  window.location = 'checkin.html';
 }
 
+function logout(){
+  fetch('/logout').then(()=> window.location='login.html');
+}
 </script>
 
 </body>

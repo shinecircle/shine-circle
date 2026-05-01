@@ -29,7 +29,8 @@ body {
 }
 
 .logo {
-  height: 180px; 
+  height: 180px;
+   align-items: center;
 }
 
 /* =========================

@@ -12,11 +12,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
-app.use(session({
-  secret: 'shinecare-secret',
-  resave: false,
-  saveUninitialized: false
-}));
+app.use(
+  session({
+    secret: 'shinecare-secret',
+    resave: false,
+    saveUninitialized: false
+  })
+);
 
 // =========================
 // ROOT ROUTE
@@ -39,14 +41,7 @@ db.serialize(() => {
       role TEXT,
       parentId INTEGER,
       firstName TEXT,
-      lastName TEXT,
-      nickname TEXT,
-      phone TEXT,
-      email TEXT,
-      timezone TEXT,
-      interests TEXT,
-      priorCareer TEXT,
-      retired TEXT
+      nickname TEXT
     )
   `);
 
@@ -60,31 +55,31 @@ db.serialize(() => {
     )
   `);
 
-  // MEDICATIONS
+  // MEDICATION MASTER LIST
   db.run(`
     CREATE TABLE IF NOT EXISTS medications (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       userId INTEGER,
       medicineName TEXT,
-      timeOfDay TEXT,
+      timeOfDay TEXT
+    )
+  `);
+
+  // MEDICATION LOGS (TAKEN)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS medication_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER,
+      medicationId INTEGER,
       taken TEXT,
       timestamp TEXT
     )
   `);
 
-  // CALL LOGS
-  db.run(`
-    CREATE TABLE IF NOT EXISTS calls (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      userId INTEGER,
-      callWith TEXT,
-      startTime TEXT,
-      endTime TEXT,
-      duration INTEGER
-    )
-  `);
+  // =========================
+  // SEED DATA
+  // =========================
 
-  // SEED USERS
   db.run(`
     INSERT OR IGNORE INTO users 
     (id, username, password, role, firstName)
@@ -96,35 +91,64 @@ db.serialize(() => {
     (username,password,role,parentId,firstName)
     VALUES ('family','1234','family',1,'Sarah')
   `);
+
+  // SAMPLE MEDS
+  db.run(`
+    INSERT OR IGNORE INTO medications (id,userId,medicineName,timeOfDay)
+    VALUES (1,1,'Blood Pressure','Morning')
+  `);
+
+  db.run(`
+    INSERT OR IGNORE INTO medications (id,userId,medicineName,timeOfDay)
+    VALUES (2,1,'Vitamin D','Evening')
+  `);
+
 });
 
 // =========================
 // LOGIN
 // =========================
-app.post('/login', (req,res)=>{
-  const {username,password} = req.body;
+app.post('/login', (req, res) => {
+
+  const { username, password } = req.body;
 
   db.get(
     `SELECT * FROM users WHERE username=? AND password=?`,
-    [username,password],
-    (err,user)=>{
-      if(!user) return res.json({success:false});
+    [username, password],
+    (err, user) => {
+
+      if (!user) return res.json({ success: false });
 
       req.session.user = user;
 
-      res.json({success:true, role:user.role});
+      res.json({
+        success: true,
+        role: user.role
+      });
     }
   );
 });
 
 // =========================
-// CHECKIN (MOOD)
+// AUTH / LOGOUT
 // =========================
-app.post('/checkin',(req,res)=>{
-  const user = req.session.user;
-  if(!user) return res.json({success:false});
+app.get('/auth', (req, res) => {
+  res.json(req.session.user || null);
+});
 
-  const {mood} = req.body;
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => res.json({ success: true }));
+});
+
+// =========================
+// SAVE MOOD
+// =========================
+app.post('/checkin', (req, res) => {
+
+  const user = req.session.user;
+  if (!user) return res.json({ success: false });
+
+  const { mood } = req.body;
 
   db.run(
     `INSERT INTO checkins (userId,mood,timestamp)
@@ -132,85 +156,99 @@ app.post('/checkin',(req,res)=>{
     [user.id, mood, new Date().toISOString()]
   );
 
-  res.json({success:true});
+  res.json({ success: true });
 });
 
 // =========================
-// MEDICATION
+// GET USER MEDS (MASTER LIST)
 // =========================
-app.post('/medication',(req,res)=>{
+app.get('/my-medications', (req, res) => {
+
   const user = req.session.user;
-  if(!user) return res.json({success:false});
+  if (!user) return res.json([]);
 
-  const {medicineName,timeOfDay,taken} = req.body;
+  db.all(
+    `SELECT * FROM medications WHERE userId=?`,
+    [user.id],
+    (err, meds) => {
 
-  db.run(
-    `INSERT INTO medications 
-     (userId,medicineName,timeOfDay,taken,timestamp)
-     VALUES (?,?,?,?,?)`,
-    [user.id,medicineName,timeOfDay,taken,new Date().toISOString()]
+      // also get today's logs
+      db.all(
+        `SELECT * FROM medication_logs WHERE userId=?`,
+        [user.id],
+        (err2, logs) => {
+
+          res.json({
+            meds: meds || [],
+            logs: logs || []
+          });
+
+        }
+      );
+    }
   );
-
-  res.json({success:true});
 });
 
 // =========================
-// CALL LOGGING
+// MARK MED AS TAKEN
 // =========================
-app.post('/call',(req,res)=>{
+app.post('/take-med', (req, res) => {
+
   const user = req.session.user;
-  if(!user) return res.json({success:false});
+  if (!user) return res.json({ success: false });
 
-  const {callWith,startTime,endTime} = req.body;
-
-  const duration =
-    (new Date(endTime) - new Date(startTime)) / 1000;
+  const { medicationId } = req.body;
 
   db.run(
-    `INSERT INTO calls (userId,callWith,startTime,endTime,duration)
-     VALUES (?,?,?,?,?)`,
-    [user.id,callWith,startTime,endTime,duration]
+    `INSERT INTO medication_logs 
+     (userId, medicationId, taken, timestamp)
+     VALUES (?,?,?,?)`,
+    [user.id, medicationId, "Yes", new Date().toISOString()]
   );
 
-  res.json({success:true});
+  res.json({ success: true });
 });
 
 // =========================
 // FAMILY DASHBOARD
 // =========================
-app.get('/family-data',(req,res)=>{
+app.get('/family-data', (req, res) => {
+
   const u = req.session.user;
-  if(!u || u.role !== 'family'){
-    return res.json({});
-  }
+  if (!u || u.role !== 'family') return res.json({});
 
   const targetId = u.parentId;
 
-  db.all(
-    `SELECT * FROM checkins WHERE userId=? ORDER BY timestamp DESC`,
+  db.get(
+    `SELECT firstName, nickname FROM users WHERE id=?`,
     [targetId],
-    (err,checkins)=>{
+    (err, userInfo) => {
 
       db.all(
-        `SELECT * FROM medications WHERE userId=?`,
+        `SELECT * FROM checkins WHERE userId=? ORDER BY timestamp DESC`,
         [targetId],
-        (err2,meds)=>{
+        (err2, checkins) => {
 
           db.all(
-            `SELECT * FROM calls WHERE userId=?`,
+            `SELECT ml.*, m.medicineName 
+             FROM medication_logs ml
+             JOIN medications m ON ml.medicationId = m.id
+             WHERE ml.userId=?`,
             [targetId],
-            (err3,calls)=>{
+            (err3, meds) => {
 
               res.json({
-                checkins:checkins || [],
-                meds:meds || [],
-                calls:calls || []
+                user: userInfo,
+                checkins: checkins || [],
+                meds: meds || []
               });
 
             }
           );
+
         }
       );
+
     }
   );
 });
@@ -220,6 +258,6 @@ app.get('/family-data',(req,res)=>{
 // =========================
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT,()=>{
+app.listen(PORT, () => {
   console.log('Server running on port ' + PORT);
 });

@@ -4,6 +4,25 @@
   <title>Check-In | Shine Circle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="styles.css">
+
+  <style>
+    .mood-btn {
+      padding: 12px;
+      margin: 5px;
+      border-radius: 10px;
+      border: none;
+      background: #eef3ff;
+      cursor: pointer;
+    }
+
+    .med-card {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 10px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+  </style>
 </head>
 
 <body>
@@ -15,113 +34,117 @@
 
 <div class="container">
 
-  <h2>Daily Check-In</h2>
-
+  <!-- ===================== -->
   <!-- MOOD -->
-  <h3>How are you feeling?</h3>
-  <select id="mood">
-    <option>Good</option>
-    <option>Okay</option>
-    <option>Not Great</option>
-  </select>
+  <!-- ===================== -->
+  <h2>How are you feeling today?</h2>
 
-  <button class="btn" onclick="saveMood()">Save Mood</button>
+  <div>
+    <button class="mood-btn" onclick="saveMood('Great')">😊 Great</button>
+    <button class="mood-btn" onclick="saveMood('Good')">🙂 Good</button>
+    <button class="mood-btn" onclick="saveMood('Okay')">😐 Okay</button>
+    <button class="mood-btn" onclick="saveMood('Not Great')">🙁 Not Great</button>
+  </div>
+
+  <p id="moodSaved"></p>
 
   <hr>
 
+  <!-- ===================== -->
   <!-- MEDICATION -->
-  <h3>Medication</h3>
+  <!-- ===================== -->
+  <h2>Medications</h2>
 
-  <input id="medName" placeholder="Medicine Name">
-
-  <select id="medTime">
-    <option>Morning</option>
-    <option>Midday</option>
-    <option>Evening</option>
-  </select>
-
-  <select id="medTaken">
-    <option>Yes</option>
-    <option>No</option>
-  </select>
-
-  <button class="btn" onclick="saveMedication()">Save Medication</button>
-
-  <hr>
-
-  <!-- CALL TRACKING -->
-  <h3>Phone Call</h3>
-
-  <input id="callWith" placeholder="Who did you talk to?">
-
-  <button class="btn" onclick="startCall()">Start Call</button>
-  <button class="btn" onclick="endCall()">End Call</button>
+  <div id="medList"></div>
 
 </div>
 
 <script>
+
 function goHome(){
   window.location = 'home.html';
 }
 
-// ===================
-// MOOD
-// ===================
-function saveMood(){
+// =========================
+// MOOD SAVE
+// =========================
+function saveMood(mood){
 
   fetch('/checkin',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      mood: document.getElementById("mood").value
-    })
+    body:JSON.stringify({mood})
   });
 
-  alert("Mood saved!");
+  document.getElementById("moodSaved").innerText =
+    "Saved: " + mood + " ✔";
 }
 
-// ===================
-// MEDICATION
-// ===================
-function saveMedication(){
+// =========================
+// LOAD MEDS
+// =========================
+function loadMeds(){
+
+  fetch('/my-medications')
+    .then(r=>r.json())
+    .then(data=>{
+
+      const container = document.getElementById("medList");
+      container.innerHTML = "";
+
+      data.forEach(med => {
+
+        const div = document.createElement("div");
+        div.className = "med-card";
+
+        const takenText = med.taken === "Yes"
+          ? `✔ Yes at ${new Date(med.timestamp).toLocaleTimeString()}`
+          : "";
+
+        div.innerHTML = `
+          <b>${med.medicineName}</b><br>
+          ${med.timeOfDay}<br><br>
+
+          <button class="btn" onclick="takeMed(${med.id})">
+            Yes, I've taken it
+          </button>
+
+          <div id="status-${med.id}" style="margin-top:8px; color:green;">
+            ${takenText}
+          </div>
+        `;
+
+        container.appendChild(div);
+      });
+
+    });
+}
+
+// =========================
+// MARK MED TAKEN
+// =========================
+function takeMed(id){
 
   fetch('/medication',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      medicineName: document.getElementById("medName").value,
-      timeOfDay: document.getElementById("medTime").value,
-      taken: document.getElementById("medTaken").value
+      medicineName: "existing",
+      timeOfDay: "now",
+      taken: "Yes"
     })
+  })
+  .then(()=>{
+
+    const el = document.getElementById("status-"+id);
+    el.innerText = "✔ Yes at " + new Date().toLocaleTimeString();
+
   });
-
-  alert("Medication saved!");
 }
 
-// ===================
-// CALL TRACKING
-// ===================
-let startTime;
+// INIT
+loadMeds();
 
-function startCall(){
-  startTime = new Date();
-  alert("Call started");
-}
-
-function endCall(){
-
-  fetch('/call',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      callWith: document.getElementById("callWith").value,
-      startTime,
-      endTime: new Date()
-    })
-  });
-
-  alert("Call logged");
-}
 </script>
 
 </body>

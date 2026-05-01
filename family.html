@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Family Dashboard | Shine Circle</title>
+  <title>Family Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -10,49 +10,49 @@
 
 <div class="header">
   <img src="logo.jpg" class="logo">
-  <button class="btn" onclick="logout()">Logout</button>
+  <div>
+    <button class="btn" onclick="logout()">Logout</button>
+  </div>
 </div>
 
-<div class="container">
+<div style="padding:20px;text-align:center;">
 
-  <!-- DYNAMIC HEADER -->
-  <h1 id="dashboardTitle">Dashboard</h1>
-  <h3 id="lovedOne"></h3>
+  <h2 id="dashboardTitle">Dashboard</h2>
+  <p id="lovedOne"></p>
+
+  <hr>
 
   <h3>Mood Check-ins</h3>
   <div id="checkins"></div>
 
+  <hr>
+
   <h3>Medications</h3>
   <div id="meds"></div>
-
-  <h3>Calls</h3>
-  <div id="calls"></div>
 
 </div>
 
 <script>
 
-function loadData(){
+// LOAD DATA
+function load(){
 
   fetch('/family-data')
   .then(r=>r.json())
   .then(data=>{
 
     // =========================
-    // HEADER PERSONALIZATION
+    // HEADER NAMES
     // =========================
-
-    // caregiver name from session
     fetch('/auth')
-      .then(r=>r.json())
-      .then(user=>{
-        if(user && user.firstName){
-          document.getElementById("dashboardTitle").innerText =
-            user.firstName + "'s Dashboard";
-        }
-      });
+    .then(r=>r.json())
+    .then(user=>{
+      if(user && user.firstName){
+        document.getElementById("dashboardTitle").innerText =
+          user.firstName + "'s Dashboard";
+      }
+    });
 
-    // loved one name
     if(data.user){
       const name = data.user.nickname || data.user.firstName || "User";
       document.getElementById("lovedOne").innerText =
@@ -60,15 +60,18 @@ function loadData(){
     }
 
     // =========================
-    // CHECKINS
+    // MOOD
     // =========================
     const c = document.getElementById("checkins");
     c.innerHTML = "";
 
     data.checkins.forEach(x=>{
       const div = document.createElement("div");
-      div.innerText =
-        `${x.mood} (${new Date(x.timestamp).toLocaleString()})`;
+
+      const time = new Date(x.timestamp)
+        .toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+
+      div.innerText = `${x.mood} at ${time}`;
       c.appendChild(div);
     });
 
@@ -79,23 +82,15 @@ function loadData(){
     m.innerHTML = "";
 
     data.meds.forEach(x=>{
+
       const div = document.createElement("div");
-      div.innerText =
-        `${x.medicineName} - ${x.taken} (${x.timeOfDay})`;
+
+      const time = new Date(x.timestamp)
+        .toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+
+      div.innerText = `${x.medicineName} ✔ at ${time}`;
       m.appendChild(div);
-    });
 
-    // =========================
-    // CALLS
-    // =========================
-    const calls = document.getElementById("calls");
-    calls.innerHTML = "";
-
-    data.calls.forEach(x=>{
-      const div = document.createElement("div");
-      div.innerText =
-        `Call with ${x.callWith} - ${Math.round(x.duration/60)} min`;
-      calls.appendChild(div);
     });
 
   });
@@ -105,7 +100,7 @@ function logout(){
   fetch('/logout').then(()=> window.location='login.html');
 }
 
-loadData();
+load();
 
 </script>
 

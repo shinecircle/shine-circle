@@ -1,179 +1,127 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Daily Check-In</title>
+  <title>Check-In | Shine Circle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="styles.css">
-
-  <style>
-    .question { font-size:20px; margin-top:20px; }
-
-    .btn-group button{
-      margin:5px;
-      padding:12px;
-      border-radius:8px;
-      border:none;
-      background:#1E6FDB;
-      color:white;
-      cursor:pointer;
-    }
-
-    .selected { background:#0B2A5B; }
-    .disabled { background:#ccc !important; cursor:not-allowed; }
-  </style>
 </head>
 
 <body>
 
 <div class="header">
   <img src="logo.jpg" class="logo">
-  <div>
-    <button class="btn" onclick="goHome()">Home</button>
-    <button class="btn" onclick="goActivities()">Activities</button>
-    <button class="btn" onclick="logout()">Logout</button>
-  </div>
+  <button class="btn" onclick="goHome()">Home</button>
 </div>
 
-<div style="text-align:center;padding:20px;">
+<div class="container">
 
   <h2>Daily Check-In</h2>
 
-  <p id="today"></p>
-  <p id="status" style="color:green;font-weight:bold;"></p>
-
   <!-- MOOD -->
-  <div class="question">How are you doing today?</div>
-  <div id="moodBtns" class="btn-group">
-    <button onclick="selectMood(this)">Great</button>
-    <button onclick="selectMood(this)">Good</button>
-    <button onclick="selectMood(this)">Low</button>
-    <button onclick="selectMood(this)">Struggling</button>
-  </div>
+  <h3>How are you feeling?</h3>
+  <select id="mood">
+    <option>Good</option>
+    <option>Okay</option>
+    <option>Not Great</option>
+  </select>
 
-  <!-- MEDS -->
-  <div class="question">Did you take your medicine today?</div>
-  <div id="medBtns" class="btn-group">
-    <button onclick="selectMeds(this)">Yes</button>
-    <button onclick="selectMeds(this)">No</button>
-  </div>
+  <button class="btn" onclick="saveMood()">Save Mood</button>
 
-  <br>
+  <hr>
 
-  <button id="submitBtn" class="btn" onclick="submitCheckin()">Submit</button>
+  <!-- MEDICATION -->
+  <h3>Medication</h3>
 
-  <p id="msg"></p>
+  <input id="medName" placeholder="Medicine Name">
+
+  <select id="medTime">
+    <option>Morning</option>
+    <option>Midday</option>
+    <option>Evening</option>
+  </select>
+
+  <select id="medTaken">
+    <option>Yes</option>
+    <option>No</option>
+  </select>
+
+  <button class="btn" onclick="saveMedication()">Save Medication</button>
+
+  <hr>
+
+  <!-- CALL TRACKING -->
+  <h3>Phone Call</h3>
+
+  <input id="callWith" placeholder="Who did you talk to?">
+
+  <button class="btn" onclick="startCall()">Start Call</button>
+  <button class="btn" onclick="endCall()">End Call</button>
 
 </div>
 
 <script>
-
-let selectedMood="";
-let selectedMeds="";
-let locked=false;
-
-// DATE
-document.getElementById("today").innerText =
-  "Today is: " + new Date().toLocaleDateString('en-US',{
-    weekday:'long',year:'numeric',month:'long',day:'numeric'
-  });
-
-// =========================
-// CHECK TODAY
-// =========================
-fetch('/checkin-today')
-.then(r=>r.json())
-.then(d=>{
-
-  if(d.checkedIn){
-
-    locked=true;
-
-    selectedMood=d.mood;
-    selectedMeds=d.meds;
-
-    const time = new Date(d.timestamp)
-      .toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-
-    document.getElementById("status").innerText =
-      `You checked in today at ${time}`;
-
-    highlightSelections();
-    disableInputs();
-  }
-});
-
-// SELECT
-function selectMood(btn){
-  if(locked) return;
-
-  selectedMood=btn.innerText;
-  document.querySelectorAll("#moodBtns button")
-    .forEach(b=>b.classList.remove("selected"));
-  btn.classList.add("selected");
+function goHome(){
+  window.location = 'home.html';
 }
 
-function selectMeds(btn){
-  if(locked) return;
-
-  selectedMeds=btn.innerText;
-  document.querySelectorAll("#medBtns button")
-    .forEach(b=>b.classList.remove("selected"));
-  btn.classList.add("selected");
-}
-
-// HIGHLIGHT
-function highlightSelections(){
-
-  document.querySelectorAll("#moodBtns button")
-    .forEach(b=>{
-      if(b.innerText===selectedMood) b.classList.add("selected");
-    });
-
-  document.querySelectorAll("#medBtns button")
-    .forEach(b=>{
-      if(b.innerText===selectedMeds) b.classList.add("selected");
-    });
-}
-
-// DISABLE ONLY INPUTS
-function disableInputs(){
-
-  document.querySelectorAll("#moodBtns button")
-    .forEach(b=>b.classList.add("disabled"));
-
-  document.querySelectorAll("#medBtns button")
-    .forEach(b=>b.classList.add("disabled"));
-
-  document.getElementById("submitBtn").style.display="none";
-}
-
-// SUBMIT
-function submitCheckin(){
-
-  if(!selectedMood){
-    document.getElementById("msg").innerText="Please select your mood.";
-    return;
-  }
+// ===================
+// MOOD
+// ===================
+function saveMood(){
 
   fetch('/checkin',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      mood:selectedMood,
-      meds:selectedMeds
+      mood: document.getElementById("mood").value
     })
-  })
-  .then(()=>{
-    document.getElementById("msg").innerText="Saved!";
-    location.reload();
   });
+
+  alert("Mood saved!");
 }
 
-// NAV
-function goHome(){ window.location='home.html'; }
-function goActivities(){ window.location='activities.html'; }
-function logout(){ fetch('/logout').then(()=>window.location='login.html'); }
+// ===================
+// MEDICATION
+// ===================
+function saveMedication(){
 
+  fetch('/medication',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      medicineName: document.getElementById("medName").value,
+      timeOfDay: document.getElementById("medTime").value,
+      taken: document.getElementById("medTaken").value
+    })
+  });
+
+  alert("Medication saved!");
+}
+
+// ===================
+// CALL TRACKING
+// ===================
+let startTime;
+
+function startCall(){
+  startTime = new Date();
+  alert("Call started");
+}
+
+function endCall(){
+
+  fetch('/call',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      callWith: document.getElementById("callWith").value,
+      startTime,
+      endTime: new Date()
+    })
+  });
+
+  alert("Call logged");
+}
 </script>
 
 </body>

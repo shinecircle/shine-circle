@@ -12,16 +12,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
-app.use(
-  session({
-    secret: 'shinecare-secret',
-    resave: false,
-    saveUninitialized: false
-  })
-);
+app.use(session({
+  secret: 'shinecare-secret',
+  resave: false,
+  saveUninitialized: false
+}));
 
 // =========================
-// ✅ ROOT ROUTE (FIXES RENDER ERROR)
+// ROOT ROUTE
 // =========================
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/howitworks.html');
@@ -32,6 +30,7 @@ app.get('/', (req, res) => {
 // =========================
 db.serialize(() => {
 
+  // USERS
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,191 +43,172 @@ db.serialize(() => {
       nickname TEXT,
       phone TEXT,
       email TEXT,
-      dayForCall TEXT,
-      timeForCall TEXT,
-      timezone TEXT
+      timezone TEXT,
+      interests TEXT,
+      priorCareer TEXT,
+      retired TEXT
     )
   `);
 
-  db.run(`ALTER TABLE users ADD COLUMN dayForCall TEXT`, ()=>{});
-  db.run(`ALTER TABLE users ADD COLUMN timeForCall TEXT`, ()=>{});
-  db.run(`ALTER TABLE users ADD COLUMN timezone TEXT`, ()=>{});
-
+  // MOOD CHECKINS
   db.run(`
     CREATE TABLE IF NOT EXISTS checkins (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       userId INTEGER,
       mood TEXT,
-      meds TEXT,
       timestamp TEXT
     )
   `);
 
-  // DEFAULT USER
+  // MEDICATIONS
   db.run(`
-    INSERT OR IGNORE INTO users
-    (id, username, password, role, parentId, firstName, lastName, nickname)
-    VALUES (1,'user','1234','user',NULL,'John','Smith','Johnny')
+    CREATE TABLE IF NOT EXISTS medications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER,
+      medicineName TEXT,
+      timeOfDay TEXT,
+      taken TEXT,
+      timestamp TEXT
+    )
   `);
 
-  // FAMILY USER
+  // CALL LOGS
   db.run(`
-    INSERT OR IGNORE INTO users
-    (username,password,role,parentId,firstName,lastName)
-    VALUES ('family','1234','family',1,'Sarah','Smith')
+    CREATE TABLE IF NOT EXISTS calls (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER,
+      callWith TEXT,
+      startTime TEXT,
+      endTime TEXT,
+      duration INTEGER
+    )
+  `);
+
+  // SEED USERS
+  db.run(`
+    INSERT OR IGNORE INTO users 
+    (id, username, password, role, firstName)
+    VALUES (1,'user','1234','user','John')
+  `);
+
+  db.run(`
+    INSERT OR IGNORE INTO users 
+    (username,password,role,parentId,firstName)
+    VALUES ('family','1234','family',1,'Sarah')
   `);
 });
 
 // =========================
 // LOGIN
 // =========================
-app.post('/login', (req, res) => {
-
-  const { username, password } = req.body;
+app.post('/login', (req,res)=>{
+  const {username,password} = req.body;
 
   db.get(
     `SELECT * FROM users WHERE username=? AND password=?`,
-    [username, password],
-    (err, user) => {
-
-      if (!user) return res.json({ success: false });
+    [username,password],
+    (err,user)=>{
+      if(!user) return res.json({success:false});
 
       req.session.user = user;
 
-      res.json({
-        success: true,
-        role: user.role
-      });
+      res.json({success:true, role:user.role});
     }
   );
 });
 
 // =========================
-// AUTH / LOGOUT
+// CHECKIN (MOOD)
 // =========================
-app.get('/auth', (req, res) => {
-  res.json(req.session.user || null);
-});
-
-app.get('/logout', (req, res) => {
-  req.session.destroy(() => res.json({ success: true }));
-});
-
-// =========================
-// CHECK-IN SAVE
-// =========================
-app.post('/checkin', (req, res) => {
-
+app.post('/checkin',(req,res)=>{
   const user = req.session.user;
+  if(!user) return res.json({success:false});
 
-  if (!user || user.role !== 'user') {
-    return res.json({ success: false });
-  }
-
-  const { mood, meds } = req.body;
+  const {mood} = req.body;
 
   db.run(
-    `INSERT INTO checkins (userId, mood, meds, timestamp)
-     VALUES (?, ?, ?, ?)`,
-    [user.id, mood, meds, new Date().toISOString()]
+    `INSERT INTO checkins (userId,mood,timestamp)
+     VALUES (?,?,?)`,
+    [user.id, mood, new Date().toISOString()]
   );
 
-  res.json({ success: true });
+  res.json({success:true});
 });
 
 // =========================
-// CHECK IF ALREADY CHECKED IN TODAY
+// MEDICATION
 // =========================
-app.get('/checkin-today', (req, res) => {
-
+app.post('/medication',(req,res)=>{
   const user = req.session.user;
-  if (!user) return res.json({ checkedIn: false });
+  if(!user) return res.json({success:false});
 
-  db.get(
-    `SELECT * FROM checkins
-     WHERE userId=?
-     ORDER BY timestamp DESC
-     LIMIT 1`,
-    [user.id],
-    (err, row) => {
-
-      if (!row) return res.json({ checkedIn: false });
-
-      const today = new Date().toDateString();
-      const rowDate = new Date(row.timestamp).toDateString();
-
-      res.json({
-        checkedIn: today === rowDate,
-        mood: row.mood,
-        meds: row.meds,
-        timestamp: row.timestamp
-      });
-    }
-  );
-});
-
-// =========================
-// ACTIVITIES
-// =========================
-app.get('/activities', (req, res) => {
-
-  const user = req.session.user;
-  if (!user) return res.json({});
-
-  db.get(
-    `SELECT dayForCall, timeForCall, timezone FROM users WHERE id=?`,
-    [user.id],
-    (err, row) => res.json(row || {})
-  );
-});
-
-app.post('/activities', (req, res) => {
-
-  const user = req.session.user;
-  if (!user) return res.json({ success: false });
-
-  const { dayForCall, timeForCall, timezone } = req.body;
+  const {medicineName,timeOfDay,taken} = req.body;
 
   db.run(
-    `UPDATE users
-     SET dayForCall=?, timeForCall=?, timezone=?
-     WHERE id=?`,
-    [dayForCall, timeForCall, timezone, user.id]
+    `INSERT INTO medications 
+     (userId,medicineName,timeOfDay,taken,timestamp)
+     VALUES (?,?,?,?,?)`,
+    [user.id,medicineName,timeOfDay,taken,new Date().toISOString()]
   );
 
-  res.json({ success: true });
+  res.json({success:true});
+});
+
+// =========================
+// CALL LOGGING
+// =========================
+app.post('/call',(req,res)=>{
+  const user = req.session.user;
+  if(!user) return res.json({success:false});
+
+  const {callWith,startTime,endTime} = req.body;
+
+  const duration =
+    (new Date(endTime) - new Date(startTime)) / 1000;
+
+  db.run(
+    `INSERT INTO calls (userId,callWith,startTime,endTime,duration)
+     VALUES (?,?,?,?,?)`,
+    [user.id,callWith,startTime,endTime,duration]
+  );
+
+  res.json({success:true});
 });
 
 // =========================
 // FAMILY DASHBOARD
 // =========================
-app.get('/family-data', (req, res) => {
-
+app.get('/family-data',(req,res)=>{
   const u = req.session.user;
-
-  if (!u || u.role !== 'family') {
-    return res.json({ checkins: [], user: null });
+  if(!u || u.role !== 'family'){
+    return res.json({});
   }
 
-  const targetUserId = u.parentId || 1;
+  const targetId = u.parentId;
 
-  db.get(
-    `SELECT firstName, nickname, dayForCall, timeForCall, timezone
-     FROM users WHERE id=?`,
-    [targetUserId],
-    (err, userInfo) => {
+  db.all(
+    `SELECT * FROM checkins WHERE userId=? ORDER BY timestamp DESC`,
+    [targetId],
+    (err,checkins)=>{
 
       db.all(
-        `SELECT * FROM checkins
-         WHERE userId=?
-         ORDER BY timestamp DESC`,
-        [targetUserId],
-        (err2, rows) => {
+        `SELECT * FROM medications WHERE userId=?`,
+        [targetId],
+        (err2,meds)=>{
 
-          res.json({
-            checkins: rows || [],
-            user: userInfo || null
-          });
+          db.all(
+            `SELECT * FROM calls WHERE userId=?`,
+            [targetId],
+            (err3,calls)=>{
+
+              res.json({
+                checkins:checkins || [],
+                meds:meds || [],
+                calls:calls || []
+              });
+
+            }
+          );
         }
       );
     }
@@ -236,10 +216,10 @@ app.get('/family-data', (req, res) => {
 });
 
 // =========================
-// START SERVER (RENDER READY)
+// START SERVER
 // =========================
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT,()=>{
   console.log('Server running on port ' + PORT);
 });

@@ -65,7 +65,7 @@ db.serialize(() => {
     )
   `);
 
-  // MEDICATION LOGS (TAKEN)
+  // MEDICATION LOGS
   db.run(`
     CREATE TABLE IF NOT EXISTS medication_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -92,7 +92,6 @@ db.serialize(() => {
     VALUES ('family','1234','family',1,'Sarah')
   `);
 
-  // SAMPLE MEDS
   db.run(`
     INSERT OR IGNORE INTO medications (id,userId,medicineName,timeOfDay)
     VALUES (1,1,'Blood Pressure','Morning')
@@ -160,19 +159,18 @@ app.post('/checkin', (req, res) => {
 });
 
 // =========================
-// GET USER MEDS (MASTER LIST)
+// GET USER MEDS
 // =========================
 app.get('/my-medications', (req, res) => {
 
   const user = req.session.user;
-  if (!user) return res.json([]);
+  if (!user) return res.json({ meds: [], logs: [] });
 
   db.all(
     `SELECT * FROM medications WHERE userId=?`,
     [user.id],
     (err, meds) => {
 
-      // also get today's logs
       db.all(
         `SELECT * FROM medication_logs WHERE userId=?`,
         [user.id],
@@ -190,7 +188,7 @@ app.get('/my-medications', (req, res) => {
 });
 
 // =========================
-// MARK MED AS TAKEN
+// MARK MED TAKEN
 // =========================
 app.post('/take-med', (req, res) => {
 
@@ -207,6 +205,45 @@ app.post('/take-med', (req, res) => {
   );
 
   res.json({ success: true });
+});
+
+// =========================
+// TODAY STATUS (NEW)
+// =========================
+app.get('/today-status', (req, res) => {
+
+  const user = req.session.user;
+  if (!user) return res.json({});
+
+  const today = new Date().toDateString();
+
+  db.get(
+    `SELECT * FROM checkins WHERE userId=? ORDER BY timestamp DESC LIMIT 1`,
+    [user.id],
+    (err, checkin) => {
+
+      const moodToday = checkin &&
+        new Date(checkin.timestamp).toDateString() === today;
+
+      db.all(
+        `SELECT * FROM medication_logs WHERE userId=?`,
+        [user.id],
+        (err2, meds) => {
+
+          const medToday = meds.some(m =>
+            new Date(m.timestamp).toDateString() === today
+          );
+
+          res.json({
+            moodToday,
+            medToday
+          });
+
+        }
+      );
+
+    }
+  );
 });
 
 // =========================
@@ -230,7 +267,7 @@ app.get('/family-data', (req, res) => {
         (err2, checkins) => {
 
           db.all(
-            `SELECT ml.*, m.medicineName 
+            `SELECT ml.timestamp, m.medicineName 
              FROM medication_logs ml
              JOIN medications m ON ml.medicationId = m.id
              WHERE ml.userId=?`,

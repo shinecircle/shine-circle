@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="styles.css">
 
-  <!-- CHART LIBRARY -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -21,12 +20,11 @@
   <h2 id="dashboardTitle">Dashboard</h2>
   <p id="lovedOne"></p>
 
-  <canvas id="chart" height="120"></canvas>
+  <h3>Mood Trend</h3>
+  <canvas id="moodChart" height="120"></canvas>
 
-  <hr>
-
-  <h3>Recent Activity</h3>
-  <div id="activity"></div>
+  <h3>Medication Taken</h3>
+  <canvas id="medChart" height="120"></canvas>
 
 </div>
 
@@ -57,70 +55,71 @@ function load(){
     }
 
     // =========================
-    // LAST 7 DAYS
+    // SORT DATA BY TIME (EARLIEST FIRST)
     // =========================
-    const days = [];
+    const checkins = data.checkins.sort(
+      (a,b)=> new Date(a.timestamp) - new Date(b.timestamp)
+    );
+
+    const meds = data.meds;
+
+    // =========================
+    // BUILD LABELS + DATA
+    // =========================
+    const labels = [];
     const moodData = [];
-    const medsData = [];
+    const medData = [];
 
-    for(let i=6;i>=0;i--){
-      const d = new Date();
-      d.setDate(d.getDate()-i);
+    const moodMap = {
+      "Struggling":1,
+      "Low":2,
+      "Good":3,
+      "Great":4
+    };
 
-      const label = d.toLocaleDateString('en-US',{weekday:'short'});
-      days.push(label);
+    checkins.forEach(c=>{
 
-      const dayStr = d.toDateString();
+      const date = new Date(c.timestamp);
+      const label = date.toLocaleDateString('en-US',{
+        month:'short',
+        day:'numeric'
+      });
 
-      // mood
-      const moodEntry = data.checkins.find(x =>
-        new Date(x.timestamp).toDateString() === dayStr
+      labels.push(label);
+
+      // MOOD
+      moodData.push(moodMap[c.mood] || null);
+
+      // MEDICATION (was any med taken that day?)
+      const medTaken = meds.some(m =>
+        new Date(m.timestamp).toDateString() === date.toDateString()
       );
 
-      const moodMap = {
-        "Great":4,
-        "Good":3,
-        "Low":2,
-        "Struggling":1
-      };
+      medData.push(medTaken ? 1 : 0);
 
-      moodData.push(moodEntry ? moodMap[moodEntry.mood] : null);
-
-      // meds (taken or not)
-      const medEntry = data.meds.find(x =>
-        new Date(x.timestamp).toDateString() === dayStr
-      );
-
-      medsData.push(medEntry ? 1 : 0);
-    }
+    });
 
     // =========================
-    // CHART
+    // MOOD CHART
     // =========================
-    new Chart(document.getElementById('chart'), {
+    new Chart(document.getElementById('moodChart'), {
       type: 'line',
       data: {
-        labels: days,
-        datasets: [
-          {
-            label: 'Mood',
-            data: moodData,
-            tension: 0.3
-          },
-          {
-            label: 'Medication Taken',
-            data: medsData,
-            tension: 0.3
-          }
-        ]
+        labels: labels,
+        datasets: [{
+          label: 'Mood',
+          data: moodData,
+          tension: 0.3
+        }]
       },
       options: {
         scales: {
           y: {
-            beginAtZero:true,
+            min:1,
+            max:4,
             ticks: {
               callback: function(value){
-                return ["","Struggling","Low","Good","Great"][value] || "";
+                return ["","Struggling","Low","Good","Great"][value];
               }
             }
           }
@@ -129,16 +128,30 @@ function load(){
     });
 
     // =========================
-    // ACTIVITY LIST
+    // MEDICATION CHART
     // =========================
-    const activity = document.getElementById("activity");
-    activity.innerHTML = "";
-
-    data.checkins.slice(0,5).forEach(x=>{
-      const div = document.createElement("div");
-      div.innerText =
-        `${x.mood} (${new Date(x.timestamp).toLocaleString()})`;
-      activity.appendChild(div);
+    new Chart(document.getElementById('medChart'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Medication Taken',
+          data: medData
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            min:0,
+            max:1,
+            ticks: {
+              callback: function(value){
+                return value === 1 ? "Yes" : "No";
+              }
+            }
+          }
+        }
+      }
     });
 
   });

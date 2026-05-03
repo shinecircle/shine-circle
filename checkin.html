@@ -3,6 +3,12 @@
 <head>
 <title>Check-In</title>
 <link rel="stylesheet" href="styles.css">
+
+<style>
+button { margin:5px; padding:10px; }
+.selected { background:#1E6FDB; color:white; }
+</style>
+
 </head>
 
 <body>
@@ -11,7 +17,9 @@
 
 <h2>Daily Check-In</h2>
 
-<div>
+<p id="status"></p>
+
+<div id="moods">
   <button onclick="selectMood(this)">Great</button>
   <button onclick="selectMood(this)">Good</button>
   <button onclick="selectMood(this)">Low</button>
@@ -31,28 +39,90 @@
 
 <script>
 
-let mood="";
+let mood = "";
+let locked = false;
 
+// =========================
+// LOAD TODAY CHECKIN
+// =========================
+fetch('/checkin-today')
+.then(r=>r.json())
+.then(d=>{
+
+  if(d.checkedIn){
+
+    locked = true;
+
+    document.getElementById("status").innerText =
+      "Already checked in today";
+
+    mood = d.mood;
+
+    // highlight mood
+    document.querySelectorAll("#moods button")
+      .forEach(btn=>{
+        if(btn.innerText === mood){
+          btn.classList.add("selected");
+        }
+      });
+  }
+});
+
+// =========================
+// SELECT MOOD
+// =========================
 function selectMood(btn){
+
+  if(locked) return;
+
   mood = btn.innerText;
+
+  document.querySelectorAll("#moods button")
+    .forEach(b=>b.classList.remove("selected"));
+
+  btn.classList.add("selected");
 }
 
+// =========================
+// SUBMIT
+// =========================
 function submit(){
+
+  if(!mood){
+    document.getElementById("msg").innerText = "Select a mood first";
+    return;
+  }
 
   fetch('/checkin',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ mood })
   })
-  .then(()=> document.getElementById("msg").innerText="Saved");
+  .then(r=>r.json())
+  .then(data=>{
+    console.log("CHECKIN RESPONSE:", data);
+
+    if(data.success){
+      document.getElementById("msg").innerText = "Saved ✓";
+      location.reload();
+    } else {
+      document.getElementById("msg").innerText = "Error saving";
+    }
+  })
+  .catch(()=>{
+    document.getElementById("msg").innerText = "Server error";
+  });
 }
 
+// =========================
 // LOAD MEDS
+// =========================
 fetch('/my-medications')
 .then(r=>r.json())
 .then(data=>{
 
   const div = document.getElementById("meds");
+  div.innerHTML = "";
 
   data.meds.forEach(m=>{
 
@@ -61,13 +131,18 @@ fetch('/my-medications')
     btn.innerText = m.medicinename + " (" + m.timeofday + ")";
 
     btn.onclick = ()=>{
+
       fetch('/take-med',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ medicationId: m.id })
-      }).then(()=>{
+      })
+      .then(r=>r.json())
+      .then(()=>{
         btn.innerText = "✓ Taken";
+        btn.classList.add("selected");
       });
+
     };
 
     div.appendChild(btn);

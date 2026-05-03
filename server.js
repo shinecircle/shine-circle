@@ -4,17 +4,13 @@ const { Pool } = require('pg');
 
 const app = express();
 
-// =========================
-// POSTGRES CONNECTION
-// =========================
+app.set('trust proxy', 1);
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// =========================
-// MIDDLEWARE
-// =========================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
@@ -22,11 +18,12 @@ app.use(express.static(__dirname));
 app.use(session({
   secret: 'shinecare-secret',
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: { secure: false }
 }));
 
 // =========================
-// INIT DATABASE
+// INIT DB
 // =========================
 async function initDB(){
 
@@ -37,8 +34,7 @@ async function initDB(){
       password TEXT,
       role TEXT,
       parentId INTEGER,
-      firstName TEXT,
-      nickname TEXT
+      firstName TEXT
     );
   `);
 
@@ -55,8 +51,8 @@ async function initDB(){
     CREATE TABLE IF NOT EXISTS medications (
       id SERIAL PRIMARY KEY,
       userId INTEGER,
-      medicineName TEXT,
-      timeOfDay TEXT
+      medicinename TEXT,
+      timeofday TEXT
     );
   `);
 
@@ -65,7 +61,6 @@ async function initDB(){
       id SERIAL PRIMARY KEY,
       userId INTEGER,
       medicationId INTEGER,
-      taken TEXT,
       timestamp TEXT
     );
   `);
@@ -80,7 +75,7 @@ async function initDB(){
     );
   `);
 
-  // seed
+  // seed users
   await pool.query(`
     INSERT INTO users (id, username, password, role, firstName)
     VALUES (1,'user','1234','user','John')
@@ -93,57 +88,72 @@ async function initDB(){
     ON CONFLICT DO NOTHING;
   `);
 
+  // seed meds
   await pool.query(`
-    INSERT INTO medications (id,userId,medicineName,timeOfDay)
+    INSERT INTO medications (id,userId,medicinename,timeofday)
     VALUES (1,1,'Blood Pressure','Morning')
     ON CONFLICT DO NOTHING;
   `);
 
   await pool.query(`
-    INSERT INTO medications (id,userId,medicineName,timeOfDay)
+    INSERT INTO medications (id,userId,medicinename,timeofday)
     VALUES (2,1,'Vitamin D','Evening')
     ON CONFLICT DO NOTHING;
   `);
+
 }
-
 initDB();
-
-// =========================
-// ROOT
-// =========================
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/howitworks.html');
-});
 
 // =========================
 // LOGIN
 // =========================
-app.post('/login', async (req, res) => {
-
+app.post('/login', async (req,res)=>{
   const { username, password } = req.body;
 
   const result = await pool.query(
     `SELECT * FROM users WHERE username=$1 AND password=$2`,
-    [username, password]
+    [username,password]
   );
 
   const user = result.rows[0];
-  if (!user) return res.json({ success:false });
+  if(!user) return res.json({success:false});
 
   req.session.user = user;
-  res.json({ success:true, role:user.role });
+  res.json({success:true, role:user.role});
 });
 
-// =========================
-// LOGOUT
-// =========================
-app.get('/logout', (req,res)=>{
+app.get('/logout',(req,res)=>{
   req.session.destroy(()=>res.json({success:true}));
 });
 
 // =========================
-// CHECKIN (MOOD)
+// CHECKIN
 // =========================
+app.get('/checkin-today', async (req,res)=>{
+
+  const user = req.session.user;
+  if(!user) return res.json({});
+
+  const today = new Date().toDateString();
+
+  const result = await pool.query(
+    `SELECT * FROM checkins WHERE userId=$1 ORDER BY timestamp DESC LIMIT 1`,
+    [user.id]
+  );
+
+  const c = result.rows[0];
+
+  if(c && new Date(c.timestamp).toDateString() === today){
+    return res.json({
+      checkedIn:true,
+      mood:c.mood,
+      timestamp:c.timestamp
+    });
+  }
+
+  res.json({checkedIn:false});
+});
+
 app.post('/checkin', async (req,res)=>{
 
   const user = req.session.user;
@@ -161,7 +171,7 @@ app.post('/checkin', async (req,res)=>{
 });
 
 // =========================
-// MEDICATION ROUTES
+// MEDS
 // =========================
 app.get('/my-medications', async (req,res)=>{
 
@@ -192,10 +202,9 @@ app.post('/take-med', async (req,res)=>{
   const { medicationId } = req.body;
 
   await pool.query(
-    `INSERT INTO medication_logs 
-     (userId,medicationId,taken,timestamp)
-     VALUES ($1,$2,$3,$4)`,
-    [user.id, medicationId, "Yes", new Date().toISOString()]
+    `INSERT INTO medication_logs (userId,medicationId,timestamp)
+     VALUES ($1,$2,$3)`,
+    [user.id, medicationId, new Date().toISOString()]
   );
 
   res.json({success:true});
@@ -205,7 +214,6 @@ app.post('/take-med', async (req,res)=>{
 // ACTIVITIES
 // =========================
 app.get('/activities', async (req,res)=>{
-
   const user = req.session.user;
   if(!user) return res.json({});
 
@@ -218,7 +226,6 @@ app.get('/activities', async (req,res)=>{
 });
 
 app.post('/activities', async (req,res)=>{
-
   const user = req.session.user;
   if(!user) return res.json({success:false});
 
@@ -227,7 +234,7 @@ app.post('/activities', async (req,res)=>{
   await pool.query(`DELETE FROM activities WHERE userId=$1`, [user.id]);
 
   await pool.query(
-    `INSERT INTO activities (userId, dayforcall, timeforcall, timezone)
+    `INSERT INTO activities (userId,dayforcall,timeforcall,timezone)
      VALUES ($1,$2,$3,$4)`,
     [user.id, dayForCall, timeForCall, timezone]
   );
@@ -236,10 +243,4 @@ app.post('/activities', async (req,res)=>{
 });
 
 // =========================
-// START SERVER
-// =========================
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, ()=>{
-  console.log('Server running on port ' + PORT);
-});
+app.listen(process.env.PORT || 3000);

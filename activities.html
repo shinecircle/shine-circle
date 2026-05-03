@@ -18,6 +18,10 @@
       background:#1E6FDB;
       color:white;
     }
+
+    .saved {
+      background:#28a745 !important;
+    }
   </style>
 </head>
 
@@ -78,21 +82,26 @@
 let selectedDays = [];
 let selectedTime = "";
 
-// LOAD
+// LOAD FROM DATABASE
 fetch('/activities')
 .then(r=>r.json())
 .then(d=>{
 
-  if(d.dayForCall){
-    selectedDays = d.dayForCall.split(',');
+  if(d.dayforcall){
+    selectedDays = d.dayforcall.split(',');
   }
 
-  selectedTime = d.timeForCall || "";
+  selectedTime = d.timeforcall || "";
 
   if(d.timezone){
     document.getElementById("timezone").value = d.timezone;
   }
 
+  highlightSelections();
+});
+
+// HIGHLIGHT FUNCTION
+function highlightSelections(){
   document.querySelectorAll(".day-btn").forEach(btn=>{
     if(selectedDays.includes(btn.innerText)){
       btn.classList.add("selected");
@@ -104,7 +113,7 @@ fetch('/activities')
       btn.classList.add("selected");
     }
   });
-});
+}
 
 // TOGGLE DAY
 function toggleDay(btn){
@@ -123,29 +132,30 @@ function toggleDay(btn){
 function selectTime(btn){
   selectedTime = btn.innerText;
 
-  document.querySelectorAll(".time-btn").forEach(b=>b.classList.remove("selected"));
+  document.querySelectorAll(".time-btn")
+    .forEach(b=>b.classList.remove("selected"));
+
   btn.classList.add("selected");
 }
 
-// SAVE (FIXED)
+// SAVE
 function save(){
-
-  const order = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-
-  const cleanDays = [...new Set(selectedDays)]
-    .sort((a,b)=>order.indexOf(a)-order.indexOf(b));
 
   fetch('/activities',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
-      dayForCall: cleanDays.join(','),
+      dayForCall: selectedDays.join(','),
       timeForCall: selectedTime,
       timezone: document.getElementById("timezone").value
     })
   })
   .then(()=>{
-    document.getElementById("msg").innerText = "Saved!";
+    document.getElementById("msg").innerText = "Saved ✓";
+
+    // Add green confirmation
+    document.querySelectorAll(".selected")
+      .forEach(btn=>btn.classList.add("saved"));
   });
 }
 

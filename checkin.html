@@ -17,8 +17,6 @@ button { margin:5px; padding:10px; }
 
 <h2>Daily Check-In</h2>
 
-<p id="status"></p>
-
 <div id="moods">
   <button onclick="selectMood(this)">Great</button>
   <button onclick="selectMood(this)">Good</button>
@@ -40,41 +38,9 @@ button { margin:5px; padding:10px; }
 <script>
 
 let mood = "";
-let locked = false;
 
-// =========================
-// LOAD TODAY CHECKIN
-// =========================
-fetch('/checkin-today')
-.then(r=>r.json())
-.then(d=>{
-
-  if(d.checkedIn){
-
-    locked = true;
-
-    document.getElementById("status").innerText =
-      "Already checked in today";
-
-    mood = d.mood;
-
-    // highlight mood
-    document.querySelectorAll("#moods button")
-      .forEach(btn=>{
-        if(btn.innerText === mood){
-          btn.classList.add("selected");
-        }
-      });
-  }
-});
-
-// =========================
 // SELECT MOOD
-// =========================
 function selectMood(btn){
-
-  if(locked) return;
-
   mood = btn.innerText;
 
   document.querySelectorAll("#moods button")
@@ -83,9 +49,7 @@ function selectMood(btn){
   btn.classList.add("selected");
 }
 
-// =========================
-// SUBMIT
-// =========================
+// SUBMIT (FIXED)
 function submit(){
 
   if(!mood){
@@ -95,18 +59,16 @@ function submit(){
 
   fetch('/checkin',{
     method:'POST',
+    credentials:'include',   // ⭐ THIS FIXES EVERYTHING
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ mood })
   })
   .then(r=>r.json())
   .then(data=>{
-    console.log("CHECKIN RESPONSE:", data);
-
     if(data.success){
       document.getElementById("msg").innerText = "Saved ✓";
-      location.reload();
     } else {
-      document.getElementById("msg").innerText = "Error saving";
+      document.getElementById("msg").innerText = "Not logged in";
     }
   })
   .catch(()=>{
@@ -114,15 +76,12 @@ function submit(){
   });
 }
 
-// =========================
-// LOAD MEDS
-// =========================
-fetch('/my-medications')
+// LOAD MEDS (FIXED)
+fetch('/my-medications', { credentials:'include' })
 .then(r=>r.json())
 .then(data=>{
 
   const div = document.getElementById("meds");
-  div.innerHTML = "";
 
   data.meds.forEach(m=>{
 
@@ -131,18 +90,15 @@ fetch('/my-medications')
     btn.innerText = m.medicinename + " (" + m.timeofday + ")";
 
     btn.onclick = ()=>{
-
       fetch('/take-med',{
         method:'POST',
+        credentials:'include',   // ⭐ ALSO IMPORTANT
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ medicationId: m.id })
-      })
-      .then(r=>r.json())
-      .then(()=>{
+      }).then(()=>{
         btn.innerText = "✓ Taken";
         btn.classList.add("selected");
       });
-
     };
 
     div.appendChild(btn);

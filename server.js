@@ -70,18 +70,17 @@ async function initDB(){
     );
   `);
 
-  // ✅ NEW: ACTIVITIES TABLE
   await pool.query(`
     CREATE TABLE IF NOT EXISTS activities (
       id SERIAL PRIMARY KEY,
       userId INTEGER,
-      dayForCall TEXT,
-      timeForCall TEXT,
+      dayforcall TEXT,
+      timeforcall TEXT,
       timezone TEXT
     );
   `);
 
-  // SEED
+  // seed
   await pool.query(`
     INSERT INTO users (id, username, password, role, firstName)
     VALUES (1,'user','1234','user','John')
@@ -94,6 +93,17 @@ async function initDB(){
     ON CONFLICT DO NOTHING;
   `);
 
+  await pool.query(`
+    INSERT INTO medications (id,userId,medicineName,timeOfDay)
+    VALUES (1,1,'Blood Pressure','Morning')
+    ON CONFLICT DO NOTHING;
+  `);
+
+  await pool.query(`
+    INSERT INTO medications (id,userId,medicineName,timeOfDay)
+    VALUES (2,1,'Vitamin D','Evening')
+    ON CONFLICT DO NOTHING;
+  `);
 }
 
 initDB();
@@ -109,6 +119,7 @@ app.get('/', (req, res) => {
 // LOGIN
 // =========================
 app.post('/login', async (req, res) => {
+
   const { username, password } = req.body;
 
   const result = await pool.query(
@@ -131,9 +142,70 @@ app.get('/logout', (req,res)=>{
 });
 
 // =========================
-// ACTIVITIES (NEW)
+// CHECKIN (MOOD)
+// =========================
+app.post('/checkin', async (req,res)=>{
+
+  const user = req.session.user;
+  if(!user) return res.json({success:false});
+
+  const { mood } = req.body;
+
+  await pool.query(
+    `INSERT INTO checkins (userId,mood,timestamp)
+     VALUES ($1,$2,$3)`,
+    [user.id, mood, new Date().toISOString()]
+  );
+
+  res.json({success:true});
+});
+
+// =========================
+// MEDICATION ROUTES
+// =========================
+app.get('/my-medications', async (req,res)=>{
+
+  const user = req.session.user;
+  if(!user) return res.json({meds:[],logs:[]});
+
+  const meds = await pool.query(
+    `SELECT * FROM medications WHERE userId=$1`,
+    [user.id]
+  );
+
+  const logs = await pool.query(
+    `SELECT * FROM medication_logs WHERE userId=$1`,
+    [user.id]
+  );
+
+  res.json({
+    meds: meds.rows,
+    logs: logs.rows
+  });
+});
+
+app.post('/take-med', async (req,res)=>{
+
+  const user = req.session.user;
+  if(!user) return res.json({success:false});
+
+  const { medicationId } = req.body;
+
+  await pool.query(
+    `INSERT INTO medication_logs 
+     (userId,medicationId,taken,timestamp)
+     VALUES ($1,$2,$3,$4)`,
+    [user.id, medicationId, "Yes", new Date().toISOString()]
+  );
+
+  res.json({success:true});
+});
+
+// =========================
+// ACTIVITIES
 // =========================
 app.get('/activities', async (req,res)=>{
+
   const user = req.session.user;
   if(!user) return res.json({});
 
@@ -146,6 +218,7 @@ app.get('/activities', async (req,res)=>{
 });
 
 app.post('/activities', async (req,res)=>{
+
   const user = req.session.user;
   if(!user) return res.json({success:false});
 
@@ -154,7 +227,7 @@ app.post('/activities', async (req,res)=>{
   await pool.query(`DELETE FROM activities WHERE userId=$1`, [user.id]);
 
   await pool.query(
-    `INSERT INTO activities (userId, dayForCall, timeForCall, timezone)
+    `INSERT INTO activities (userId, dayforcall, timeforcall, timezone)
      VALUES ($1,$2,$3,$4)`,
     [user.id, dayForCall, timeForCall, timezone]
   );

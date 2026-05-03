@@ -18,10 +18,6 @@
       background:#1E6FDB;
       color:white;
     }
-
-    .saved {
-      background:#28a745 !important;
-    }
   </style>
 </head>
 
@@ -82,7 +78,7 @@
 let selectedDays = [];
 let selectedTime = "";
 
-// LOAD FROM DATABASE
+// LOAD
 fetch('/activities')
 .then(r=>r.json())
 .then(d=>{
@@ -100,8 +96,9 @@ fetch('/activities')
   highlightSelections();
 });
 
-// HIGHLIGHT FUNCTION
+// HIGHLIGHT
 function highlightSelections(){
+
   document.querySelectorAll(".day-btn").forEach(btn=>{
     if(selectedDays.includes(btn.innerText)){
       btn.classList.add("selected");
@@ -115,7 +112,7 @@ function highlightSelections(){
   });
 }
 
-// TOGGLE DAY
+// TOGGLE
 function toggleDay(btn){
   const day = btn.innerText;
 
@@ -152,10 +149,6 @@ function save(){
   })
   .then(()=>{
     document.getElementById("msg").innerText = "Saved ✓";
-
-    // Add green confirmation
-    document.querySelectorAll(".selected")
-      .forEach(btn=>btn.classList.add("saved"));
   });
 }
 

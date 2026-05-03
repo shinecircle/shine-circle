@@ -33,10 +33,11 @@ app.use(session({
 // =========================
 async function initDB(){
 
-  // CLIENTS
+  // CLIENTS TABLE
   await pool.query(`
     CREATE TABLE IF NOT EXISTS clients (
       id SERIAL PRIMARY KEY,
+      username TEXT,
       firstname TEXT,
       lastname TEXT,
       phone TEXT,
@@ -46,6 +47,16 @@ async function initDB(){
       specialties TEXT,
       role TEXT,
       password TEXT
+    );
+  `);
+
+  // CHECKINS
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS checkins (
+      id SERIAL PRIMARY KEY,
+      clientid INTEGER,
+      mood TEXT,
+      timestamp TEXT
     );
   `);
 
@@ -81,17 +92,17 @@ async function initDB(){
     );
   `);
 
-  // SEED TEST USER
+  // 🔥 FORCE RESET USERS (ensures login works)
+  await pool.query(`DELETE FROM clients`);
+
   await pool.query(`
-    INSERT INTO clients (id, firstname, lastname, role, password)
-    VALUES (1,'John','Doe','user','1234')
-    ON CONFLICT DO NOTHING;
+    INSERT INTO clients (id, username, firstname, lastname, role, password)
+    VALUES (1,'user','John','Doe','user','1234');
   `);
 
   await pool.query(`
-    INSERT INTO clients (firstname, lastname, role, password)
-    VALUES ('Sarah','Caregiver','caregiver','1234')
-    ON CONFLICT DO NOTHING;
+    INSERT INTO clients (id, username, firstname, lastname, role, password)
+    VALUES (2,'family','Sarah','Caregiver','caregiver','1234');
   `);
 
 }
@@ -110,20 +121,78 @@ app.get('/', (req,res)=>{
 // =========================
 app.post('/login', async (req,res)=>{
 
-  const { firstname, password } = req.body;
+  console.log("LOGIN ATTEMPT:", req.body);
+
+  const { username, password } = req.body;
 
   const result = await pool.query(
-    `SELECT * FROM clients WHERE firstname=$1 AND password=$2`,
-    [firstname, password]
+    `SELECT * FROM clients WHERE username=$1 AND password=$2`,
+    [username, password]
   );
+
+  console.log("DB RESULT:", result.rows);
 
   const user = result.rows[0];
 
-  if(!user) return res.json({success:false});
+  if(!user){
+    return res.json({success:false});
+  }
 
   req.session.user = user;
 
   res.json({success:true, role:user.role});
+});
+
+// =========================
+// LOGOUT
+// =========================
+app.get('/logout',(req,res)=>{
+  req.session.destroy(()=>res.json({success:true}));
+});
+
+// =========================
+// CHECKIN
+// =========================
+app.post('/checkin', async (req,res)=>{
+
+  const user = req.session.user;
+  if(!user) return res.json({success:false});
+
+  const { mood } = req.body;
+
+  await pool.query(
+    `INSERT INTO checkins (clientid,mood,timestamp)
+     VALUES ($1,$2,$3)`,
+    [user.id, mood, new Date().toISOString()]
+  );
+
+  res.json({success:true});
+});
+
+// CHECK TODAY
+app.get('/checkin-today', async (req,res)=>{
+
+  const user = req.session.user;
+  if(!user) return res.json({});
+
+  const today = new Date().toDateString();
+
+  const result = await pool.query(
+    `SELECT * FROM checkins WHERE clientid=$1 ORDER BY timestamp DESC LIMIT 1`,
+    [user.id]
+  );
+
+  const c = result.rows[0];
+
+  if(c && new Date(c.timestamp).toDateString() === today){
+    return res.json({
+      checkedIn:true,
+      mood:c.mood,
+      timestamp:c.timestamp
+    });
+  }
+
+  res.json({checkedIn:false});
 });
 
 // =========================
@@ -142,7 +211,7 @@ app.get('/medications', async (req,res)=>{
   res.json(result.rows);
 });
 
-// LOG MED TAKEN
+// TAKE MED
 app.post('/take-med', async (req,res)=>{
 
   const user = req.session.user;
@@ -174,7 +243,7 @@ app.post('/conversation', async (req,res)=>{
   const date = new Date().toISOString().split('T')[0];
 
   await pool.query(
-    `INSERT INTO conversations 
+    `INSERT INTO conversations
      (clientid, withwhom, starttime, endtime, date)
      VALUES ($1,$2,$3,$4,$5)`,
     [user.id, withWhom, startTime, endTime, date]

@@ -9,9 +9,7 @@ const app = express();
 // =========================
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: { rejectUnauthorized: false }
 });
 
 // =========================
@@ -28,7 +26,7 @@ app.use(session({
 }));
 
 // =========================
-// INIT DATABASE (RUN ON START)
+// INIT DATABASE
 // =========================
 async function initDB(){
 
@@ -72,7 +70,18 @@ async function initDB(){
     );
   `);
 
-  // SEED USERS
+  // ✅ NEW: ACTIVITIES TABLE
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS activities (
+      id SERIAL PRIMARY KEY,
+      userId INTEGER,
+      dayForCall TEXT,
+      timeForCall TEXT,
+      timezone TEXT
+    );
+  `);
+
+  // SEED
   await pool.query(`
     INSERT INTO users (id, username, password, role, firstName)
     VALUES (1,'user','1234','user','John')
@@ -82,19 +91,6 @@ async function initDB(){
   await pool.query(`
     INSERT INTO users (username,password,role,parentId,firstName)
     VALUES ('family','1234','family',1,'Sarah')
-    ON CONFLICT DO NOTHING;
-  `);
-
-  // SEED MEDS
-  await pool.query(`
-    INSERT INTO medications (id,userId,medicineName,timeOfDay)
-    VALUES (1,1,'Blood Pressure','Morning')
-    ON CONFLICT DO NOTHING;
-  `);
-
-  await pool.query(`
-    INSERT INTO medications (id,userId,medicineName,timeOfDay)
-    VALUES (2,1,'Vitamin D','Evening')
     ON CONFLICT DO NOTHING;
   `);
 
@@ -113,7 +109,6 @@ app.get('/', (req, res) => {
 // LOGIN
 // =========================
 app.post('/login', async (req, res) => {
-
   const { username, password } = req.body;
 
   const result = await pool.query(
@@ -122,156 +117,49 @@ app.post('/login', async (req, res) => {
   );
 
   const user = result.rows[0];
-
   if (!user) return res.json({ success:false });
 
   req.session.user = user;
-
-  res.json({
-    success:true,
-    role:user.role
-  });
+  res.json({ success:true, role:user.role });
 });
 
 // =========================
-// AUTH / LOGOUT
+// LOGOUT
 // =========================
-app.get('/auth', (req,res)=>{
-  res.json(req.session.user || null);
-});
-
 app.get('/logout', (req,res)=>{
   req.session.destroy(()=>res.json({success:true}));
 });
 
 // =========================
-// SAVE MOOD
+// ACTIVITIES (NEW)
 // =========================
-app.post('/checkin', async (req,res)=>{
-
-  const user = req.session.user;
-  if(!user) return res.json({success:false});
-
-  const { mood } = req.body;
-
-  await pool.query(
-    `INSERT INTO checkins (userId,mood,timestamp)
-     VALUES ($1,$2,$3)`,
-    [user.id, mood, new Date().toISOString()]
-  );
-
-  res.json({success:true});
-});
-
-// =========================
-// GET MEDS
-// =========================
-app.get('/my-medications', async (req,res)=>{
-
-  const user = req.session.user;
-  if(!user) return res.json({meds:[],logs:[]});
-
-  const meds = await pool.query(
-    `SELECT * FROM medications WHERE userId=$1`,
-    [user.id]
-  );
-
-  const logs = await pool.query(
-    `SELECT * FROM medication_logs WHERE userId=$1`,
-    [user.id]
-  );
-
-  res.json({
-    meds: meds.rows,
-    logs: logs.rows
-  });
-});
-
-// =========================
-// TAKE MED
-// =========================
-app.post('/take-med', async (req,res)=>{
-
-  const user = req.session.user;
-  if(!user) return res.json({success:false});
-
-  const { medicationId } = req.body;
-
-  await pool.query(
-    `INSERT INTO medication_logs 
-     (userId,medicationId,taken,timestamp)
-     VALUES ($1,$2,$3,$4)`,
-    [user.id, medicationId, "Yes", new Date().toISOString()]
-  );
-
-  res.json({success:true});
-});
-
-// =========================
-// TODAY STATUS
-// =========================
-app.get('/today-status', async (req,res)=>{
-
+app.get('/activities', async (req,res)=>{
   const user = req.session.user;
   if(!user) return res.json({});
 
-  const today = new Date().toDateString();
-
-  const checkins = await pool.query(
-    `SELECT * FROM checkins WHERE userId=$1 ORDER BY timestamp DESC LIMIT 1`,
+  const result = await pool.query(
+    `SELECT * FROM activities WHERE userId=$1`,
     [user.id]
   );
 
-  const checkin = checkins.rows[0];
-
-  const moodToday = checkin &&
-    new Date(checkin.timestamp).toDateString() === today;
-
-  const meds = await pool.query(
-    `SELECT * FROM medication_logs WHERE userId=$1`,
-    [user.id]
-  );
-
-  const medToday = meds.rows.some(m =>
-    new Date(m.timestamp).toDateString() === today
-  );
-
-  res.json({ moodToday, medToday });
+  res.json(result.rows[0] || {});
 });
 
-// =========================
-// FAMILY DASHBOARD
-// =========================
-app.get('/family-data', async (req,res)=>{
+app.post('/activities', async (req,res)=>{
+  const user = req.session.user;
+  if(!user) return res.json({success:false});
 
-  const u = req.session.user;
-  if(!u || u.role !== 'family') return res.json({});
+  const { dayForCall, timeForCall, timezone } = req.body;
 
-  const targetId = u.parentId;
+  await pool.query(`DELETE FROM activities WHERE userId=$1`, [user.id]);
 
-  const userInfo = await pool.query(
-    `SELECT firstName,nickname FROM users WHERE id=$1`,
-    [targetId]
+  await pool.query(
+    `INSERT INTO activities (userId, dayForCall, timeForCall, timezone)
+     VALUES ($1,$2,$3,$4)`,
+    [user.id, dayForCall, timeForCall, timezone]
   );
 
-  const checkins = await pool.query(
-    `SELECT * FROM checkins WHERE userId=$1 ORDER BY timestamp DESC`,
-    [targetId]
-  );
-
-  const meds = await pool.query(
-    `SELECT ml.timestamp, m.medicineName 
-     FROM medication_logs ml
-     JOIN medications m ON ml.medicationId = m.id
-     WHERE ml.userId=$1`,
-    [targetId]
-  );
-
-  res.json({
-    user: userInfo.rows[0],
-    checkins: checkins.rows,
-    meds: meds.rows
-  });
+  res.json({success:true});
 });
 
 // =========================

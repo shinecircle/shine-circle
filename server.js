@@ -6,11 +6,17 @@ const app = express();
 
 app.set('trust proxy', 1);
 
+// =========================
+// DATABASE
+// =========================
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
+// =========================
+// MIDDLEWARE
+// =========================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
@@ -23,7 +29,7 @@ app.use(session({
 }));
 
 // =========================
-// INIT DB
+// INIT DATABASE
 // =========================
 async function initDB(){
 
@@ -34,14 +40,14 @@ async function initDB(){
       password TEXT,
       role TEXT,
       parentId INTEGER,
-      firstName TEXT
+      firstname TEXT
     );
   `);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS checkins (
       id SERIAL PRIMARY KEY,
-      userId INTEGER,
+      userid INTEGER,
       mood TEXT,
       timestamp TEXT
     );
@@ -50,7 +56,7 @@ async function initDB(){
   await pool.query(`
     CREATE TABLE IF NOT EXISTS medications (
       id SERIAL PRIMARY KEY,
-      userId INTEGER,
+      userid INTEGER,
       medicinename TEXT,
       timeofday TEXT
     );
@@ -59,8 +65,8 @@ async function initDB(){
   await pool.query(`
     CREATE TABLE IF NOT EXISTS medication_logs (
       id SERIAL PRIMARY KEY,
-      userId INTEGER,
-      medicationId INTEGER,
+      userid INTEGER,
+      medicationid INTEGER,
       timestamp TEXT
     );
   `);
@@ -68,7 +74,7 @@ async function initDB(){
   await pool.query(`
     CREATE TABLE IF NOT EXISTS activities (
       id SERIAL PRIMARY KEY,
-      userId INTEGER,
+      userid INTEGER,
       dayforcall TEXT,
       timeforcall TEXT,
       timezone TEXT
@@ -77,37 +83,48 @@ async function initDB(){
 
   // seed users
   await pool.query(`
-    INSERT INTO users (id, username, password, role, firstName)
+    INSERT INTO users (id, username, password, role, firstname)
     VALUES (1,'user','1234','user','John')
     ON CONFLICT DO NOTHING;
   `);
 
   await pool.query(`
-    INSERT INTO users (username,password,role,parentId,firstName)
+    INSERT INTO users (username,password,role,parentId,firstname)
     VALUES ('family','1234','family',1,'Sarah')
     ON CONFLICT DO NOTHING;
   `);
 
   // seed meds
   await pool.query(`
-    INSERT INTO medications (id,userId,medicinename,timeofday)
+    INSERT INTO medications (id,userid,medicinename,timeofday)
     VALUES (1,1,'Blood Pressure','Morning')
     ON CONFLICT DO NOTHING;
   `);
 
   await pool.query(`
-    INSERT INTO medications (id,userId,medicinename,timeofday)
+    INSERT INTO medications (id,userid,medicinename,timeofday)
     VALUES (2,1,'Vitamin D','Evening')
     ON CONFLICT DO NOTHING;
   `);
-
 }
-initDB();
+
+// run safely
+initDB().catch(err => {
+  console.error("DB INIT ERROR:", err);
+});
+
+// =========================
+// ROOT (FIXES BLANK PAGE)
+// =========================
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/login.html');
+});
 
 // =========================
 // LOGIN
 // =========================
 app.post('/login', async (req,res)=>{
+
   const { username, password } = req.body;
 
   const result = await pool.query(
@@ -116,12 +133,17 @@ app.post('/login', async (req,res)=>{
   );
 
   const user = result.rows[0];
+
   if(!user) return res.json({success:false});
 
   req.session.user = user;
+
   res.json({success:true, role:user.role});
 });
 
+// =========================
+// LOGOUT
+// =========================
 app.get('/logout',(req,res)=>{
   req.session.destroy(()=>res.json({success:true}));
 });
@@ -137,7 +159,7 @@ app.get('/checkin-today', async (req,res)=>{
   const today = new Date().toDateString();
 
   const result = await pool.query(
-    `SELECT * FROM checkins WHERE userId=$1 ORDER BY timestamp DESC LIMIT 1`,
+    `SELECT * FROM checkins WHERE userid=$1 ORDER BY timestamp DESC LIMIT 1`,
     [user.id]
   );
 
@@ -162,7 +184,7 @@ app.post('/checkin', async (req,res)=>{
   const { mood } = req.body;
 
   await pool.query(
-    `INSERT INTO checkins (userId,mood,timestamp)
+    `INSERT INTO checkins (userid,mood,timestamp)
      VALUES ($1,$2,$3)`,
     [user.id, mood, new Date().toISOString()]
   );
@@ -171,7 +193,7 @@ app.post('/checkin', async (req,res)=>{
 });
 
 // =========================
-// MEDS
+// MEDICATIONS
 // =========================
 app.get('/my-medications', async (req,res)=>{
 
@@ -179,12 +201,12 @@ app.get('/my-medications', async (req,res)=>{
   if(!user) return res.json({meds:[],logs:[]});
 
   const meds = await pool.query(
-    `SELECT * FROM medications WHERE userId=$1`,
+    `SELECT * FROM medications WHERE userid=$1`,
     [user.id]
   );
 
   const logs = await pool.query(
-    `SELECT * FROM medication_logs WHERE userId=$1`,
+    `SELECT * FROM medication_logs WHERE userid=$1`,
     [user.id]
   );
 
@@ -202,7 +224,7 @@ app.post('/take-med', async (req,res)=>{
   const { medicationId } = req.body;
 
   await pool.query(
-    `INSERT INTO medication_logs (userId,medicationId,timestamp)
+    `INSERT INTO medication_logs (userid,medicationid,timestamp)
      VALUES ($1,$2,$3)`,
     [user.id, medicationId, new Date().toISOString()]
   );
@@ -214,11 +236,12 @@ app.post('/take-med', async (req,res)=>{
 // ACTIVITIES
 // =========================
 app.get('/activities', async (req,res)=>{
+
   const user = req.session.user;
   if(!user) return res.json({});
 
   const result = await pool.query(
-    `SELECT * FROM activities WHERE userId=$1`,
+    `SELECT * FROM activities WHERE userid=$1`,
     [user.id]
   );
 
@@ -226,15 +249,16 @@ app.get('/activities', async (req,res)=>{
 });
 
 app.post('/activities', async (req,res)=>{
+
   const user = req.session.user;
   if(!user) return res.json({success:false});
 
   const { dayForCall, timeForCall, timezone } = req.body;
 
-  await pool.query(`DELETE FROM activities WHERE userId=$1`, [user.id]);
+  await pool.query(`DELETE FROM activities WHERE userid=$1`, [user.id]);
 
   await pool.query(
-    `INSERT INTO activities (userId,dayforcall,timeforcall,timezone)
+    `INSERT INTO activities (userid,dayforcall,timeforcall,timezone)
      VALUES ($1,$2,$3,$4)`,
     [user.id, dayForCall, timeForCall, timezone]
   );
@@ -243,4 +267,10 @@ app.post('/activities', async (req,res)=>{
 });
 
 // =========================
-app.listen(process.env.PORT || 3000);
+// START SERVER
+// =========================
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, ()=>{
+  console.log("Server running on port " + PORT);
+});

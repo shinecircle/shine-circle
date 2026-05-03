@@ -4,8 +4,10 @@ const { Pool } = require('pg');
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 // =========================
-// POSTGRES CONNECTION
+// DATABASE CONNECTION
 // =========================
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -20,9 +22,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
 app.use(session({
-  secret: 'shinecare-secret',
+  secret: 'shine-secret',
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: { secure: false }
 }));
 
 // =========================
@@ -30,133 +33,151 @@ app.use(session({
 // =========================
 async function initDB(){
 
+  // CLIENTS
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
+    CREATE TABLE IF NOT EXISTS clients (
       id SERIAL PRIMARY KEY,
-      username TEXT UNIQUE,
-      password TEXT,
+      firstname TEXT,
+      lastname TEXT,
+      phone TEXT,
+      timezone TEXT,
+      email TEXT,
+      interests TEXT,
+      specialties TEXT,
       role TEXT,
-      parentId INTEGER,
-      firstName TEXT,
-      nickname TEXT
+      password TEXT
     );
   `);
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS checkins (
-      id SERIAL PRIMARY KEY,
-      userId INTEGER,
-      mood TEXT,
-      timestamp TEXT
-    );
-  `);
-
+  // MEDICATIONS
   await pool.query(`
     CREATE TABLE IF NOT EXISTS medications (
       id SERIAL PRIMARY KEY,
-      userId INTEGER,
-      medicineName TEXT,
-      timeOfDay TEXT
+      clientid INTEGER,
+      medicinename TEXT
     );
   `);
 
+  // MEDICATION LOGS
   await pool.query(`
     CREATE TABLE IF NOT EXISTS medication_logs (
       id SERIAL PRIMARY KEY,
-      userId INTEGER,
-      medicationId INTEGER,
-      taken TEXT,
-      timestamp TEXT
+      clientid INTEGER,
+      medicationid INTEGER,
+      date TEXT,
+      taken TEXT
     );
   `);
 
-  // ✅ NEW: ACTIVITIES TABLE
+  // CONVERSATIONS
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS activities (
+    CREATE TABLE IF NOT EXISTS conversations (
       id SERIAL PRIMARY KEY,
-      userId INTEGER,
-      dayForCall TEXT,
-      timeForCall TEXT,
-      timezone TEXT
+      clientid INTEGER,
+      withwhom TEXT,
+      starttime TEXT,
+      endtime TEXT,
+      date TEXT
     );
   `);
 
-  // SEED
+  // SEED TEST USER
   await pool.query(`
-    INSERT INTO users (id, username, password, role, firstName)
-    VALUES (1,'user','1234','user','John')
+    INSERT INTO clients (id, firstname, lastname, role, password)
+    VALUES (1,'John','Doe','user','1234')
     ON CONFLICT DO NOTHING;
   `);
 
   await pool.query(`
-    INSERT INTO users (username,password,role,parentId,firstName)
-    VALUES ('family','1234','family',1,'Sarah')
+    INSERT INTO clients (firstname, lastname, role, password)
+    VALUES ('Sarah','Caregiver','caregiver','1234')
     ON CONFLICT DO NOTHING;
   `);
 
 }
 
-initDB();
+initDB().catch(err => console.log(err));
 
 // =========================
 // ROOT
 // =========================
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/howitworks.html');
+app.get('/', (req,res)=>{
+  res.sendFile(__dirname + '/login.html');
 });
 
 // =========================
 // LOGIN
 // =========================
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
+app.post('/login', async (req,res)=>{
+
+  const { firstname, password } = req.body;
 
   const result = await pool.query(
-    `SELECT * FROM users WHERE username=$1 AND password=$2`,
-    [username, password]
+    `SELECT * FROM clients WHERE firstname=$1 AND password=$2`,
+    [firstname, password]
   );
 
   const user = result.rows[0];
-  if (!user) return res.json({ success:false });
+
+  if(!user) return res.json({success:false});
 
   req.session.user = user;
-  res.json({ success:true, role:user.role });
+
+  res.json({success:true, role:user.role});
 });
 
 // =========================
-// LOGOUT
+// MEDICATIONS
 // =========================
-app.get('/logout', (req,res)=>{
-  req.session.destroy(()=>res.json({success:true}));
-});
+app.get('/medications', async (req,res)=>{
 
-// =========================
-// ACTIVITIES (NEW)
-// =========================
-app.get('/activities', async (req,res)=>{
   const user = req.session.user;
-  if(!user) return res.json({});
+  if(!user) return res.json([]);
 
   const result = await pool.query(
-    `SELECT * FROM activities WHERE userId=$1`,
+    `SELECT * FROM medications WHERE clientid=$1`,
     [user.id]
   );
 
-  res.json(result.rows[0] || {});
+  res.json(result.rows);
 });
 
-app.post('/activities', async (req,res)=>{
+// LOG MED TAKEN
+app.post('/take-med', async (req,res)=>{
+
   const user = req.session.user;
   if(!user) return res.json({success:false});
 
-  const { dayForCall, timeForCall, timezone } = req.body;
+  const { medicationId } = req.body;
 
-  await pool.query(`DELETE FROM activities WHERE userId=$1`, [user.id]);
+  const today = new Date().toISOString().split('T')[0];
 
   await pool.query(
-    `INSERT INTO activities (userId, dayForCall, timeForCall, timezone)
+    `INSERT INTO medication_logs (clientid, medicationid, date, taken)
      VALUES ($1,$2,$3,$4)`,
-    [user.id, dayForCall, timeForCall, timezone]
+    [user.id, medicationId, today, 'yes']
+  );
+
+  res.json({success:true});
+});
+
+// =========================
+// CONVERSATIONS
+// =========================
+app.post('/conversation', async (req,res)=>{
+
+  const user = req.session.user;
+  if(!user) return res.json({success:false});
+
+  const { withWhom, startTime, endTime } = req.body;
+
+  const date = new Date().toISOString().split('T')[0];
+
+  await pool.query(
+    `INSERT INTO conversations 
+     (clientid, withwhom, starttime, endtime, date)
+     VALUES ($1,$2,$3,$4,$5)`,
+    [user.id, withWhom, startTime, endTime, date]
   );
 
   res.json({success:true});
@@ -168,5 +189,5 @@ app.post('/activities', async (req,res)=>{
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, ()=>{
-  console.log('Server running on port ' + PORT);
+  console.log("Server running on port " + PORT);
 });

@@ -33,11 +33,10 @@ app.use(session({
 // =========================
 async function initDB(){
 
-  // CLIENTS TABLE
+  // CLIENTS TABLE (create if missing)
   await pool.query(`
     CREATE TABLE IF NOT EXISTS clients (
       id SERIAL PRIMARY KEY,
-      username TEXT,
       firstname TEXT,
       lastname TEXT,
       phone TEXT,
@@ -48,6 +47,12 @@ async function initDB(){
       role TEXT,
       password TEXT
     );
+  `);
+
+  // 🔥 CRITICAL FIX: add username column if missing
+  await pool.query(`
+    ALTER TABLE clients
+    ADD COLUMN IF NOT EXISTS username TEXT;
   `);
 
   // CHECKINS
@@ -92,19 +97,17 @@ async function initDB(){
     );
   `);
 
-  // 🔥 FORCE RESET USERS (ensures login works)
-  await pool.query(`DELETE FROM clients`);
+  // OPTIONAL: seed users ONLY if table is empty
+  const existing = await pool.query(`SELECT * FROM clients LIMIT 1`);
 
-  await pool.query(`
-    INSERT INTO clients (id, username, firstname, lastname, role, password)
-    VALUES (1,'user','John','Doe','user','1234');
-  `);
-
-  await pool.query(`
-    INSERT INTO clients (id, username, firstname, lastname, role, password)
-    VALUES (2,'family','Sarah','Caregiver','caregiver','1234');
-  `);
-
+  if(existing.rows.length === 0){
+    await pool.query(`
+      INSERT INTO clients (username, firstname, lastname, role, password)
+      VALUES
+      ('user','John','Doe','user','1234'),
+      ('family','Sarah','Caregiver','caregiver','1234')
+    `);
+  }
 }
 
 initDB().catch(err => console.log(err));

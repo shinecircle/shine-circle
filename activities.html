@@ -21,7 +21,7 @@
 
 function save(){
 
-  fetch('/activities',{
+  fetch('/api/activities',{   // 🔥 FIXED ROUTE
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({

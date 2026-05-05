@@ -1,3 +1,9 @@
+JavaScript
+
+app.get ('test', (req,res)=>{
+  res.send("TEST WORKING");
+});
+
 const express = require('express');
 const session = require('express-session');
 const { Pool } = require('pg');

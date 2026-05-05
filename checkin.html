@@ -52,7 +52,10 @@
 
   <!-- MEDS -->
   <div class="question">Did you take your medicine today?</div>
-  <div id="medSection"></div>
+  <div id="medBtns" class="btn-group">
+    <button onclick="selectMeds(this)">Yes</button>
+    <button onclick="selectMeds(this)">No</button>
+  </div>
 
   <br>
 
@@ -65,6 +68,7 @@
 <script>
 
 let selectedMood="";
+let selectedMeds="";
 let locked=false;
 
 // DATE
@@ -74,59 +78,31 @@ document.getElementById("today").innerText =
   });
 
 // =========================
-// LOAD MEDS FROM DB
+// CHECK TODAY
 // =========================
-function loadMeds(){
+fetch('/checkin-today')
+.then(r=>r.json())
+.then(d=>{
 
-  fetch('/my-medications')
-  .then(r=>r.json())
-  .then(data=>{
+  if(d.checkedIn){
 
-    const container = document.getElementById("medSection");
-    container.innerHTML = "";
+    locked=true;
 
-    data.meds.forEach(med=>{
+    selectedMood=d.mood;
+    selectedMeds=d.meds;
 
-      const div = document.createElement("div");
+    const time = new Date(d.timestamp)
+      .toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
 
-      div.innerHTML = `
-        <b>${med.medicineName} (${med.timeOfDay})</b><br>
-        <button onclick="takeMed(${med.id})">Yes, I've taken it</button>
-        <div id="medStatus-${med.id}" style="color:green;"></div>
-        <br>
-      `;
+    document.getElementById("status").innerText =
+      `You checked in today at ${time}`;
 
-      container.appendChild(div);
-    });
+    highlightSelections();
+    disableInputs();
+  }
+});
 
-  });
-}
-
-// =========================
-// TAKE MED
-// =========================
-function takeMed(id){
-
-  fetch('/take-med',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ medicationId:id })
-  })
-  .then(()=>{
-
-    const time = new Date().toLocaleTimeString('en-US',{
-      hour:'numeric',minute:'2-digit'
-    });
-
-    document.getElementById("medStatus-"+id)
-      .innerText = "Yes at " + time;
-
-  });
-}
-
-// =========================
-// MOOD
-// =========================
+// SELECT
 function selectMood(btn){
   if(locked) return;
 
@@ -136,9 +112,42 @@ function selectMood(btn){
   btn.classList.add("selected");
 }
 
-// =========================
+function selectMeds(btn){
+  if(locked) return;
+
+  selectedMeds=btn.innerText;
+  document.querySelectorAll("#medBtns button")
+    .forEach(b=>b.classList.remove("selected"));
+  btn.classList.add("selected");
+}
+
+// HIGHLIGHT
+function highlightSelections(){
+
+  document.querySelectorAll("#moodBtns button")
+    .forEach(b=>{
+      if(b.innerText===selectedMood) b.classList.add("selected");
+    });
+
+  document.querySelectorAll("#medBtns button")
+    .forEach(b=>{
+      if(b.innerText===selectedMeds) b.classList.add("selected");
+    });
+}
+
+// DISABLE ONLY INPUTS
+function disableInputs(){
+
+  document.querySelectorAll("#moodBtns button")
+    .forEach(b=>b.classList.add("disabled"));
+
+  document.querySelectorAll("#medBtns button")
+    .forEach(b=>b.classList.add("disabled"));
+
+  document.getElementById("submitBtn").style.display="none";
+}
+
 // SUBMIT
-// =========================
 function submitCheckin(){
 
   if(!selectedMood){
@@ -150,23 +159,20 @@ function submitCheckin(){
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      mood:selectedMood
+      mood:selectedMood,
+      meds:selectedMeds
     })
   })
   .then(()=>{
     document.getElementById("msg").innerText="Saved!";
+    location.reload();
   });
 }
 
-// =========================
 // NAV
-// =========================
 function goHome(){ window.location='home.html'; }
 function goActivities(){ window.location='activities.html'; }
 function logout(){ fetch('/logout').then(()=>window.location='login.html'); }
-
-// INIT
-loadMeds();
 
 </script>
 

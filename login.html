@@ -1,56 +1,88 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Shine Circle</title>
+  <title>SHINE Circle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="stylesheet" href="styles.css">
 
   <style>
-    .login-container {
-      text-align: center;
-      padding: 40px 20px;
+    body {
+      text-align:center;
+      padding:20px;
     }
 
-    .login-box {
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      max-width: 350px;
-      margin: auto;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    .hero {
+      max-width:600px;
+      margin:auto;
+    }
+
+    .big-btn {
+      font-size:20px;
+      padding:18px;
+      width:90%;
+      margin:15px 0;
+      border-radius:10px;
+      border:none;
+      background:#1E6FDB;
+      color:white;
+      cursor:pointer;
+    }
+
+    .small-btn {
+      font-size:14px;
+      padding:10px;
+      margin-top:10px;
+    }
+
+    .card {
+      margin-top:20px;
+      padding:15px;
+      background:#f5f5f5;
+      border-radius:10px;
     }
 
     input {
-      width: 90%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+      width:90%;
+      padding:12px;
+      margin:5px 0;
     }
   </style>
 </head>
 
 <body>
 
-<div class="header">
-  <img src="logo.jpg" class="logo">
-</div>
+<img src="logo.jpg" style="height:60px;">
 
-<div class="login-container">
+<div class="hero">
 
-  <h2>Welcome to Shine Circle</h2>
+  <h2>SHINE Circle</h2>
 
-  <p>Connection you can count on</p>
+  <p><b>A bright spot you can count on.</b></p>
 
-  <div class="login-box">
+  <p>
+    Daily check-ins, real human connection, and peace of mind for families.
+  </p>
 
-    <input id="username" placeholder="Username">
-    <input id="password" type="password" placeholder="Password">
+  <!-- BIG CLIENT BUTTON -->
+  <button class="big-btn" onclick="showLogin('user')">
+    I'm Checking In Today
+  </button>
+
+  <!-- FAMILY BUTTON -->
+  <button class="btn small-btn" onclick="showLogin('family')">
+    Family / Caregiver Login
+  </button>
+
+  <!-- LOGIN FORM -->
+  <div id="loginBox" class="card" style="display:none;">
+
+    <input id="username" placeholder="Username"><br>
+    <input id="password" type="password" placeholder="Password"><br>
 
     <button class="btn" onclick="login()">Login</button>
 
-    <p id="msg"></p>
+    <p id="error" style="color:red;"></p>
 
   </div>
 
@@ -58,25 +90,35 @@
 
 <script>
 
-function login(){
+let selectedRole = "";
 
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
+// SHOW LOGIN
+function showLogin(role){
+  selectedRole = role;
+  document.getElementById("loginBox").style.display = "block";
+}
+
+// LOGIN
+function login(){
 
   fetch('/login',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({username,password})
+    body: JSON.stringify({
+      username: document.getElementById("username").value,
+      password: document.getElementById("password").value
+    })
   })
   .then(r=>r.json())
-  .then(d=>{
+  .then(data=>{
 
-    if(!d.success){
-      document.getElementById("msg").innerText = "Login failed";
+    if(!data.success){
+      document.getElementById("error").innerText = "Login failed";
       return;
     }
 
-    if(d.role === 'user'){
+    // ROUTING
+    if(data.role === 'user'){
       window.location = 'home.html';
     } else {
       window.location = 'family.html';

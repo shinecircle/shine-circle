@@ -7,12 +7,20 @@ body {
   padding: 0;
   background: #fff9e6; /* light yellow */
   color: #1a1a1a;
+
+  outline: 1px solid black;
+
+
 }
 
 .container {
   max-width: 900px;
   margin: auto;
-  padding: 10px;
+  padding: 1px;
+
+  outline: 1px solid black;
+
+
 }
 
 /* =========================
@@ -26,24 +34,27 @@ body {
   border-bottom: 1px solid #ddd;
   flex-wrap: wrap;
   background: white;
+
+  outline: 1px solid black;
+
+
 }
 
 .logo {
-  height: 180px;
-   align-items: center;
+  height: 160px; /* DOUBLE SIZE */
 }
 
 /* =========================
    BUTTONS
 ========================= */
 .btn {
-  padding: 15px 15px;
-  margin: 8px;
+  padding: 10px 14px;
+  margin: 5px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #2d6cdf;
   color: white;
-  font-size: 18px;
+  font-size: 14px;
   cursor: pointer;
 }
 
@@ -61,33 +72,51 @@ body {
 ========================= */
 .hero {
   text-align: center;
-  padding: 10px 5px 10px;
+  padding: 10px 10px 10px;
+
+  outline: 1px solid black;
+
 }
 
 .hero h1 {
   font-size: 32px;
   margin-bottom: 5px;
+
+  outline: 1px solid black;
+
 }
 
 .hero p {
   font-size: 18px;
   color: #555;
+
+  outline: 1px solid black;
+
+
 }
 
 /* =========================
    STEPS
 ========================= */
 .steps {
-  margin-top: 10px;
+  margin-top: 20px;
+
+  outline: 1px solid black;
+
+
 }
 
 .step {
   background: white;
   padding: 20px;
   border-radius: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   text-align: left;
+
+  outline: 1px solid black;
+
+
 }
 
 .step h3 {
@@ -104,12 +133,12 @@ body {
 ========================= */
 .why {
   text-align: center;
-  margin-top: 10px;
+  margin-top: 5px;
 }
 
 .why p {
   max-width: 600px;
-  margin: 12px auto;
+  margin: 10px auto;
   color: #555;
   font-size: 17px;
 }
@@ -121,13 +150,21 @@ body {
   margin-top: 5px;
   text-align: center;
   background: white;
-  padding: 15px;
+  padding: 10px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+
+  outline: 1px solid black;
+
+
 }
 
 .cta h2 {
-  margin-bottom: 5px;
+  margin-bottom: 15px;
+
+  outline: 1px solid black;
+
+
 }
 
 /* =========================
@@ -147,22 +184,13 @@ body {
 
   .hero h1 {
     font-size: 26px;
+
+  outline: 1px solid black;
+
+
   }
 
   .logo {
-    height: 130px; /* slightly smaller on mobile */
+    height: 90px; /* slightly smaller on mobile */
   }
-}
-
-/* =========================
-   FOOTER
-========================= */
-.footer {
-  text-align: center;
-  padding: 20px 10px;
-  margin-top: 30px;
-  font-size: 14px;
-  color: #777;
-  background: #ffffff;
-  border-top: 1px solid #ddd;
 }

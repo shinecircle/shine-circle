@@ -1,2 +1,0 @@
-# shine-circle
-Shine Circle

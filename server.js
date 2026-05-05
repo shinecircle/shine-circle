@@ -69,24 +69,26 @@ async function initDB(){
   }
 }
 
+//TEMPORARY RESET
+await pool.query('DROP TABLE IF EXISTS activities')}
 
 
 //ACTIVITIES TABLE
-await pool.query('
-   CREATE TABLE IF NOT EXISTS activities (
-	id SERIAL PRIMARY KEY,
-	clientid INTEGER,
-	dayforcall TEXT,
-	timeforcall TEXT,
-	timezone TEXT
-	);
-   ');
+//await pool.query('
+  // CREATE TABLE IF NOT EXISTS activities (
+//	id SERIAL PRIMARY KEY,
+//	clientid INTEGER,
+//	dayforcall TEXT,
+//	timeforcall TEXT,
+//	timezone TEXT
+//	);
+  // ');
 
 //FIX EXISTING TABLE
-   await pool.query('
-	ALTER TABLE activities
-	ADD COLUMN IF NOT EXISTS clientid INTEGER;
-   ');
+//   await pool.query('
+//	ALTER TABLE activities
+//	ADD COLUMN IF NOT EXISTS clientid INTEGER;
+  // ');
 
 
 

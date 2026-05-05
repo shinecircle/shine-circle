@@ -1,19 +1,17 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
 const session = require('express-session');
+const { Pool } = require('pg');
 
 const app = express();
-const db = new sqlite3.Database('./data.db');
 
-app.get('/debug-users', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT id, username, role FROM clients ORDER BY id'
-    );
-    res.json(result.rows);
-  } catch (err) {
-    res.json({ error: err.message });
-  }
+app.set('trust proxy', 1);
+
+// =========================
+// DATABASE (POSTGRES ONLY)
+// =========================
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
 // =========================
@@ -21,221 +19,108 @@ app.get('/debug-users', async (req, res) => {
 // =========================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('.'));
+app.use(express.static(__dirname));
 
-app.use(
-  session({
-    secret: 'shinecare-secret',
-    resave: false,
-    saveUninitialized: false
-  })
-);
+app.use(session({
+  secret: 'shine-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false }
+}));
 
 // =========================
-// DATABASE
+// INIT DATABASE
 // =========================
-db.serialize(() => {
+async function initDB(){
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE,
-      password TEXT,
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clients (
+      id SERIAL PRIMARY KEY,
+      username TEXT,
+      firstname TEXT,
+      lastname TEXT,
       role TEXT,
-      parentId INTEGER,
-      firstName TEXT,
-      lastName TEXT,
-      nickname TEXT,
-      phone TEXT,
-      email TEXT,
-      dayForCall TEXT,
-      timeForCall TEXT,
-      timezone TEXT
-    )
+      password TEXT
+    );
   `);
 
-  db.run(`ALTER TABLE users ADD COLUMN dayForCall TEXT`, ()=>{});
-  db.run(`ALTER TABLE users ADD COLUMN timeForCall TEXT`, ()=>{});
-  db.run(`ALTER TABLE users ADD COLUMN timezone TEXT`, ()=>{});
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS checkins (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      userId INTEGER,
-      mood TEXT,
-      meds TEXT,
-      timestamp TEXT
-    )
+  // ensure column exists (safe)
+  await pool.query(`
+    ALTER TABLE clients
+    ADD COLUMN IF NOT EXISTS username TEXT;
   `);
 
-  // USER
-  db.run(`
-    INSERT OR IGNORE INTO users 
-    (id, username, password, role, parentId, firstName, lastName, nickname)
-    VALUES (1,'user','1234','user',NULL,'John','Smith','Johnny')
-  `);
+  // ensure at least 2 users exist
+  const result = await pool.query(`SELECT * FROM clients`);
 
-  // FAMILY
-  db.run(`
-    INSERT OR IGNORE INTO users 
-    (username,password,role,parentId,firstName,lastName)
-    VALUES ('family','1234','family',1,'Sarah','Smith')
-  `);
+  if(result.rows.length === 0){
+    await pool.query(`
+      INSERT INTO clients (username, firstname, lastname, role, password)
+      VALUES
+      ('user','John','Doe','user','1234'),
+      ('family','Sarah','Caregiver','caregiver','1234')
+    `);
+  }
+}
+
+initDB().catch(err => console.log(err));
+
+// =========================
+// DEBUG ROUTE
+// =========================
+app.get('/debug-users', async (req,res)=>{
+  const result = await pool.query(
+    `SELECT id, username, role FROM clients ORDER BY id`
+  );
+  res.json(result.rows);
+});
+
+// =========================
+// PAGE ROUTES
+// =========================
+app.get('/', (req,res)=>{
+  res.sendFile(__dirname + '/login.html');
+});
+
+app.get('/home', (req,res)=>{
+  res.sendFile(__dirname + '/home.html');
+});
+
+app.get('/family', (req,res)=>{
+  res.sendFile(__dirname + '/family.html');
 });
 
 // =========================
 // LOGIN
 // =========================
-app.post('/login', (req,res)=>{
-  const {username,password} = req.body;
+app.post('/login', async (req,res)=>{
 
-  db.get(
-    `SELECT * FROM users WHERE username=? AND password=?`,
-    [username,password],
-    (err,user)=>{
-      if(!user) return res.json({success:false});
+  const { username, password } = req.body;
 
-      req.session.user = user;
-
-      res.json({
-        success:true,
-        role:user.role
-      });
-    }
-  );
-});
-
-// =========================
-// AUTH / LOGOUT
-// =========================
-app.get('/auth',(req,res)=>{
-  res.json(req.session.user || null);
-});
-
-app.get('/logout',(req,res)=>{
-  req.session.destroy(()=>res.json({success:true}));
-});
-
-// =========================
-// CHECKIN SAVE
-// =========================
-app.post('/checkin',(req,res)=>{
-  const user = req.session.user;
-  if(!user || user.role!=='user') return res.json({success:false});
-
-  const {mood,meds} = req.body;
-
-  db.run(
-    `INSERT INTO checkins (userId,mood,meds,timestamp)
-     VALUES (?,?,?,?)`,
-    [user.id,mood,meds,new Date().toISOString()]
+  const result = await pool.query(
+    `SELECT * FROM clients WHERE username=$1 AND password=$2`,
+    [username, password]
   );
 
-  res.json({success:true});
-});
+  const user = result.rows[0];
 
-// =========================
-// CHECKIN TODAY
-// =========================
-app.get('/checkin-today',(req,res)=>{
-
-  const user = req.session.user;
-  if(!user) return res.json({checkedIn:false});
-
-  db.get(
-    `SELECT * FROM checkins 
-     WHERE userId=? 
-     ORDER BY timestamp DESC 
-     LIMIT 1`,
-    [user.id],
-    (err,row)=>{
-
-      if(!row) return res.json({checkedIn:false});
-
-      const today = new Date().toDateString();
-      const rowDate = new Date(row.timestamp).toDateString();
-
-      res.json({
-        checkedIn: today === rowDate,
-        mood: row.mood,
-        meds: row.meds,
-        timestamp: row.timestamp
-      });
-    }
-  );
-});
-
-// =========================
-// ACTIVITIES
-// =========================
-app.get('/activities',(req,res)=>{
-  const user = req.session.user;
-  if(!user) return res.json({});
-
-  db.get(
-    `SELECT dayForCall,timeForCall,timezone FROM users WHERE id=?`,
-    [user.id],
-    (err,row)=>res.json(row || {})
-  );
-});
-
-app.post('/activities',(req,res)=>{
-  const user = req.session.user;
-  if(!user) return res.json({success:false});
-
-  const {dayForCall,timeForCall,timezone} = req.body;
-
-  db.run(
-    `UPDATE users SET dayForCall=?,timeForCall=?,timezone=? WHERE id=?`,
-    [dayForCall,timeForCall,timezone,user.id]
-  );
-
-  res.json({success:true});
-});
-
-// =========================
-// 🔥 FAMILY DASHBOARD (FIXED)
-// =========================
-app.get('/family-data',(req,res)=>{
-
-  const u = req.session.user;
-
-  if(!u || u.role !== 'family'){
-    return res.json({checkins:[],user:null});
+  if(!user){
+    return res.json({success:false});
   }
 
-  const targetUserId = u.parentId || 1;
+  req.session.user = user;
 
-
-
-  // GET USER INFO
-  db.get(
-    `SELECT firstName,nickname,dayForCall,timeForCall,timezone 
-     FROM users WHERE id=?`,
-    [targetUserId],
-    (err,userInfo)=>{
-
-      // GET CHECKINS
-      db.all(
-        `SELECT * FROM checkins 
-         WHERE userId=? 
-         ORDER BY timestamp DESC`,
-        [targetUserId],
-        (err2,rows)=>{
-
-          res.json({
-            checkins: rows || [],
-            user: userInfo || null
-          });
-        }
-      );
-    }
-  );
+  res.json({
+    success:true,
+    role:user.role
+  });
 });
-
-
 
 // =========================
 // START SERVER
 // =========================
-app.listen(3000,()=>console.log('Server running on http://localhost:3000'));
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, ()=>{
+  console.log("Server running on port " + PORT);
+});

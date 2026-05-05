@@ -64,10 +64,32 @@ async function initDB(){
       INSERT INTO clients (username, firstname, lastname, role, password)
       VALUES
       ('user','John','Doe','user','1234'),
-      ('family','Sarah','Caregiver','caregiver','1234')
+      ('family','Sarah','Doe','caregiver','1234')
     `);
   }
 }
+
+
+
+//ACTIVITIES TABLE
+await pool.query('
+   CREATE TABLE IF NOT EXISTS activities (
+	id SERIAL PRIMARY KEY,
+	clientid INTEGER,
+	dayforcall TEXT,
+	timeforcall TEXT,
+	timezone TEXT
+	);
+   ');
+
+//FIX EXISTING TABLE
+   await pool.query('
+	ALTER TABLE activities
+	ADD COLUMN IF NOT EXISTS clientid INTEGER;
+   ');
+
+
+
 
 initDB().catch(err => console.log(err));
 

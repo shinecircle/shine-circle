@@ -69,9 +69,6 @@ async function initDB(){
   }
 }
 
-//TEMPORARY RESET
-await pool.query('DROP TABLE IF EXISTS activities')}
-
 
 //ACTIVITIES TABLE
 await pool.query('

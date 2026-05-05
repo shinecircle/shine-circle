@@ -5,6 +5,17 @@ const session = require('express-session');
 const app = express();
 const db = new sqlite3.Database('./data.db');
 
+app.get('/debug-users', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, username, role FROM clients ORDER BY id'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+});
+
 // =========================
 // MIDDLEWARE
 // =========================
@@ -195,6 +206,8 @@ app.get('/family-data',(req,res)=>{
 
   const targetUserId = u.parentId || 1;
 
+
+
   // GET USER INFO
   db.get(
     `SELECT firstName,nickname,dayForCall,timeForCall,timezone 
@@ -219,6 +232,8 @@ app.get('/family-data',(req,res)=>{
     }
   );
 });
+
+
 
 // =========================
 // START SERVER

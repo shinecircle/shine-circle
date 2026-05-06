@@ -44,17 +44,17 @@
   <!-- MOOD -->
   <div class="question">How are you doing today?</div>
   <div id="moodBtns" class="btn-group">
-    <button onclick="selectMood(this)">Great</button>
-    <button onclick="selectMood(this)">Good</button>
-    <button onclick="selectMood(this)">Low</button>
-    <button onclick="selectMood(this)">Struggling</button>
+    <button>Great</button>
+    <button>Good</button>
+    <button>Low</button>
+    <button>Struggling</button>
   </div>
 
   <!-- MEDS -->
   <div class="question">Did you take your medicine today?</div>
   <div id="medBtns" class="btn-group">
-    <button onclick="selectMeds(this)">Yes</button>
-    <button onclick="selectMeds(this)">No</button>
+    <button>Yes</button>
+    <button>No</button>
   </div>
 
   <br>
@@ -78,20 +78,34 @@ document.getElementById("today").innerText =
   });
 
 // =========================
-// CHECK TODAY
+// BUTTON EVENT BINDING (safer)
+// =========================
+document.querySelectorAll("#moodBtns button").forEach(btn=>{
+  btn.onclick = ()=>selectMood(btn);
+});
+
+document.querySelectorAll("#medBtns button").forEach(btn=>{
+  btn.onclick = ()=>selectMeds(btn);
+});
+
+// =========================
+// LOAD TODAY DATA
 // =========================
 fetch('/checkin-today')
-.then(r=>r.json())
+.then(r=>{
+  if(!r.ok) throw new Error("Failed fetch");
+  return r.json();
+})
 .then(d=>{
 
-  if(d.checkedIn){
+  if(d && d.checkedIn){
 
-    locked=true;
+    locked = true;
 
-    selectedMood=d.mood;
-    selectedMeds=d.meds;
+    selectedMood = d.mood || "";
+    selectedMeds = d.meds || "";
 
-    const time = new Date(d.timestamp)
+    const time = new Date(d.timestamp || Date.now())
       .toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
 
     document.getElementById("status").innerText =
@@ -100,54 +114,80 @@ fetch('/checkin-today')
     highlightSelections();
     disableInputs();
   }
+
+})
+.catch(err=>{
+  console.error("LOAD ERROR:", err);
 });
 
-// SELECT
+// =========================
+// SELECT FUNCTIONS
+// =========================
 function selectMood(btn){
   if(locked) return;
 
-  selectedMood=btn.innerText;
+  selectedMood = btn.innerText;
+
   document.querySelectorAll("#moodBtns button")
     .forEach(b=>b.classList.remove("selected"));
+
   btn.classList.add("selected");
 }
 
 function selectMeds(btn){
   if(locked) return;
 
-  selectedMeds=btn.innerText;
+  selectedMeds = btn.innerText;
+
   document.querySelectorAll("#medBtns button")
     .forEach(b=>b.classList.remove("selected"));
+
   btn.classList.add("selected");
 }
 
-// HIGHLIGHT
+// =========================
+// HIGHLIGHT SAVED VALUES
+// =========================
 function highlightSelections(){
 
   document.querySelectorAll("#moodBtns button")
     .forEach(b=>{
-      if(b.innerText===selectedMood) b.classList.add("selected");
+      if(b.innerText === selectedMood){
+        b.classList.add("selected");
+      }
     });
 
   document.querySelectorAll("#medBtns button")
     .forEach(b=>{
-      if(b.innerText===selectedMeds) b.classList.add("selected");
+      if(b.innerText === selectedMeds){
+        b.classList.add("selected");
+      }
     });
 }
 
-// DISABLE ONLY INPUTS
+// =========================
+// DISABLE INPUTS
+// =========================
 function disableInputs(){
 
   document.querySelectorAll("#moodBtns button")
-    .forEach(b=>b.classList.add("disabled"));
+    .forEach(b=>{
+      b.classList.add("disabled");
+      b.disabled = true;
+    });
 
   document.querySelectorAll("#medBtns button")
-    .forEach(b=>b.classList.add("disabled"));
+    .forEach(b=>{
+      b.classList.add("disabled");
+      b.disabled = true;
+    });
 
   document.getElementById("submitBtn").style.display="none";
 }
 
+// =========================
 // SUBMIT
+// =========================
 function submitCheckin(){
 
   if(!selectedMood){
@@ -163,16 +203,26 @@ function submitCheckin(){
       meds:selectedMeds
     })
   })
+  .then(r=>{
+    if(!r.ok) throw new Error("Save failed");
+    return r.json();
+  })
   .then(()=>{
     document.getElementById("msg").innerText="Saved!";
-    location.reload();
+    setTimeout(()=>location.reload(),500);
+  })
+  .catch(err=>{
+    console.error("SAVE ERROR:", err);
+    document.getElementById("msg").innerText="Error saving";
   });
 }
 
+// =========================
 // NAV
-function goHome(){ window.location='home.html'; }
-function goActivities(){ window.location='activities.html'; }
-function logout(){ fetch('/logout').then(()=>window.location='login.html'); }
+// =========================
+function goHome(){ window.location='/home'; }
+function goActivities(){ window.location='/activities'; }
+function logout(){ fetch('/logout').then(()=>window.location='/'); }
 
 </script>
 

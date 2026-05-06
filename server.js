@@ -28,18 +28,18 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false // set to true in production with HTTPS
+    secure: false // OK for now
   }
 }));
 
 // =========================
-// DATABASE INIT (SAFE + ALL IN ONE)
+// DATABASE INIT
 // =========================
 async function initDB() {
   try {
     console.log("Initializing database...");
 
-    // CLIENTS TABLE
+    // CLIENTS
     await pool.query(`
       CREATE TABLE IF NOT EXISTS clients (
         id SERIAL PRIMARY KEY,
@@ -51,13 +51,7 @@ async function initDB() {
       );
     `);
 
-    // Redundant safety column (OK during debugging)
-    await pool.query(`
-      ALTER TABLE clients
-      ADD COLUMN IF NOT EXISTS username TEXT;
-    `);
-
-    // ACTIVITIES TABLE
+    // ACTIVITIES
     await pool.query(`
       CREATE TABLE IF NOT EXISTS activities (
         id SERIAL PRIMARY KEY,
@@ -68,10 +62,13 @@ async function initDB() {
       );
     `);
 
-    // Redundant safety column
+    // Fix existing schema issues
     await pool.query(`
-      ALTER TABLE activities
-      ADD COLUMN IF NOT EXISTS clientid INTEGER;
+      ALTER TABLE clients ADD COLUMN IF NOT EXISTS username TEXT;
+    `);
+
+    await pool.query(`
+      ALTER TABLE activities ADD COLUMN IF NOT EXISTS clientid INTEGER;
     `);
 
     // Seed users if empty
@@ -94,11 +91,29 @@ async function initDB() {
   }
 }
 
-// Run DB init (non-blocking)
 initDB();
 
 // =========================
-// DEBUG ROUTE
+// AUTH ROUTES (🔥 FIX)
+// =========================
+
+// Returns logged-in user
+app.get('/auth', (req, res) => {
+  if (!req.session.user) {
+    return res.json(null);
+  }
+  res.json(req.session.user);
+});
+
+// Logout
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.json({ success: true });
+  });
+});
+
+// =========================
+// DEBUG
 // =========================
 app.get('/debug-users', async (req, res) => {
   try {
@@ -113,7 +128,7 @@ app.get('/debug-users', async (req, res) => {
 });
 
 // =========================
-// TEST ROUTE (NOW SAFE)
+// TEST
 // =========================
 app.get('/test', (req, res) => {
   res.send("TEST WORKING");
@@ -132,6 +147,14 @@ app.get('/home', (req, res) => {
 
 app.get('/family', (req, res) => {
   res.sendFile(path.join(__dirname, 'family.html'));
+});
+
+app.get('/checkin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'checkin.html'));
+});
+
+app.get('/activities', (req, res) => {
+  res.sendFile(path.join(__dirname, 'activities.html'));
 });
 
 // =========================

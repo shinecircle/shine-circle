@@ -27,7 +27,6 @@
     }
 
     .selected { background:#0B2A5B; }
-    .disabled { background:#ccc !important; cursor:not-allowed; }
   </style>
 </head>
 
@@ -45,9 +44,11 @@
 <div style="text-align:center;padding:20px;">
 
   <h2>Daily Check-In</h2>
-  <p id="today"></p>
 
-  <!-- MOOD PANEL -->
+  <p id="today"></p>
+  <p id="status" style="color:green;font-weight:bold;"></p>
+
+  <!-- MOOD -->
   <div class="panel mood-panel">
     <h3>How are you feeling today?</h3>
 
@@ -59,10 +60,10 @@
     </div>
 
     <br>
-    <button id="moodSubmit" class="btn" onclick="submitMood()">Save Mood</button>
+    <button class="btn" onclick="submitMood()">Save Mood</button>
   </div>
 
-  <!-- MEDS PANEL -->
+  <!-- MEDS -->
   <div class="panel meds-panel">
     <h3>Did you take your medicine today?</h3>
 
@@ -72,55 +73,95 @@
     </div>
 
     <br>
-    <button id="medSubmit" class="btn" onclick="submitMeds()">Save Medication</button>
+    <button class="btn" onclick="submitMeds()">Save Medication</button>
   </div>
-
-  <p id="msg"></p>
 
 </div>
 
 <script>
 
-let selectedMood="";
-let selectedMeds="";
+let selectedMood = "";
+let selectedMeds = "";
 
-// DATE
+// =========================
+// DATE (FULL FORMAT)
+// =========================
 document.getElementById("today").innerText =
-  "Today is: " + new Date().toLocaleDateString();
+  new Date().toLocaleDateString('en-US',{
+    weekday:'long',
+    year:'numeric',
+    month:'long',
+    day:'numeric'
+  });
 
-// LOAD EXISTING
+// =========================
+// LOAD SAVED DATA
+// =========================
 fetch('/checkin-today')
 .then(r=>r.json())
 .then(d=>{
-  if(d.checkedIn){
-    selectedMood = d.mood || "";
-    selectedMeds = d.meds || "";
 
-    highlight();
-    disableIfSaved();
-  }
+  if(!d.checkedIn) return;
+
+  selectedMood = d.mood || "";
+  selectedMeds = d.meds || "";
+
+  document.getElementById("status").innerText =
+    "You already checked in today";
+
+  highlightSelections();
 });
 
-// SELECT
+// =========================
+// SELECT FUNCTIONS
+// =========================
 function selectMood(btn){
+
   selectedMood = btn.innerText;
+
   document.querySelectorAll("#moodBtns button")
     .forEach(b=>b.classList.remove("selected"));
+
   btn.classList.add("selected");
 }
 
 function selectMeds(btn){
+
   selectedMeds = btn.innerText;
+
   document.querySelectorAll("#medBtns button")
     .forEach(b=>b.classList.remove("selected"));
+
   btn.classList.add("selected");
 }
 
-// SAVE MOOD ONLY
+// =========================
+// RESTORE SELECTIONS
+// =========================
+function highlightSelections(){
+
+  document.querySelectorAll("#moodBtns button")
+    .forEach(b=>{
+      if(b.innerText === selectedMood){
+        b.classList.add("selected");
+      }
+    });
+
+  document.querySelectorAll("#medBtns button")
+    .forEach(b=>{
+      if(b.innerText === selectedMeds){
+        b.classList.add("selected");
+      }
+    });
+}
+
+// =========================
+// SUBMIT (SAFE)
+// =========================
 function submitMood(){
 
   if(!selectedMood){
-    document.getElementById("msg").innerText="Select a mood first";
+    alert("Select a mood first");
     return;
   }
 
@@ -128,43 +169,31 @@ function submitMood(){
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      mood:selectedMood,
-      meds:selectedMeds
+      mood:selectedMood
     })
   })
   .then(()=> {
-    document.getElementById("msg").innerText="Mood saved!";
+    document.getElementById("status").innerText="Mood saved!";
   });
 }
 
-// SAVE MEDS ONLY
 function submitMeds(){
+
+  if(!selectedMeds){
+    alert("Select Yes or No");
+    return;
+  }
 
   fetch('/checkin',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      mood:selectedMood,
       meds:selectedMeds
     })
   })
   .then(()=> {
-    document.getElementById("msg").innerText="Medication saved!";
+    document.getElementById("status").innerText="Medication saved!";
   });
-}
-
-// UI HELPERS
-function highlight(){
-  document.querySelectorAll("#moodBtns button")
-    .forEach(b=>{ if(b.innerText===selectedMood) b.classList.add("selected"); });
-
-  document.querySelectorAll("#medBtns button")
-    .forEach(b=>{ if(b.innerText===selectedMeds) b.classList.add("selected"); });
-}
-
-function disableIfSaved(){
-  document.getElementById("moodSubmit").innerText="Saved";
-  document.getElementById("medSubmit").innerText="Saved";
 }
 
 // NAV

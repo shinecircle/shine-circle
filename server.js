@@ -30,149 +30,117 @@ app.use(session({
 }));
 
 // =========================
-// INIT DATABASE
+// INIT DB
 // =========================
 async function initDB() {
-  try {
 
-    // CLIENTS
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clients (
+      id SERIAL PRIMARY KEY,
+      username TEXT,
+      role TEXT,
+      password TEXT
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS checkins (
+      id SERIAL PRIMARY KEY,
+      clientid INTEGER,
+      mood TEXT,
+      meds TEXT,
+      date TEXT
+    );
+  `);
+
+  const r = await pool.query(`SELECT * FROM clients`);
+  if (r.rows.length === 0) {
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS clients (
-        id SERIAL PRIMARY KEY,
-        username TEXT,
-        firstname TEXT,
-        lastname TEXT,
-        role TEXT,
-        password TEXT
-      );
+      INSERT INTO clients (username, role, password)
+      VALUES 
+      ('user','user','1234'),
+      ('family','caregiver','1234')
     `);
-
-    // CHECKINS
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS checkins (
-        id SERIAL PRIMARY KEY,
-        clientid INTEGER,
-        mood TEXT,
-        meds TEXT,
-        date TEXT
-      );
-    `);
-
-    // ACTIVITIES (for your other page)
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS activities (
-        id SERIAL PRIMARY KEY,
-        clientid INTEGER,
-        dayforcall TEXT,
-        timeforcall TEXT,
-        timezone TEXT
-      );
-    `);
-
-    // Seed users if empty
-    const r = await pool.query(`SELECT * FROM clients`);
-    if (r.rows.length === 0) {
-      await pool.query(`
-        INSERT INTO clients (username, firstname, lastname, role, password)
-        VALUES 
-        ('user','John','Doe','user','1234'),
-        ('family','Sarah','Doe','caregiver','1234')
-      `);
-    }
-
-    console.log("DB READY");
-
-  } catch (err) {
-    console.log("DB INIT ERROR:", err);
   }
 }
 
 initDB();
 
 // =========================
-// AUTH
-// =========================
-app.get('/auth', (req, res) => {
-  res.json(req.session.user || null);
-});
-
-app.get('/logout', (req, res) => {
-  req.session.destroy(() => res.json({ success: true }));
-});
-
-// =========================
-// PAGES
-// =========================
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
-app.get('/home', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
-app.get('/family', (req, res) => res.sendFile(path.join(__dirname, 'family.html')));
-app.get('/checkin', (req, res) => res.sendFile(path.join(__dirname, 'checkin.html')));
-app.get('/activities', (req, res) => res.sendFile(path.join(__dirname, 'activities.html')));
-
-// =========================
 // LOGIN
 // =========================
-app.post('/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
+app.post('/login', async (req,res)=>{
+  const { username, password } = req.body;
 
-    const result = await pool.query(
-      `SELECT * FROM clients WHERE username=$1 AND password=$2`,
-      [username, password]
-    );
+  const result = await pool.query(
+    `SELECT * FROM clients WHERE username=$1 AND password=$2`,
+    [username,password]
+  );
 
-    const user = result.rows[0];
-    if (!user) return res.json({ success: false });
+  const user = result.rows[0];
+  if(!user) return res.json({success:false});
 
-    req.session.user = user;
+  req.session.user = user;
 
-    res.json({ success: true, role: user.role });
+  console.log("LOGIN SUCCESS:", user);
 
-  } catch (err) {
-    console.log("LOGIN ERROR:", err);
-    res.status(500).json({ success: false });
-  }
+  res.json({success:true});
+});
+
+// =========================
+// AUTH
+// =========================
+app.get('/auth',(req,res)=>{
+  console.log("AUTH SESSION:", req.session.user);
+  res.json(req.session.user || null);
 });
 
 // =========================
 // SAVE CHECKIN
 // =========================
-app.post('/checkin', async (req, res) => {
+app.post('/checkin', async (req,res)=>{
   try {
+
+    console.log("SESSION ON SAVE:", req.session.user);
+
     const user = req.session.user;
-    if (!user) return res.status(401).json({ success: false });
+    if(!user) return res.status(401).json({success:false});
 
     const { mood, meds } = req.body;
 
     const today = new Date().toISOString().split('T')[0];
 
-    // Ensure ONE record per day
+    console.log("SAVING:", user.id, mood, meds, today);
+
     await pool.query(
       `DELETE FROM checkins WHERE clientid=$1 AND date=$2`,
       [user.id, today]
     );
 
     await pool.query(
-      `INSERT INTO checkins (clientid, mood, meds, date)
+      `INSERT INTO checkins (clientid,mood,meds,date)
        VALUES ($1,$2,$3,$4)`,
       [user.id, mood, meds, today]
     );
 
-    res.json({ success: true });
+    res.json({success:true});
 
-  } catch (err) {
-    console.log("CHECKIN SAVE ERROR:", err);
-    res.status(500).json({ success: false });
+  } catch(err){
+    console.log("SAVE ERROR:", err);
+    res.status(500).json({success:false});
   }
 });
 
 // =========================
-// LOAD TODAY CHECKIN (KEY FIX)
+// LOAD CHECKIN
 // =========================
-app.get('/checkin-today', async (req, res) => {
+app.get('/checkin-today', async (req,res)=>{
   try {
+
+    console.log("SESSION ON LOAD:", req.session.user);
+
     const user = req.session.user;
-    if (!user) return res.json({ checkedIn: false });
+    if(!user) return res.json({checkedIn:false});
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -181,58 +149,36 @@ app.get('/checkin-today', async (req, res) => {
       [user.id, today]
     );
 
+    console.log("DB RESULT:", result.rows);
+
     const c = result.rows[0];
 
-    if (!c) return res.json({ checkedIn: false });
+    if(!c) return res.json({checkedIn:false});
 
     res.json({
-      checkedIn: true,
-      mood: c.mood,
-      meds: c.meds
+      checkedIn:true,
+      mood:c.mood,
+      meds:c.meds
     });
 
-  } catch (err) {
-    console.log("CHECKIN LOAD ERROR:", err);
-    res.json({ checkedIn: false });
+  } catch(err){
+    console.log("LOAD ERROR:", err);
+    res.json({checkedIn:false});
   }
 });
 
 // =========================
-// SAVE ACTIVITIES
+// PAGES
 // =========================
-app.post('/api/activities', async (req, res) => {
-  try {
-    const user = req.session.user;
-    if (!user) return res.status(401).json({ success: false });
-
-    const { dayForCall, timeForCall, timezone } = req.body;
-
-    await pool.query(
-      `INSERT INTO activities (clientid, dayforcall, timeforcall, timezone)
-       VALUES ($1,$2,$3,$4)`,
-      [user.id, dayForCall, timeForCall, timezone]
-    );
-
-    res.json({ success: true });
-
-  } catch (err) {
-    console.log("ACTIVITIES ERROR:", err);
-    res.status(500).json({ success: false });
-  }
-});
+app.get('/',(req,res)=>res.sendFile(path.join(__dirname,'login.html')));
+app.get('/home',(req,res)=>res.sendFile(path.join(__dirname,'home.html')));
+app.get('/checkin',(req,res)=>res.sendFile(path.join(__dirname,'checkin.html')));
 
 // =========================
-// TEST ROUTE
-// =========================
-app.get('/test', (req, res) => {
-  res.send("TEST WORKING");
-});
-
-// =========================
-// START SERVER
+// START
 // =========================
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+app.listen(PORT, ()=>{
+  console.log("SERVER RUNNING", PORT);
 });

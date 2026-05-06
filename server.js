@@ -35,7 +35,6 @@ app.use(session({
 async function initDB() {
   try {
 
-    // CLIENTS
     await pool.query(`
       CREATE TABLE IF NOT EXISTS clients (
         id SERIAL PRIMARY KEY,
@@ -47,7 +46,6 @@ async function initDB() {
       );
     `);
 
-    // CHECKINS
     await pool.query(`
       CREATE TABLE IF NOT EXISTS checkins (
         id SERIAL PRIMARY KEY,
@@ -58,7 +56,6 @@ async function initDB() {
       );
     `);
 
-    // ACTIVITIES
     await pool.query(`
       CREATE TABLE IF NOT EXISTS activities (
         id SERIAL PRIMARY KEY,
@@ -69,7 +66,7 @@ async function initDB() {
       );
     `);
 
-    // Seed users if empty
+    // seed users if empty
     const r = await pool.query(`SELECT * FROM clients`);
     if (r.rows.length === 0) {
       await pool.query(`
@@ -129,31 +126,37 @@ app.post('/login', async (req,res)=>{
     );
 
     const user = result.rows[0];
-    if(!user) return res.json({success:false});
+
+    if(!user){
+      return res.json({ success:false });
+    }
 
     req.session.user = user;
 
-    res.json({success:true, role:user.role});
+    res.json({
+      success:true,
+      role:user.role
+    });
 
   } catch(err){
     console.log("LOGIN ERROR:", err);
-    res.status(500).json({success:false});
+    res.status(500).json({ success:false });
   }
 });
 
 // =========================
-// SAVE CHECKIN
+// CHECKIN SAVE
 // =========================
 app.post('/checkin', async (req,res)=>{
   try {
     const user = req.session.user;
-    if(!user) return res.status(401).json({success:false});
+    if(!user) return res.status(401).json({ success:false });
 
     const { mood, meds } = req.body;
 
     const today = new Date().toISOString().split('T')[0];
 
-    // Only 1 per day
+    // ensure only 1 per day
     await pool.query(
       `DELETE FROM checkins WHERE clientid=$1 AND date=$2`,
       [user.id, today]
@@ -165,21 +168,21 @@ app.post('/checkin', async (req,res)=>{
       [user.id, mood, meds, today]
     );
 
-    res.json({success:true});
+    res.json({ success:true });
 
   } catch(err){
     console.log("CHECKIN SAVE ERROR:", err);
-    res.status(500).json({success:false});
+    res.status(500).json({ success:false });
   }
 });
 
 // =========================
-// LOAD CHECKIN
+// CHECKIN LOAD
 // =========================
 app.get('/checkin-today', async (req,res)=>{
   try {
     const user = req.session.user;
-    if(!user) return res.json({checkedIn:false});
+    if(!user) return res.json({ checkedIn:false });
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -190,7 +193,9 @@ app.get('/checkin-today', async (req,res)=>{
 
     const c = result.rows[0];
 
-    if(!c) return res.json({checkedIn:false});
+    if(!c){
+      return res.json({ checkedIn:false });
+    }
 
     res.json({
       checkedIn:true,
@@ -200,17 +205,17 @@ app.get('/checkin-today', async (req,res)=>{
 
   } catch(err){
     console.log("CHECKIN LOAD ERROR:", err);
-    res.json({checkedIn:false});
+    res.json({ checkedIn:false });
   }
 });
 
 // =========================
-// SAVE ACTIVITIES
+// ACTIVITIES SAVE
 // =========================
 app.post('/api/activities', async (req,res)=>{
   try {
     const user = req.session.user;
-    if(!user) return res.status(401).json({success:false});
+    if(!user) return res.status(401).json({ success:false });
 
     const { dayForCall, timeForCall, timezone } = req.body;
 
@@ -220,18 +225,18 @@ app.post('/api/activities', async (req,res)=>{
       [user.id, dayForCall, timeForCall, timezone]
     );
 
-    res.json({success:true});
+    res.json({ success:true });
 
   } catch(err){
     console.log("ACTIVITIES ERROR:", err);
-    res.status(500).json({success:false});
+    res.status(500).json({ success:false });
   }
 });
 
 // =========================
 // DEBUG ROUTE
 // =========================
-app.get('/test',(req,res)=>{
+app.get('/test', (req,res)=>{
   res.send("TEST WORKING");
 });
 

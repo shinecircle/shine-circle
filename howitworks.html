@@ -3,13 +3,10 @@
 <head>
   <title>How It Works | Shine Circle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-
-<!-- VERSION 2.0 FORCE UPDATE -->
 
 <!-- HEADER -->
 <div class="header">
@@ -100,12 +97,18 @@
 
 <script>
 
-// AUTO REDIRECT IF LOGGED IN
+// 🔒 SAFE REDIRECT: ONLY after login
 fetch('/auth')
 .then(r => r.json())
 .then(user => {
 
   if(!user) return;
+
+  const justLoggedIn = sessionStorage.getItem("justLoggedIn");
+
+  if(justLoggedIn !== "true") return;
+
+  sessionStorage.removeItem("justLoggedIn");
 
   if(user.role === 'user'){
     window.location = '/home';

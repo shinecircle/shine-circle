@@ -46,10 +46,8 @@
 
 <body>
 
-<!-- ✅ STANDARD HEADER (matches other pages) -->
 <div class="header">
   <img src="logo.jpg" class="logo">
-
   <div>
     <button class="btn btn-light" onclick="goHome()">Home</button>
   </div>
@@ -65,12 +63,10 @@
     Daily check-ins, real human connection, and peace of mind for families.
   </p>
 
-  <!-- ✅ SINGLE ENTRY BUTTON -->
   <button class="big-btn" onclick="showLogin()">
     Login to Continue
   </button>
 
-  <!-- LOGIN FORM -->
   <div id="loginBox" class="card" style="display:none;">
 
     <input id="username" placeholder="Username"><br>
@@ -86,12 +82,10 @@
 
 <script>
 
-// SHOW LOGIN
 function showLogin(){
   document.getElementById("loginBox").style.display = "block";
 }
 
-// LOGIN
 function login(){
 
   fetch('/login',{
@@ -110,7 +104,9 @@ function login(){
       return;
     }
 
-    // ✅ ROUTING BASED ON ROLE (unchanged backend logic)
+    // ✅ SET REDIRECT FLAG
+    sessionStorage.setItem("justLoggedIn", "true");
+
     if(data.role === 'user'){
       window.location = '/home';
     } else {

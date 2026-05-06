@@ -29,12 +29,6 @@
       cursor:pointer;
     }
 
-    .small-btn {
-      font-size:14px;
-      padding:10px;
-      margin-top:10px;
-    }
-
     .card {
       margin-top:20px;
       padding:15px;
@@ -52,7 +46,14 @@
 
 <body>
 
-<img src="logo.jpg" style="height:60px;">
+<!-- ✅ STANDARD HEADER (matches other pages) -->
+<div class="header">
+  <img src="logo.jpg" class="logo">
+
+  <div>
+    <button class="btn btn-light" onclick="goHome()">Home</button>
+  </div>
+</div>
 
 <div class="hero">
 
@@ -64,14 +65,9 @@
     Daily check-ins, real human connection, and peace of mind for families.
   </p>
 
-  <!-- BIG CLIENT BUTTON -->
-  <button class="big-btn" onclick="showLogin('user')">
-    I'm Checking In Today
-  </button>
-
-  <!-- FAMILY BUTTON -->
-  <button class="btn small-btn" onclick="showLogin('family')">
-    Family / Caregiver Login
+  <!-- ✅ SINGLE ENTRY BUTTON -->
+  <button class="big-btn" onclick="showLogin()">
+    Login to Continue
   </button>
 
   <!-- LOGIN FORM -->
@@ -90,11 +86,8 @@
 
 <script>
 
-let selectedRole = "";
-
 // SHOW LOGIN
-function showLogin(role){
-  selectedRole = role;
+function showLogin(){
   document.getElementById("loginBox").style.display = "block";
 }
 
@@ -117,14 +110,19 @@ function login(){
       return;
     }
 
-    // ROUTING
+    // ✅ ROUTING BASED ON ROLE (unchanged backend logic)
     if(data.role === 'user'){
-      window.location = 'home.html';
+      window.location = '/home';
     } else {
-      window.location = 'family.html';
+      window.location = '/family';
     }
 
   });
+}
+
+// NAV
+function goHome(){
+  window.location = '/';
 }
 
 </script>

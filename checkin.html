@@ -6,7 +6,15 @@
   <link rel="stylesheet" href="styles.css">
 
   <style>
-    .question { font-size:20px; margin-top:20px; }
+    .panel {
+      margin:20px auto;
+      padding:20px;
+      border-radius:12px;
+      max-width:500px;
+    }
+
+    .mood-panel { background:#E8F0FE; }
+    .meds-panel { background:#E8F8F5; }
 
     .btn-group button{
       margin:5px;
@@ -37,29 +45,35 @@
 <div style="text-align:center;padding:20px;">
 
   <h2>Daily Check-In</h2>
-
   <p id="today"></p>
-  <p id="status" style="color:green;font-weight:bold;"></p>
 
-  <!-- MOOD -->
-  <div class="question">How are you doing today?</div>
-  <div id="moodBtns" class="btn-group">
-    <button onclick="selectMood(this)">Great</button>
-    <button onclick="selectMood(this)">Good</button>
-    <button onclick="selectMood(this)">Low</button>
-    <button onclick="selectMood(this)">Struggling</button>
+  <!-- MOOD PANEL -->
+  <div class="panel mood-panel">
+    <h3>How are you feeling today?</h3>
+
+    <div id="moodBtns" class="btn-group">
+      <button onclick="selectMood(this)">Great</button>
+      <button onclick="selectMood(this)">Good</button>
+      <button onclick="selectMood(this)">Low</button>
+      <button onclick="selectMood(this)">Struggling</button>
+    </div>
+
+    <br>
+    <button id="moodSubmit" class="btn" onclick="submitMood()">Save Mood</button>
   </div>
 
-  <!-- MEDS -->
-  <div class="question">Did you take your medicine today?</div>
-  <div id="medBtns" class="btn-group">
-    <button onclick="selectMeds(this)">Yes</button>
-    <button onclick="selectMeds(this)">No</button>
+  <!-- MEDS PANEL -->
+  <div class="panel meds-panel">
+    <h3>Did you take your medicine today?</h3>
+
+    <div id="medBtns" class="btn-group">
+      <button onclick="selectMeds(this)">Yes</button>
+      <button onclick="selectMeds(this)">No</button>
+    </div>
+
+    <br>
+    <button id="medSubmit" class="btn" onclick="submitMeds()">Save Medication</button>
   </div>
-
-  <br>
-
-  <button id="submitBtn" class="btn" onclick="submitCheckin()">Submit</button>
 
   <p id="msg"></p>
 
@@ -69,113 +83,44 @@
 
 let selectedMood="";
 let selectedMeds="";
-let locked=false;
 
 // DATE
 document.getElementById("today").innerText =
-  "Today is: " + new Date().toLocaleDateString('en-US',{
-    weekday:'long',year:'numeric',month:'long',day:'numeric'
-  });
+  "Today is: " + new Date().toLocaleDateString();
 
-// =========================
-// LOAD EXISTING CHECKIN
-// =========================
-function loadCheckin(){
+// LOAD EXISTING
+fetch('/checkin-today')
+.then(r=>r.json())
+.then(d=>{
+  if(d.checkedIn){
+    selectedMood = d.mood || "";
+    selectedMeds = d.meds || "";
 
-  fetch('/checkin-today')
-  .then(r=>r.json())
-  .then(d=>{
+    highlight();
+    disableIfSaved();
+  }
+});
 
-    if(d.checkedIn){
-
-      locked=true;
-
-      selectedMood = d.mood || "";
-      selectedMeds = d.meds || "";
-
-      document.getElementById("status").innerText =
-        "You already checked in today";
-
-      highlightSelections();
-      disableInputs();
-    }
-  });
-}
-
-loadCheckin();
-
-// =========================
 // SELECT
-// =========================
 function selectMood(btn){
-  if(locked) return;
-
   selectedMood = btn.innerText;
-
   document.querySelectorAll("#moodBtns button")
     .forEach(b=>b.classList.remove("selected"));
-
   btn.classList.add("selected");
 }
 
 function selectMeds(btn){
-  if(locked) return;
-
   selectedMeds = btn.innerText;
-
   document.querySelectorAll("#medBtns button")
     .forEach(b=>b.classList.remove("selected"));
-
   btn.classList.add("selected");
 }
 
-// =========================
-// HIGHLIGHT SAVED
-// =========================
-function highlightSelections(){
-
-  document.querySelectorAll("#moodBtns button")
-    .forEach(b=>{
-      if(b.innerText === selectedMood){
-        b.classList.add("selected");
-      }
-    });
-
-  document.querySelectorAll("#medBtns button")
-    .forEach(b=>{
-      if(b.innerText === selectedMeds){
-        b.classList.add("selected");
-      }
-    });
-}
-
-// =========================
-// DISABLE INPUTS
-// =========================
-function disableInputs(){
-
-  document.querySelectorAll("#moodBtns button")
-    .forEach(b=>{
-      b.classList.add("disabled");
-      b.disabled = true;
-    });
-
-  document.querySelectorAll("#medBtns button")
-    .forEach(b=>{
-      b.classList.add("disabled");
-      b.disabled = true;
-    });
-
-  document.getElementById("submitBtn").style.display="none";
-}
-
-// =========================
-// SUBMIT
-// =========================
-function submitCheckin(){
+// SAVE MOOD ONLY
+function submitMood(){
 
   if(!selectedMood){
-    document.getElementById("msg").innerText="Please select your mood.";
+    document.getElementById("msg").innerText="Select a mood first";
     return;
   }
 
@@ -187,16 +132,39 @@ function submitCheckin(){
       meds:selectedMeds
     })
   })
-  .then(r=>r.json())
-  .then(()=>{
-    document.getElementById("msg").innerText="Saved!";
-    locked = true;
-    highlightSelections();
-    disableInputs();
-  })
-  .catch(()=>{
-    document.getElementById("msg").innerText="Error saving";
+  .then(()=> {
+    document.getElementById("msg").innerText="Mood saved!";
   });
+}
+
+// SAVE MEDS ONLY
+function submitMeds(){
+
+  fetch('/checkin',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      mood:selectedMood,
+      meds:selectedMeds
+    })
+  })
+  .then(()=> {
+    document.getElementById("msg").innerText="Medication saved!";
+  });
+}
+
+// UI HELPERS
+function highlight(){
+  document.querySelectorAll("#moodBtns button")
+    .forEach(b=>{ if(b.innerText===selectedMood) b.classList.add("selected"); });
+
+  document.querySelectorAll("#medBtns button")
+    .forEach(b=>{ if(b.innerText===selectedMeds) b.classList.add("selected"); });
+}
+
+function disableIfSaved(){
+  document.getElementById("moodSubmit").innerText="Saved";
+  document.getElementById("medSubmit").innerText="Saved";
 }
 
 // NAV

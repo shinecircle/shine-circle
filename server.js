@@ -30,57 +30,38 @@ app.use(session({
 }));
 
 // =========================
-// INIT DATABASE
+// INIT DB
 // =========================
 async function initDB() {
-  try {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clients (
+      id SERIAL PRIMARY KEY,
+      username TEXT,
+      firstname TEXT,
+      lastname TEXT,
+      role TEXT,
+      password TEXT
+    );
+  `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS checkins (
+      id SERIAL PRIMARY KEY,
+      clientid INTEGER,
+      date TEXT,
+      mood TEXT,
+      meds TEXT
+    );
+  `);
+
+  const r = await pool.query(`SELECT * FROM clients`);
+  if (r.rows.length === 0) {
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS clients (
-        id SERIAL PRIMARY KEY,
-        username TEXT,
-        firstname TEXT,
-        lastname TEXT,
-        role TEXT,
-        password TEXT
-      );
+      INSERT INTO clients (username, firstname, lastname, role, password)
+      VALUES 
+      ('user','John','Doe','user','1234'),
+      ('family','Sarah','Doe','caregiver','1234')
     `);
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS checkins (
-        id SERIAL PRIMARY KEY,
-        clientid INTEGER,
-        mood TEXT,
-        meds TEXT,
-        date TEXT
-      );
-    `);
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS activities (
-        id SERIAL PRIMARY KEY,
-        clientid INTEGER,
-        dayforcall TEXT,
-        timeforcall TEXT,
-        timezone TEXT
-      );
-    `);
-
-    // seed users if empty
-    const r = await pool.query(`SELECT * FROM clients`);
-    if (r.rows.length === 0) {
-      await pool.query(`
-        INSERT INTO clients (username, firstname, lastname, role, password)
-        VALUES 
-        ('user','John','Doe','user','1234'),
-        ('family','Sarah','Doe','caregiver','1234')
-      `);
-    }
-
-    console.log("DB READY");
-
-  } catch (err) {
-    console.log("DB INIT ERROR:", err);
   }
 }
 
@@ -89,159 +70,121 @@ initDB();
 // =========================
 // AUTH
 // =========================
-app.get('/auth', (req, res) => {
+app.get('/auth', (req,res)=>{
   res.json(req.session.user || null);
 });
 
-app.get('/logout', (req, res) => {
-  req.session.destroy(() => res.json({ success: true }));
-});
-
-// =========================
-// LANDING PAGE
-// =========================
-app.get('/', (req,res)=>{
-  res.sendFile(path.join(__dirname,'howitworks.html'));
+app.get('/logout',(req,res)=>{
+  req.session.destroy(()=>res.json({success:true}));
 });
 
 // =========================
 // PAGES
 // =========================
-app.get('/login', (req,res)=>res.sendFile(path.join(__dirname,'login.html')));
-app.get('/home', (req,res)=>res.sendFile(path.join(__dirname,'home.html')));
-app.get('/family', (req,res)=>res.sendFile(path.join(__dirname,'family.html')));
-app.get('/checkin', (req,res)=>res.sendFile(path.join(__dirname,'checkin.html')));
-app.get('/activities', (req,res)=>res.sendFile(path.join(__dirname,'activities.html')));
+app.get('/',(req,res)=>res.sendFile(path.join(__dirname,'howitworks.html')));
+app.get('/login',(req,res)=>res.sendFile(path.join(__dirname,'login.html')));
+app.get('/home',(req,res)=>res.sendFile(path.join(__dirname,'home.html')));
+app.get('/family',(req,res)=>res.sendFile(path.join(__dirname,'family.html')));
+app.get('/checkin',(req,res)=>res.sendFile(path.join(__dirname,'checkin.html')));
+app.get('/activities',(req,res)=>res.sendFile(path.join(__dirname,'activities.html')));
 
 // =========================
 // LOGIN
 // =========================
 app.post('/login', async (req,res)=>{
-  try {
-    const { username, password } = req.body;
+  const { username, password } = req.body;
 
-    const result = await pool.query(
-      `SELECT * FROM clients WHERE username=$1 AND password=$2`,
-      [username,password]
-    );
+  const result = await pool.query(
+    `SELECT * FROM clients WHERE username=$1 AND password=$2`,
+    [username,password]
+  );
 
-    const user = result.rows[0];
+  const user = result.rows[0];
+  if(!user) return res.json({success:false});
 
-    if(!user){
-      return res.json({ success:false });
-    }
+  req.session.user = user;
 
-    req.session.user = user;
-
-    res.json({
-      success:true,
-      role:user.role
-    });
-
-  } catch(err){
-    console.log("LOGIN ERROR:", err);
-    res.status(500).json({ success:false });
-  }
+  res.json({success:true, role:user.role});
 });
 
 // =========================
-// CHECKIN SAVE
+// SAVE CHECKIN (NO OVERWRITE)
 // =========================
 app.post('/checkin', async (req,res)=>{
   try {
     const user = req.session.user;
-    if(!user) return res.status(401).json({ success:false });
+    if(!user) return res.status(401).json({success:false});
 
     const { mood, meds } = req.body;
-
     const today = new Date().toISOString().split('T')[0];
 
-    // ensure only 1 per day
-    await pool.query(
-      `DELETE FROM checkins WHERE clientid=$1 AND date=$2`,
-      [user.id, today]
-    );
-
-    await pool.query(
-      `INSERT INTO checkins (clientid, mood, meds, date)
-       VALUES ($1,$2,$3,$4)`,
-      [user.id, mood, meds, today]
-    );
-
-    res.json({ success:true });
-
-  } catch(err){
-    console.log("CHECKIN SAVE ERROR:", err);
-    res.status(500).json({ success:false });
-  }
-});
-
-// =========================
-// CHECKIN LOAD
-// =========================
-app.get('/checkin-today', async (req,res)=>{
-  try {
-    const user = req.session.user;
-    if(!user) return res.json({ checkedIn:false });
-
-    const today = new Date().toISOString().split('T')[0];
-
-    const result = await pool.query(
+    // get existing row
+    const existing = await pool.query(
       `SELECT * FROM checkins WHERE clientid=$1 AND date=$2`,
       [user.id, today]
     );
 
-    const c = result.rows[0];
+    if(existing.rows.length === 0){
+      // create new row
+      await pool.query(
+        `INSERT INTO checkins (clientid, date, mood, meds)
+         VALUES ($1,$2,$3,$4)`,
+        [user.id, today, mood || null, meds || null]
+      );
+    } else {
+      // update ONLY provided fields
+      if(mood){
+        await pool.query(
+          `UPDATE checkins SET mood=$1 WHERE clientid=$2 AND date=$3`,
+          [mood, user.id, today]
+        );
+      }
 
-    if(!c){
-      return res.json({ checkedIn:false });
+      if(meds){
+        await pool.query(
+          `UPDATE checkins SET meds=$1 WHERE clientid=$2 AND date=$3`,
+          [meds, user.id, today]
+        );
+      }
     }
 
-    res.json({
-      checkedIn:true,
-      mood:c.mood,
-      meds:c.meds
-    });
+    res.json({success:true});
 
   } catch(err){
-    console.log("CHECKIN LOAD ERROR:", err);
-    res.json({ checkedIn:false });
+    console.log(err);
+    res.status(500).json({success:false});
   }
 });
 
 // =========================
-// ACTIVITIES SAVE
+// LOAD CHECKIN
 // =========================
-app.post('/api/activities', async (req,res)=>{
-  try {
-    const user = req.session.user;
-    if(!user) return res.status(401).json({ success:false });
+app.get('/checkin-today', async (req,res)=>{
+  const user = req.session.user;
+  if(!user) return res.json({checkedIn:false});
 
-    const { dayForCall, timeForCall, timezone } = req.body;
+  const today = new Date().toISOString().split('T')[0];
 
-    await pool.query(
-      `INSERT INTO activities (clientid, dayforcall, timeforcall, timezone)
-       VALUES ($1,$2,$3,$4)`,
-      [user.id, dayForCall, timeForCall, timezone]
-    );
+  const result = await pool.query(
+    `SELECT * FROM checkins WHERE clientid=$1 AND date=$2`,
+    [user.id, today]
+  );
 
-    res.json({ success:true });
+  const c = result.rows[0];
 
-  } catch(err){
-    console.log("ACTIVITIES ERROR:", err);
-    res.status(500).json({ success:false });
+  if(!c){
+    return res.json({checkedIn:false});
   }
+
+  res.json({
+    checkedIn:true,
+    mood:c.mood,
+    meds:c.meds
+  });
 });
 
 // =========================
-// DEBUG ROUTE
-// =========================
-app.get('/test', (req,res)=>{
-  res.send("TEST WORKING");
-});
-
-// =========================
-// START SERVER
+// START
 // =========================
 const PORT = process.env.PORT || 3000;
 

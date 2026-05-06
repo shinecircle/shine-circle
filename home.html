@@ -1,60 +1,134 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Home</title>
+  <title>Home | Shine Circle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="styles.css">
+
+  <style>
+    body {
+      text-align:center;
+      padding:20px;
+    }
+
+    .section {
+      margin-top:20px;
+      padding:15px;
+      border-radius:10px;
+      background:#f5f5f5;
+    }
+
+    .status-good {
+      color:green;
+      font-weight:bold;
+    }
+
+    .status-missing {
+      color:#999;
+    }
+  </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
   <img src="logo.jpg" class="logo">
+
   <div>
+    <button class="btn" onclick="goCheckin()">Check-In</button>
+    <button class="btn" onclick="goActivities()">Activities</button>
     <button class="btn" onclick="logout()">Logout</button>
   </div>
 </div>
 
-<div style="text-align:center;padding:20px;" id="content"></div>
+<div id="content">
+
+  <h2 id="welcome"></h2>
+
+  <div id="date"></div>
+
+  <div class="section" id="statusBox">
+    Loading today's status...
+  </div>
+
+</div>
 
 <script>
 
+// =========================
+// LOAD USER
+// =========================
 fetch('/auth')
-.then(r => r.json())
-.then(u => {
+.then(r=>r.json())
+.then(user=>{
 
-  if(!u){
-    window.location='login.html';
+  if(!user){
+    window.location='/login';
     return;
   }
 
-  const name = u.firstname || u.firstName || "User";
+  const name = user.firstname || user.username || "Friend";
 
-  let html = `<h2>Welcome ${name}</h2>`;
-
-  if(u.role === 'user'){
-    html += `
-      <a href="/checkin"><button class="btn">Daily Check-In</button></a>
-      <a href="/activities"><button class="btn">Activities</button></a>
-    `;
-  }
-
-  if(u.role === 'caregiver'){
-    html += `
-      <a href="/family"><button class="btn">Dashboard</button></a>
-    `;
-  }
-
-  document.getElementById("content").innerHTML = html;
-})
-.catch(err => {
-  console.error(err);
-  document.getElementById("content").innerHTML = "Error loading page";
+  document.getElementById("welcome").innerText =
+    "Welcome, " + name + "!";
 });
+
+// =========================
+// TODAY DATE
+// =========================
+const todayStr = new Date().toLocaleDateString('en-US',{
+  weekday:'long',
+  year:'numeric',
+  month:'long',
+  day:'numeric'
+});
+
+document.getElementById("date").innerHTML =
+  "<p><b>Today:</b> " + todayStr + "</p>";
+
+// =========================
+// LOAD CHECKIN STATUS
+// =========================
+fetch('/checkin-today')
+.then(r=>r.json())
+.then(d=>{
+
+  let html = "";
+
+  if(!d.checkedIn){
+    html = "<p class='status-missing'>No check-in yet today</p>";
+  } else {
+
+    html += "<p><b>Today's Status</b></p>";
+
+    html += d.mood
+      ? `<p class="status-good">✔ Mood: ${d.mood}</p>`
+      : `<p class="status-missing">Mood not checked yet</p>`;
+
+    html += d.meds
+      ? `<p class="status-good">✔ Medication: ${d.meds}</p>`
+      : `<p class="status-missing">Medication not checked yet</p>`;
+  }
+
+  document.getElementById("statusBox").innerHTML = html;
+});
+
+// =========================
+// NAV
+// =========================
+function goCheckin(){
+  window.location='/checkin';
+}
+
+function goActivities(){
+  window.location='/activities';
+}
 
 function logout(){
   fetch('/logout')
-  .then(()=>window.location='login.html');
+  .then(()=>window.location='/');
 }
 
 </script>

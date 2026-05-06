@@ -1,69 +1,210 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Daily Check-In</title>
-<link rel="stylesheet" href="styles.css">
+  <title>Daily Check-In</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    .question { font-size:20px; margin-top:20px; }
+
+    .btn-group button{
+      margin:5px;
+      padding:12px;
+      border-radius:8px;
+      border:none;
+      background:#1E6FDB;
+      color:white;
+      cursor:pointer;
+    }
+
+    .selected { background:#0B2A5B; }
+    .disabled { background:#ccc !important; cursor:not-allowed; }
+  </style>
 </head>
 
 <body>
 
-<h2>Daily Check-In</h2>
-
-<div>
-<button onclick="setMood('Great')">Great</button>
-<button onclick="setMood('Good')">Good</button>
-<button onclick="setMood('Low')">Low</button>
-<button onclick="setMood('Struggling')">Struggling</button>
+<div class="header">
+  <img src="logo.jpg" class="logo">
+  <div>
+    <button class="btn" onclick="goHome()">Home</button>
+    <button class="btn" onclick="goActivities()">Activities</button>
+    <button class="btn" onclick="logout()">Logout</button>
+  </div>
 </div>
 
-<br>
+<div style="text-align:center;padding:20px;">
 
-<div>
-<button onclick="setMeds('Yes')">Yes</button>
-<button onclick="setMeds('No')">No</button>
+  <h2>Daily Check-In</h2>
+
+  <p id="today"></p>
+  <p id="status" style="color:green;font-weight:bold;"></p>
+
+  <!-- MOOD -->
+  <div class="question">How are you doing today?</div>
+  <div id="moodBtns" class="btn-group">
+    <button onclick="selectMood(this)">Great</button>
+    <button onclick="selectMood(this)">Good</button>
+    <button onclick="selectMood(this)">Low</button>
+    <button onclick="selectMood(this)">Struggling</button>
+  </div>
+
+  <!-- MEDS -->
+  <div class="question">Did you take your medicine today?</div>
+  <div id="medBtns" class="btn-group">
+    <button onclick="selectMeds(this)">Yes</button>
+    <button onclick="selectMeds(this)">No</button>
+  </div>
+
+  <br>
+
+  <button id="submitBtn" class="btn" onclick="submitCheckin()">Submit</button>
+
+  <p id="msg"></p>
+
 </div>
-
-<br>
-
-<button onclick="submit()">Submit</button>
-
-<p id="msg"></p>
 
 <script>
 
-let mood="";
-let meds="";
+let selectedMood="";
+let selectedMeds="";
+let locked=false;
 
-function setMood(m){ mood=m; }
-function setMeds(m){ meds=m; }
-
-function submit(){
-
-  fetch('/checkin',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ mood, meds })
-  })
-  .then(r=>r.json())
-  .then(()=>{
-    document.getElementById("msg").innerText="Saved";
-    load();
+// DATE
+document.getElementById("today").innerText =
+  "Today is: " + new Date().toLocaleDateString('en-US',{
+    weekday:'long',year:'numeric',month:'long',day:'numeric'
   });
-}
 
-function load(){
+// =========================
+// LOAD EXISTING CHECKIN
+// =========================
+function loadCheckin(){
 
   fetch('/checkin-today')
   .then(r=>r.json())
   .then(d=>{
+
     if(d.checkedIn){
-      document.getElementById("msg").innerText =
-        "Today: " + d.mood + " / " + d.meds;
+
+      locked=true;
+
+      selectedMood = d.mood || "";
+      selectedMeds = d.meds || "";
+
+      const time = new Date(d.timestamp)
+        .toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+
+      document.getElementById("status").innerText =
+        `You checked in today at ${time}`;
+
+      highlightSelections();
+      disableInputs();
     }
   });
 }
 
-load();
+loadCheckin();
+
+// =========================
+// SELECT FUNCTIONS
+// =========================
+function selectMood(btn){
+  if(locked) return;
+
+  selectedMood = btn.innerText;
+
+  document.querySelectorAll("#moodBtns button")
+    .forEach(b=>b.classList.remove("selected"));
+
+  btn.classList.add("selected");
+}
+
+function selectMeds(btn){
+  if(locked) return;
+
+  selectedMeds = btn.innerText;
+
+  document.querySelectorAll("#medBtns button")
+    .forEach(b=>b.classList.remove("selected"));
+
+  btn.classList.add("selected");
+}
+
+// =========================
+// HIGHLIGHT AFTER LOAD
+// =========================
+function highlightSelections(){
+
+  document.querySelectorAll("#moodBtns button")
+    .forEach(b=>{
+      if(b.innerText === selectedMood){
+        b.classList.add("selected");
+      }
+    });
+
+  document.querySelectorAll("#medBtns button")
+    .forEach(b=>{
+      if(b.innerText === selectedMeds){
+        b.classList.add("selected");
+      }
+    });
+}
+
+// =========================
+// DISABLE INPUTS
+// =========================
+function disableInputs(){
+
+  document.querySelectorAll("#moodBtns button")
+    .forEach(b=>{
+      b.classList.add("disabled");
+      b.disabled = true;
+    });
+
+  document.querySelectorAll("#medBtns button")
+    .forEach(b=>{
+      b.classList.add("disabled");
+      b.disabled = true;
+    });
+
+  document.getElementById("submitBtn").style.display="none";
+}
+
+// =========================
+// SUBMIT
+// =========================
+function submitCheckin(){
+
+  if(!selectedMood){
+    document.getElementById("msg").innerText="Please select your mood.";
+    return;
+  }
+
+  fetch('/checkin',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      mood:selectedMood,
+      meds:selectedMeds
+    })
+  })
+  .then(r=>r.json())
+  .then(()=>{
+    document.getElementById("msg").innerText="Saved!";
+    
+    // 🔥 UPDATE UI WITHOUT RELOAD
+    locked = true;
+    highlightSelections();
+    disableInputs();
+  });
+}
+
+// NAV
+function goHome(){ window.location='/home'; }
+function goActivities(){ window.location='/activities'; }
+function logout(){ fetch('/logout').then(()=>window.location='/'); }
 
 </script>
 

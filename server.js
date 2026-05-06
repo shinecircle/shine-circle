@@ -5,11 +5,10 @@ const path = require('path');
 
 const app = express();
 
-// Trust proxy (required for Render / HTTPS)
 app.set('trust proxy', 1);
 
 // =========================
-// DATABASE (POSTGRES ONLY)
+// DATABASE
 // =========================
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -27,19 +26,15 @@ app.use(session({
   secret: 'shine-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: {
-    secure: false // OK for now
-  }
+  cookie: { secure: false }
 }));
 
 // =========================
-// DATABASE INIT
+// INIT DB
 // =========================
 async function initDB() {
   try {
-    console.log("Initializing database...");
 
-    // CLIENTS
     await pool.query(`
       CREATE TABLE IF NOT EXISTS clients (
         id SERIAL PRIMARY KEY,
@@ -51,7 +46,6 @@ async function initDB() {
       );
     `);
 
-    // ACTIVITIES
     await pool.query(`
       CREATE TABLE IF NOT EXISTS activities (
         id SERIAL PRIMARY KEY,
@@ -62,137 +56,165 @@ async function initDB() {
       );
     `);
 
-    // Fix existing schema issues
     await pool.query(`
-      ALTER TABLE clients ADD COLUMN IF NOT EXISTS username TEXT;
+      CREATE TABLE IF NOT EXISTS checkins (
+        id SERIAL PRIMARY KEY,
+        clientid INTEGER,
+        mood TEXT,
+        meds TEXT,
+        timestamp TEXT
+      );
     `);
 
-    await pool.query(`
-      ALTER TABLE activities ADD COLUMN IF NOT EXISTS clientid INTEGER;
-    `);
-
-    // Seed users if empty
-    const result = await pool.query(`SELECT * FROM clients`);
-
-    if (result.rows.length === 0) {
-      console.log("Seeding default users...");
-
+    // seed users
+    const r = await pool.query(`SELECT * FROM clients`);
+    if (r.rows.length === 0) {
       await pool.query(`
         INSERT INTO clients (username, firstname, lastname, role, password)
-        VALUES
+        VALUES 
         ('user','John','Doe','user','1234'),
         ('family','Sarah','Doe','caregiver','1234')
       `);
     }
 
-    console.log("Database ready.");
   } catch (err) {
-    console.error("DB INIT ERROR:", err);
+    console.log("DB ERROR:", err);
   }
 }
 
 initDB();
 
 // =========================
-// AUTH ROUTES (🔥 FIX)
+// AUTH
 // =========================
-
-// Returns logged-in user
-app.get('/auth', (req, res) => {
-  if (!req.session.user) {
-    return res.json(null);
-  }
-  res.json(req.session.user);
+app.get('/auth', (req,res)=>{
+  res.json(req.session.user || null);
 });
 
-// Logout
-app.get('/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.json({ success: true });
-  });
+app.get('/logout',(req,res)=>{
+  req.session.destroy(()=>res.json({success:true}));
 });
 
 // =========================
 // DEBUG
 // =========================
-app.get('/debug-users', async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT id, username, role FROM clients ORDER BY id`
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("DB error");
-  }
-});
+app.get('/test',(req,res)=>res.send("TEST WORKING"));
 
 // =========================
-// TEST
+// PAGES
 // =========================
-app.get('/test', (req, res) => {
-  res.send("TEST WORKING");
-});
-
-// =========================
-// PAGE ROUTES
-// =========================
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'login.html'));
-});
-
-app.get('/home', (req, res) => {
-  res.sendFile(path.join(__dirname, 'home.html'));
-});
-
-app.get('/family', (req, res) => {
-  res.sendFile(path.join(__dirname, 'family.html'));
-});
-
-app.get('/checkin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'checkin.html'));
-});
-
-app.get('/activities', (req, res) => {
-  res.sendFile(path.join(__dirname, 'activities.html'));
-});
+app.get('/',(req,res)=>res.sendFile(path.join(__dirname,'login.html')));
+app.get('/home',(req,res)=>res.sendFile(path.join(__dirname,'home.html')));
+app.get('/family',(req,res)=>res.sendFile(path.join(__dirname,'family.html')));
+app.get('/checkin',(req,res)=>res.sendFile(path.join(__dirname,'checkin.html')));
+app.get('/activities',(req,res)=>res.sendFile(path.join(__dirname,'activities.html')));
 
 // =========================
 // LOGIN
 // =========================
-app.post('/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
+app.post('/login', async (req,res)=>{
+  const { username, password } = req.body;
 
-    const result = await pool.query(
-      `SELECT * FROM clients WHERE username=$1 AND password=$2`,
-      [username, password]
+  const result = await pool.query(
+    `SELECT * FROM clients WHERE username=$1 AND password=$2`,
+    [username,password]
+  );
+
+  const user = result.rows[0];
+  if(!user) return res.json({success:false});
+
+  req.session.user = user;
+  res.json({success:true, role:user.role});
+});
+
+// =========================
+// CHECKIN SAVE
+// =========================
+app.post('/checkin', async (req,res)=>{
+  try {
+    const user = req.session.user;
+    if(!user) return res.status(401).json({success:false});
+
+    const { mood, meds } = req.body;
+
+    await pool.query(
+      `INSERT INTO checkins (clientid,mood,meds,timestamp)
+       VALUES ($1,$2,$3,$4)`,
+      [user.id, mood, meds, new Date().toISOString()]
     );
 
-    const user = result.rows[0];
-
-    if (!user) {
-      return res.json({ success: false });
-    }
-
-    req.session.user = user;
-
-    res.json({
-      success: true,
-      role: user.role
-    });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Login error");
+    res.json({success:true});
+  } catch(err){
+    console.log(err);
+    res.status(500).json({success:false});
   }
 });
 
 // =========================
-// START SERVER
+// CHECKIN LOAD
+// =========================
+app.get('/checkin-today', async (req,res)=>{
+  try {
+    const user = req.session.user;
+    if(!user) return res.json({checkedIn:false});
+
+    const result = await pool.query(
+      `SELECT * FROM checkins 
+       WHERE clientid=$1 
+       ORDER BY timestamp DESC 
+       LIMIT 1`,
+      [user.id]
+    );
+
+    const c = result.rows[0];
+    if(!c) return res.json({checkedIn:false});
+
+    const today = new Date().toDateString();
+
+    if(new Date(c.timestamp).toDateString() === today){
+      return res.json({
+        checkedIn:true,
+        mood:c.mood,
+        meds:c.meds,
+        timestamp:c.timestamp
+      });
+    }
+
+    res.json({checkedIn:false});
+  } catch(err){
+    console.log(err);
+    res.json({checkedIn:false});
+  }
+});
+
+// =========================
+// ACTIVITIES SAVE
+// =========================
+app.post('/api/activities', async (req,res)=>{
+  try {
+    const user = req.session.user;
+    if(!user) return res.status(401).json({success:false});
+
+    const { dayForCall, timeForCall, timezone } = req.body;
+
+    await pool.query(
+      `INSERT INTO activities (clientid,dayforcall,timeforcall,timezone)
+       VALUES ($1,$2,$3,$4)`,
+      [user.id, dayForCall, timeForCall, timezone]
+    );
+
+    res.json({success:true});
+  } catch(err){
+    console.log(err);
+    res.status(500).json({success:false});
+  }
+});
+
+// =========================
+// START
 // =========================
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, ()=>{
   console.log("Server running on port " + PORT);
 });

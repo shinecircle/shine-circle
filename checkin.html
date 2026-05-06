@@ -38,6 +38,13 @@
 
   <h2>Daily Check-In</h2>
 
+<<<<<<< HEAD
+=======
+  <p id="today"></p>
+  <p id="status" style="color:green;font-weight:bold;"></p>
+
+  <!-- MOOD -->
+>>>>>>> parent of c781130 (get checkin into db)
   <div class="question">How are you doing today?</div>
   <div id="moodBtns" class="btn-group">
     <button onclick="selectMood(this)">Great</button>
@@ -46,6 +53,10 @@
     <button onclick="selectMood(this)">Struggling</button>
   </div>
 
+<<<<<<< HEAD
+=======
+  <!-- MEDS -->
+>>>>>>> parent of c781130 (get checkin into db)
   <div class="question">Did you take your medicine today?</div>
   <div id="medBtns" class="btn-group">
     <button onclick="selectMeds(this)">Yes</button>
@@ -62,10 +73,11 @@
 
 <script>
 
-let mood="";
-let meds="";
+let selectedMood="";
+let selectedMeds="";
 let locked=false;
 
+<<<<<<< HEAD
 // =========================
 // LOAD SAVED DATA
 // =========================
@@ -85,14 +97,51 @@ fetch('/checkin-today')
     disable();
   }
 });
+=======
+// DATE
+document.getElementById("today").innerText =
+  "Today is: " + new Date().toLocaleDateString('en-US',{
+    weekday:'long',year:'numeric',month:'long',day:'numeric'
+  });
+>>>>>>> parent of c781130 (get checkin into db)
 
 // =========================
-// SELECT
+// LOAD EXISTING CHECKIN
+// =========================
+function loadCheckin(){
+
+  fetch('/checkin-today')
+  .then(r=>r.json())
+  .then(d=>{
+
+    if(d.checkedIn){
+
+      locked=true;
+
+      selectedMood = d.mood || "";
+      selectedMeds = d.meds || "";
+
+      const time = new Date(d.timestamp)
+        .toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+
+      document.getElementById("status").innerText =
+        `You checked in today at ${time}`;
+
+      highlightSelections();
+      disableInputs();
+    }
+  });
+}
+
+loadCheckin();
+
+// =========================
+// SELECT FUNCTIONS
 // =========================
 function selectMood(btn){
   if(locked) return;
 
-  mood = btn.innerText;
+  selectedMood = btn.innerText;
 
   document.querySelectorAll("#moodBtns button")
     .forEach(b=>b.classList.remove("selected"));
@@ -103,7 +152,7 @@ function selectMood(btn){
 function selectMeds(btn){
   if(locked) return;
 
-  meds = btn.innerText;
+  selectedMeds = btn.innerText;
 
   document.querySelectorAll("#medBtns button")
     .forEach(b=>b.classList.remove("selected"));
@@ -112,29 +161,45 @@ function selectMeds(btn){
 }
 
 // =========================
+<<<<<<< HEAD
 // HIGHLIGHT SAVED
+=======
+// HIGHLIGHT AFTER LOAD
+>>>>>>> parent of c781130 (get checkin into db)
 // =========================
-function highlight(){
+function highlightSelections(){
 
   document.querySelectorAll("#moodBtns button")
     .forEach(b=>{
+<<<<<<< HEAD
       if(b.innerText === mood){
+=======
+      if(b.innerText === selectedMood){
+>>>>>>> parent of c781130 (get checkin into db)
         b.classList.add("selected");
       }
     });
 
   document.querySelectorAll("#medBtns button")
     .forEach(b=>{
+<<<<<<< HEAD
       if(b.innerText === meds){
+=======
+      if(b.innerText === selectedMeds){
+>>>>>>> parent of c781130 (get checkin into db)
         b.classList.add("selected");
       }
     });
 }
 
 // =========================
+<<<<<<< HEAD
 // DISABLE AFTER SAVE
+=======
+// DISABLE INPUTS
+>>>>>>> parent of c781130 (get checkin into db)
 // =========================
-function disable(){
+function disableInputs(){
 
   document.querySelectorAll("#moodBtns button")
     .forEach(b=>{
@@ -156,23 +221,32 @@ function disable(){
 // =========================
 function submitCheckin(){
 
-  if(!mood){
-    document.getElementById("msg").innerText="Select mood";
+  if(!selectedMood){
+    document.getElementById("msg").innerText="Please select your mood.";
     return;
   }
 
   fetch('/checkin',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ mood, meds })
+    body:JSON.stringify({
+      mood:selectedMood,
+      meds:selectedMeds
+    })
   })
   .then(r=>r.json())
   .then(()=>{
+<<<<<<< HEAD
     document.getElementById("msg").innerText="Saved";
 
+=======
+    document.getElementById("msg").innerText="Saved!";
+    
+    // 🔥 UPDATE UI WITHOUT RELOAD
+>>>>>>> parent of c781130 (get checkin into db)
     locked = true;
-    highlight();
-    disable();
+    highlightSelections();
+    disableInputs();
   });
 }
 

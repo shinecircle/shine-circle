@@ -2,10 +2,22 @@
 <html>
 <head>
   <title>Daily Check-In</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="styles.css">
 
   <style>
-    .btn { margin:5px; padding:10px; border:none; border-radius:6px; background:#1E6FDB; color:white; }
+    .question { font-size:20px; margin-top:20px; }
+
+    .btn-group button{
+      margin:5px;
+      padding:12px;
+      border-radius:8px;
+      border:none;
+      background:#1E6FDB;
+      color:white;
+      cursor:pointer;
+    }
+
     .selected { background:#0B2A5B; }
     .disabled { background:#ccc !important; cursor:not-allowed; }
   </style>
@@ -13,27 +25,40 @@
 
 <body>
 
-<h2>Daily Check-In</h2>
-
-<h3>Mood</h3>
-<div id="moodBtns">
-  <button onclick="selectMood(this)">Great</button>
-  <button onclick="selectMood(this)">Good</button>
-  <button onclick="selectMood(this)">Low</button>
-  <button onclick="selectMood(this)">Struggling</button>
+<div class="header">
+  <img src="logo.jpg" class="logo">
+  <div>
+    <button class="btn" onclick="goHome()">Home</button>
+    <button class="btn" onclick="goActivities()">Activities</button>
+    <button class="btn" onclick="logout()">Logout</button>
+  </div>
 </div>
 
-<h3>Medication</h3>
-<div id="medBtns">
-  <button onclick="selectMeds(this)">Yes</button>
-  <button onclick="selectMeds(this)">No</button>
+<div style="text-align:center;padding:20px;">
+
+  <h2>Daily Check-In</h2>
+
+  <div class="question">How are you doing today?</div>
+  <div id="moodBtns" class="btn-group">
+    <button onclick="selectMood(this)">Great</button>
+    <button onclick="selectMood(this)">Good</button>
+    <button onclick="selectMood(this)">Low</button>
+    <button onclick="selectMood(this)">Struggling</button>
+  </div>
+
+  <div class="question">Did you take your medicine today?</div>
+  <div id="medBtns" class="btn-group">
+    <button onclick="selectMeds(this)">Yes</button>
+    <button onclick="selectMeds(this)">No</button>
+  </div>
+
+  <br>
+
+  <button id="submitBtn" class="btn" onclick="submitCheckin()">Submit</button>
+
+  <p id="msg"></p>
+
 </div>
-
-<br>
-
-<button onclick="submit()">Submit</button>
-
-<p id="msg"></p>
 
 <script>
 
@@ -42,15 +67,20 @@ let meds="";
 let locked=false;
 
 // =========================
-// LOAD EXISTING DATA
+// LOAD SAVED DATA
 // =========================
 fetch('/checkin-today')
 .then(r=>r.json())
 .then(d=>{
+
+  console.log("CHECKIN DATA:", d); // 🔍 debugging
+
   if(d.checkedIn){
-    mood = d.mood;
-    meds = d.meds;
+
+    mood = d.mood || "";
+    meds = d.meds || "";
     locked = true;
+
     highlight();
     disable();
   }
@@ -82,35 +112,49 @@ function selectMeds(btn){
 }
 
 // =========================
-// HIGHLIGHT
+// HIGHLIGHT SAVED
 // =========================
 function highlight(){
 
   document.querySelectorAll("#moodBtns button")
     .forEach(b=>{
-      if(b.innerText===mood) b.classList.add("selected");
+      if(b.innerText === mood){
+        b.classList.add("selected");
+      }
     });
 
   document.querySelectorAll("#medBtns button")
     .forEach(b=>{
-      if(b.innerText===meds) b.classList.add("selected");
+      if(b.innerText === meds){
+        b.classList.add("selected");
+      }
     });
 }
 
 // =========================
-// DISABLE
+// DISABLE AFTER SAVE
 // =========================
 function disable(){
 
-  document.querySelectorAll("button")
-    .forEach(b=>b.classList.add("disabled"));
+  document.querySelectorAll("#moodBtns button")
+    .forEach(b=>{
+      b.classList.add("disabled");
+      b.disabled = true;
+    });
 
+  document.querySelectorAll("#medBtns button")
+    .forEach(b=>{
+      b.classList.add("disabled");
+      b.disabled = true;
+    });
+
+  document.getElementById("submitBtn").style.display="none";
 }
 
 // =========================
 // SUBMIT
 // =========================
-function submit(){
+function submitCheckin(){
 
   if(!mood){
     document.getElementById("msg").innerText="Select mood";
@@ -122,8 +166,8 @@ function submit(){
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({ mood, meds })
   })
+  .then(r=>r.json())
   .then(()=>{
-
     document.getElementById("msg").innerText="Saved";
 
     locked = true;
@@ -131,6 +175,11 @@ function submit(){
     disable();
   });
 }
+
+// NAV
+function goHome(){ window.location='/home'; }
+function goActivities(){ window.location='/activities'; }
+function logout(){ fetch('/logout').then(()=>window.location='/'); }
 
 </script>
 

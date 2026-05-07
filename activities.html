@@ -1,73 +1,402 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Activities</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Activities Preferences</title>
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="styles.css">
 
   <style>
-    .day-btn, .time-btn {
-      margin:5px;
-      padding:10px;
-      border-radius:8px;
-      border:1px solid #ccc;
-      cursor:pointer;
+
+    body{
+      font-family:Arial, sans-serif;
+      margin:0;
+      padding:0;
+      background:#F4F7FB;
+      color:#222;
     }
 
-    .selected {
-      background:#1E6FDB;
-      color:white;
+    /* =========================
+       HEADER
+    ========================== */
+    .header{
+
+      display:flex;
+
+      justify-content:space-between;
+
+      align-items:center;
+
+      padding:15px 20px;
+
+      background:white;
+
+      box-shadow:0 2px 8px rgba(0,0,0,.08);
+
     }
+
+    .logo{
+      height:60px;
+    }
+
+    .btn{
+
+      background:#1E6FDB;
+
+      color:white;
+
+      border:none;
+
+      padding:12px 18px;
+
+      border-radius:10px;
+
+      cursor:pointer;
+
+      font-size:15px;
+
+      font-weight:bold;
+
+      transition:.2s;
+
+    }
+
+    .btn:hover{
+      transform:scale(1.03);
+    }
+
+    /* =========================
+       MAIN
+    ========================== */
+    .container{
+
+      max-width:760px;
+
+      margin:auto;
+
+      padding:25px;
+
+      text-align:center;
+
+    }
+
+    h2{
+
+      font-size:34px;
+
+      color:#0B2A5B;
+
+      margin-bottom:25px;
+
+      font-weight:800;
+
+    }
+
+    .section{
+
+      background:white;
+
+      padding:28px;
+
+      border-radius:18px;
+
+      margin-bottom:25px;
+
+      box-shadow:0 4px 12px rgba(0,0,0,.08);
+
+    }
+
+    .section h3{
+
+      margin-top:0;
+
+      color:#0B2A5B;
+
+      font-size:24px;
+
+      font-weight:800;
+
+      margin-bottom:20px;
+
+    }
+
+    /* =========================
+       BUTTON GROUPS
+    ========================== */
+    .btn-group{
+
+      display:flex;
+
+      flex-wrap:wrap;
+
+      justify-content:center;
+
+      gap:14px;
+
+    }
+
+    .day-btn,
+    .time-btn{
+
+      min-width:130px;
+
+      padding:16px 18px;
+
+      border:none;
+
+      border-radius:14px;
+
+      background:#2F80ED;
+
+      color:white;
+
+      cursor:pointer;
+
+      font-size:18px;
+
+      font-weight:800;
+
+      transition:.2s;
+
+      box-shadow:0 3px 8px rgba(0,0,0,.12);
+
+    }
+
+    .day-btn:hover,
+    .time-btn:hover{
+
+      transform:translateY(-2px);
+
+    }
+
+    /* ACTIVE SELECTION */
+    .selected{
+
+      background:#138A36 !important;
+
+      border:4px solid #A5D6A7;
+
+      transform:scale(1.08);
+
+      box-shadow:0 0 16px rgba(19,138,54,.7);
+
+    }
+
+    /* =========================
+       SELECT
+    ========================== */
+    select{
+
+      padding:14px;
+
+      border-radius:10px;
+
+      border:2px solid #1E6FDB;
+
+      font-size:18px;
+
+      font-weight:700;
+
+      width:280px;
+
+      text-align:center;
+
+    }
+
+    /* =========================
+       MESSAGE
+    ========================== */
+    #msg{
+
+      margin-top:20px;
+
+      font-size:20px;
+
+      font-weight:800;
+
+      color:#138A36;
+
+      min-height:24px;
+
+    }
+
+    .save-btn{
+
+      margin-top:20px;
+
+      padding:16px 30px;
+
+      font-size:20px;
+
+      font-weight:800;
+
+    }
+
+    @media(max-width:600px){
+
+      .header{
+
+        flex-direction:column;
+
+        gap:10px;
+
+      }
+
+      .day-btn,
+      .time-btn{
+
+        width:100%;
+
+      }
+
+    }
+
   </style>
+
 </head>
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
-  <img src="logo.jpg" class="logo">
+
+  <img src="logo.jpg"
+       class="logo">
+
   <div>
-    <button class="btn" onclick="goHome()">Home</button>
-    <button class="btn" onclick="logout()">Logout</button>
+
+    <button class="btn"
+            onclick="goHome()">
+      Home
+    </button>
+
+    <button class="btn"
+            onclick="logout()">
+      Logout
+    </button>
+
   </div>
+
 </div>
 
-<div style="padding:20px;text-align:center;">
+<!-- MAIN -->
+<div class="container">
 
   <h2>Activities Preferences</h2>
 
-  <p><b>Preferred days for calls</b></p>
+  <!-- DAYS -->
+  <div class="section">
 
-  <div id="days">
-    <button class="day-btn" onclick="toggleDay(this)">Mon</button>
-    <button class="day-btn" onclick="toggleDay(this)">Tue</button>
-    <button class="day-btn" onclick="toggleDay(this)">Wed</button>
-    <button class="day-btn" onclick="toggleDay(this)">Thu</button>
-    <button class="day-btn" onclick="toggleDay(this)">Fri</button>
-    <button class="day-btn" onclick="toggleDay(this)">Sat</button>
-    <button class="day-btn" onclick="toggleDay(this)">Sun</button>
+    <h3>Preferred Days for Calls</h3>
+
+    <div class="btn-group"
+         id="days">
+
+      <button class="day-btn"
+              onclick="toggleDay(this)">
+        Mon
+      </button>
+
+      <button class="day-btn"
+              onclick="toggleDay(this)">
+        Tue
+      </button>
+
+      <button class="day-btn"
+              onclick="toggleDay(this)">
+        Wed
+      </button>
+
+      <button class="day-btn"
+              onclick="toggleDay(this)">
+        Thu
+      </button>
+
+      <button class="day-btn"
+              onclick="toggleDay(this)">
+        Fri
+      </button>
+
+      <button class="day-btn"
+              onclick="toggleDay(this)">
+        Sat
+      </button>
+
+      <button class="day-btn"
+              onclick="toggleDay(this)">
+        Sun
+      </button>
+
+    </div>
+
   </div>
 
-  <p><b>Preferred timing for calls</b></p>
+  <!-- TIMES -->
+  <div class="section">
 
-  <div id="times">
-    <button class="time-btn" onclick="selectTime(this)">Morning</button>
-    <button class="time-btn" onclick="selectTime(this)">Midday</button>
-    <button class="time-btn" onclick="selectTime(this)">Evening</button>
+    <h3>Preferred Time for Calls</h3>
+
+    <div class="btn-group"
+         id="times">
+
+      <button class="time-btn"
+              onclick="selectTime(this)">
+        Morning
+      </button>
+
+      <button class="time-btn"
+              onclick="selectTime(this)">
+        Midday
+      </button>
+
+      <button class="time-btn"
+              onclick="selectTime(this)">
+        Evening
+      </button>
+
+    </div>
+
   </div>
 
-  <p><b>Select Time Zone</b></p>
+  <!-- TIMEZONE -->
+  <div class="section">
 
-  <select id="timezone">
-    <option value="">Select Time Zone</option>
-    <option value="EST">Eastern</option>
-    <option value="CST">Central</option>
-    <option value="MST">Mountain</option>
-    <option value="PST">Pacific</option>
-  </select>
+    <h3>Time Zone</h3>
 
-  <br><br>
+    <select id="timezone">
 
-  <button class="btn" onclick="save()">Save</button>
+      <option value="">
+        Select Time Zone
+      </option>
+
+      <option value="EST">
+        Eastern
+      </option>
+
+      <option value="CST">
+        Central
+      </option>
+
+      <option value="MST">
+        Mountain
+      </option>
+
+      <option value="PST">
+        Pacific
+      </option>
+
+    </select>
+
+  </div>
+
+  <!-- SAVE -->
+  <button class="btn save-btn"
+          onclick="save()">
+    Save Preferences
+  </button>
 
   <p id="msg"></p>
 
@@ -78,79 +407,218 @@
 let selectedDays = [];
 let selectedTime = "";
 
-// LOAD
-fetch('/activities')
-.then(r=>r.json())
-.then(d=>{
+// =========================
+// LOAD FROM DATABASE
+// =========================
+loadActivities();
 
-  if(d.dayForCall){
-    selectedDays = d.dayForCall.split(',');
+async function loadActivities(){
+
+  try{
+
+    const response =
+      await fetch('/api/activities');
+
+    const data =
+      await response.json();
+
+    console.log(data);
+
+    // DAYS
+    if(data.dayforcall){
+
+      selectedDays =
+        data.dayforcall.split(',');
+
+    }
+
+    // TIME
+    selectedTime =
+      data.timeforcall || "";
+
+    // TIMEZONE
+    if(data.timezone){
+
+      document.getElementById("timezone").value =
+        data.timezone;
+
+    }
+
+    restoreSelections();
+
   }
 
-  selectedTime = d.timeForCall || "";
+  catch(err){
 
-  if(d.timezone){
-    document.getElementById("timezone").value = d.timezone;
+    console.log(err);
+
   }
 
-  document.querySelectorAll(".day-btn").forEach(btn=>{
-    if(selectedDays.includes(btn.innerText)){
-      btn.classList.add("selected");
-    }
-  });
+}
 
-  document.querySelectorAll(".time-btn").forEach(btn=>{
-    if(btn.innerText === selectedTime){
-      btn.classList.add("selected");
-    }
-  });
-});
+// =========================
+// RESTORE BUTTONS
+// =========================
+function restoreSelections(){
 
-// TOGGLE DAY
+  // DAYS
+  document.querySelectorAll(".day-btn")
+    .forEach(btn=>{
+
+      btn.classList.remove("selected");
+
+      if(selectedDays.includes(btn.innerText.trim())){
+
+        btn.classList.add("selected");
+
+      }
+
+    });
+
+  // TIMES
+  document.querySelectorAll(".time-btn")
+    .forEach(btn=>{
+
+      btn.classList.remove("selected");
+
+      if(btn.innerText.trim() === selectedTime){
+
+        btn.classList.add("selected");
+
+      }
+
+    });
+
+}
+
+// =========================
+// TOGGLE DAYS
+// =========================
 function toggleDay(btn){
-  const day = btn.innerText;
+
+  const day =
+    btn.innerText.trim();
 
   if(selectedDays.includes(day)){
-    selectedDays = selectedDays.filter(d=>d!==day);
-    btn.classList.remove("selected");
-  } else {
-    selectedDays.push(day);
-    btn.classList.add("selected");
+
+    selectedDays =
+      selectedDays.filter(d=>d !== day);
+
   }
+
+  else{
+
+    selectedDays.push(day);
+
+  }
+
+  restoreSelections();
+
 }
 
+// =========================
 // SELECT TIME
+// =========================
 function selectTime(btn){
-  selectedTime = btn.innerText;
 
-  document.querySelectorAll(".time-btn").forEach(b=>b.classList.remove("selected"));
-  btn.classList.add("selected");
+  selectedTime =
+    btn.innerText.trim();
+
+  restoreSelections();
+
 }
 
-// SAVE (FIXED)
-function save(){
+// =========================
+// SAVE
+// =========================
+async function save(){
 
-  const order = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  try{
 
-  const cleanDays = [...new Set(selectedDays)]
-    .sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+    const order =
 
-  fetch('/activities',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({
-      dayForCall: cleanDays.join(','),
-      timeForCall: selectedTime,
-      timezone: document.getElementById("timezone").value
-    })
-  })
-  .then(()=>{
-    document.getElementById("msg").innerText = "Saved!";
-  });
+      ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+    const cleanDays =
+
+      [...new Set(selectedDays)]
+
+      .sort(
+
+        (a,b)=>
+
+        order.indexOf(a) -
+        order.indexOf(b)
+
+      );
+
+    const response = await fetch('/api/activities',{
+
+      method:'POST',
+
+      headers:{
+        'Content-Type':'application/json'
+      },
+
+      body:JSON.stringify({
+
+        dayForCall:
+          cleanDays.join(','),
+
+        timeForCall:
+          selectedTime,
+
+        timezone:
+          document.getElementById("timezone").value
+
+      })
+
+    });
+
+    const data =
+      await response.json();
+
+    if(!data.success){
+
+      throw new Error();
+
+    }
+
+    document.getElementById("msg").innerText =
+      "Preferences saved successfully";
+
+  }
+
+  catch(err){
+
+    console.log(err);
+
+    document.getElementById("msg").innerText =
+      "Error saving preferences";
+
+  }
+
 }
 
-function goHome(){ window.location='home.html'; }
-function logout(){ fetch('/logout').then(()=>window.location='login.html'); }
+// =========================
+// NAV
+// =========================
+function goHome(){
+
+  window.location='/home';
+
+}
+
+function logout(){
+
+  fetch('/logout')
+    .then(()=>{
+
+      window.location='/';
+
+    });
+
+}
 
 </script>
 

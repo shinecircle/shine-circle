@@ -64,7 +64,9 @@ async function initDB(){
 
   try{
 
-    // USERS TABLE
+    // =========================
+    // CLIENTS TABLE
+    // =========================
     await pool.query(`
 
       CREATE TABLE IF NOT EXISTS clients (
@@ -85,7 +87,9 @@ async function initDB(){
 
     `);
 
+    // =========================
     // CHECKINS TABLE
+    // =========================
     await pool.query(`
 
       CREATE TABLE IF NOT EXISTS checkins (
@@ -104,9 +108,38 @@ async function initDB(){
 
     `);
 
+    // =========================
+    // ACTIVITIES TABLE
+    // =========================
+    await pool.query(`
+
+      CREATE TABLE IF NOT EXISTS activities (
+
+        id SERIAL PRIMARY KEY,
+
+        userid INTEGER,
+
+        dayforcall TEXT,
+
+        timeforcall TEXT,
+
+        timezone TEXT
+
+      )
+
+    `);
+
+    // =========================
     // SEED USERS
+    // =========================
     const users =
-      await pool.query(`SELECT * FROM clients`);
+      await pool.query(`
+
+        SELECT *
+
+        FROM clients
+
+      `);
 
     if(users.rows.length === 0){
 
@@ -255,6 +288,7 @@ app.post('/login', async (req,res)=>{
     req.session.save(()=>{
 
       console.log("LOGIN SUCCESS");
+
       console.log(req.session.user);
 
       res.json({
@@ -272,6 +306,7 @@ app.post('/login', async (req,res)=>{
   catch(err){
 
     console.log("LOGIN ERROR");
+
     console.log(err);
 
     res.status(500).json({
@@ -326,7 +361,7 @@ app.post('/api/checkin', async (req,res)=>{
     const today =
       new Date().toISOString().split('T')[0];
 
-    // FIND TODAY'S CHECKIN
+    // EXISTING?
     const existing = await pool.query(
 
       `SELECT *
@@ -341,7 +376,7 @@ app.post('/api/checkin', async (req,res)=>{
 
     );
 
-    // CREATE NEW ROW
+    // CREATE
     if(existing.rows.length === 0){
 
       await pool.query(
@@ -366,11 +401,9 @@ app.post('/api/checkin', async (req,res)=>{
 
       );
 
-      console.log("Created new checkin");
-
     }
 
-    // UPDATE EXISTING ROW
+    // UPDATE
     else{
 
       if(mood){
@@ -396,8 +429,6 @@ app.post('/api/checkin', async (req,res)=>{
           ]
 
         );
-
-        console.log("Mood updated");
 
       }
 
@@ -425,13 +456,10 @@ app.post('/api/checkin', async (req,res)=>{
 
         );
 
-        console.log("Medication updated");
-
       }
 
     }
 
-    // VERIFY SAVE
     const saved = await pool.query(
 
       `SELECT *
@@ -446,9 +474,6 @@ app.post('/api/checkin', async (req,res)=>{
 
     );
 
-    console.log("SAVED ROW:");
-    console.log(saved.rows[0]);
-
     res.json({
 
       success:true,
@@ -462,6 +487,7 @@ app.post('/api/checkin', async (req,res)=>{
   catch(err){
 
     console.log("CHECKIN ERROR");
+
     console.log(err);
 
     res.status(500).json({
@@ -535,11 +561,188 @@ app.get('/api/checkin-today', async (req,res)=>{
   catch(err){
 
     console.log("LOAD CHECKIN ERROR");
+
     console.log(err);
 
     res.status(500).json({
 
       checkedIn:false
+
+    });
+
+  }
+
+});
+
+// =========================
+// LOAD ACTIVITIES
+// =========================
+app.get('/api/activities', async (req,res)=>{
+
+  try{
+
+    const user = req.session.user;
+
+    if(!user){
+
+      return res.json({});
+    }
+
+    const result = await pool.query(
+
+      `SELECT *
+
+       FROM activities
+
+       WHERE userid=$1`,
+
+      [user.id]
+
+    );
+
+    if(result.rows.length === 0){
+
+      return res.json({});
+    }
+
+    res.json(result.rows[0]);
+
+  }
+
+  catch(err){
+
+    console.log("LOAD ACTIVITIES ERROR");
+
+    console.log(err);
+
+    res.status(500).json({});
+  }
+
+});
+
+// =========================
+// SAVE ACTIVITIES
+// =========================
+app.post('/api/activities', async (req,res)=>{
+
+  try{
+
+    const user = req.session.user;
+
+    if(!user){
+
+      return res.status(401).json({
+
+        success:false
+
+      });
+
+    }
+
+    const {
+
+      dayForCall,
+
+      timeForCall,
+
+      timezone
+
+    } = req.body;
+
+    // EXISTING?
+    const existing = await pool.query(
+
+      `SELECT *
+
+       FROM activities
+
+       WHERE userid=$1`,
+
+      [user.id]
+
+    );
+
+    // CREATE
+    if(existing.rows.length === 0){
+
+      await pool.query(
+
+        `INSERT INTO activities
+
+        (userid, dayforcall, timeforcall, timezone)
+
+        VALUES ($1,$2,$3,$4)`,
+
+        [
+
+          user.id,
+
+          dayForCall,
+
+          timeForCall,
+
+          timezone
+
+        ]
+
+      );
+
+      console.log("Created activities");
+
+    }
+
+    // UPDATE
+    else{
+
+      await pool.query(
+
+        `UPDATE activities
+
+         SET
+
+         dayforcall=$1,
+
+         timeforcall=$2,
+
+         timezone=$3
+
+         WHERE userid=$4`,
+
+        [
+
+          dayForCall,
+
+          timeForCall,
+
+          timezone,
+
+          user.id
+
+        ]
+
+      );
+
+      console.log("Updated activities");
+
+    }
+
+    res.json({
+
+      success:true
+
+    });
+
+  }
+
+  catch(err){
+
+    console.log("SAVE ACTIVITIES ERROR");
+
+    console.log(err);
+
+    res.status(500).json({
+
+      success:false
 
     });
 

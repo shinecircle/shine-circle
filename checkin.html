@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+
   <title>Daily Check-In</title>
 
   <meta name="viewport"
@@ -10,11 +11,138 @@
 
   <style>
 
+    body{
+      font-family:Arial, sans-serif;
+      margin:0;
+      padding:0;
+      background:#F4F7FB;
+      color:#222;
+    }
+
+    /* =========================
+       HEADER
+    ========================== */
+    .header{
+
+      display:flex;
+
+      justify-content:space-between;
+
+      align-items:center;
+
+      padding:15px 20px;
+
+      background:white;
+
+      box-shadow:0 2px 8px rgba(0,0,0,.08);
+
+    }
+
+    .logo{
+      height:60px;
+    }
+
+    .btn{
+
+      background:#1E6FDB;
+
+      color:white;
+
+      border:none;
+
+      padding:12px 18px;
+
+      border-radius:10px;
+
+      cursor:pointer;
+
+      font-size:15px;
+
+      font-weight:bold;
+
+      margin-left:6px;
+
+      transition:.2s;
+
+    }
+
+    .btn:hover{
+      transform:scale(1.03);
+      opacity:.95;
+    }
+
+    /* =========================
+       MAIN
+    ========================== */
+    .container{
+
+      max-width:750px;
+
+      margin:auto;
+
+      padding:25px;
+
+      text-align:center;
+
+    }
+
+    h2{
+
+      font-size:34px;
+
+      margin-bottom:10px;
+
+      font-weight:800;
+
+      color:#0B2A5B;
+
+    }
+
+    #today{
+
+      font-size:20px;
+
+      font-weight:600;
+
+      margin-bottom:15px;
+
+      color:#555;
+
+    }
+
+    #status{
+
+      min-height:24px;
+
+      font-size:18px;
+
+      font-weight:700;
+
+      margin-bottom:15px;
+
+    }
+
+    .success{
+      color:#138A36;
+    }
+
+    .error{
+      color:#C62828;
+    }
+
+    /* =========================
+       PANELS
+    ========================== */
     .panel{
-      margin:20px auto;
-      padding:20px;
-      border-radius:12px;
-      max-width:500px;
+
+      margin:25px auto;
+
+      padding:30px;
+
+      border-radius:18px;
+
+      box-shadow:0 4px 12px rgba(0,0,0,.08);
+
     }
 
     .mood-panel{
@@ -25,22 +153,140 @@
       background:#E8F8F5;
     }
 
+    .panel h3{
+
+      margin-top:0;
+
+      margin-bottom:22px;
+
+      font-size:26px;
+
+      font-weight:800;
+
+      color:#0B2A5B;
+
+    }
+
+    /* =========================
+       BUTTON GROUPS
+    ========================== */
+    .btn-group{
+
+      display:flex;
+
+      flex-wrap:wrap;
+
+      justify-content:center;
+
+      gap:14px;
+
+      margin-bottom:20px;
+
+    }
+
     .btn-group button{
-      margin:5px;
-      padding:12px;
+
+      min-width:130px;
+
+      padding:16px 20px;
+
       border:none;
-      border-radius:8px;
-      background:#1E6FDB;
+
+      border-radius:14px;
+
+      background:#2F80ED;
+
       color:white;
+
       cursor:pointer;
+
+      font-size:18px;
+
+      font-weight:800;
+
+      letter-spacing:.3px;
+
+      transition:.2s;
+
+      box-shadow:0 3px 8px rgba(0,0,0,.12);
+
     }
 
+    .btn-group button:hover{
+
+      transform:translateY(-2px);
+
+      opacity:.96;
+
+    }
+
+    /* =========================
+       CURRENTLY SELECTED
+    ========================== */
     .selected{
-      outline:3px solid #0B2A5B;
+
+      background:#0B2A5B !important;
+
+      color:white !important;
+
+      transform:scale(1.08);
+
+      border:4px solid #FFD54F;
+
+      box-shadow:0 0 14px rgba(255,213,79,.8);
+
     }
 
+    /* =========================
+       SAVED TO DATABASE
+    ========================== */
     .saved{
-      background:green !important;
+
+      background:#138A36 !important;
+
+      color:white !important;
+
+      border:4px solid #A5D6A7;
+
+      transform:scale(1.08);
+
+      box-shadow:0 0 16px rgba(19,138,54,.65);
+
+    }
+
+    .save-btn{
+
+      margin-top:10px;
+
+      padding:14px 28px;
+
+      font-size:18px;
+
+      font-weight:800;
+
+      border-radius:12px;
+
+    }
+
+    /* =========================
+       MOBILE
+    ========================== */
+    @media(max-width:600px){
+
+      .header{
+
+        flex-direction:column;
+
+        gap:10px;
+
+      }
+
+      .btn-group button{
+
+        width:100%;
+
+      }
+
     }
 
   </style>
@@ -49,9 +295,13 @@
 
 <body>
 
+<!-- =========================
+     HEADER
+========================= -->
 <div class="header">
 
-  <img src="logo.jpg" class="logo">
+  <img src="logo.jpg"
+       class="logo">
 
   <div>
 
@@ -74,7 +324,10 @@
 
 </div>
 
-<div style="text-align:center;padding:20px;">
+<!-- =========================
+     MAIN CONTENT
+========================= -->
+<div class="container">
 
   <h2>Daily Check-In</h2>
 
@@ -82,7 +335,9 @@
 
   <p id="status"></p>
 
-  <!-- MOOD -->
+  <!-- =========================
+       MOOD PANEL
+  ========================== -->
   <div class="panel mood-panel">
 
     <h3>How are you feeling today?</h3>
@@ -108,16 +363,16 @@
 
     </div>
 
-    <br>
-
-    <button class="btn"
+    <button class="btn save-btn"
             onclick="submitMood()">
       Save Mood
     </button>
 
   </div>
 
-  <!-- MEDS -->
+  <!-- =========================
+       MEDICATION PANEL
+  ========================== -->
   <div class="panel meds-panel">
 
     <h3>Did you take your medicine today?</h3>
@@ -135,9 +390,7 @@
 
     </div>
 
-    <br>
-
-    <button class="btn"
+    <button class="btn save-btn"
             onclick="submitMeds()">
       Save Medication
     </button>
@@ -148,28 +401,41 @@
 
 <script>
 
+// =========================
+// GLOBALS
+// =========================
 let selectedMood = "";
 let selectedMeds = "";
 
+// =========================
 // DATE
+// =========================
 document.getElementById("today").innerText =
 
-  new Date().toLocaleDateString('en-US',{
+  new Date().toLocaleDateString(
 
-    weekday:'long',
+    'en-US',
 
-    year:'numeric',
+    {
 
-    month:'long',
+      weekday:'long',
 
-    day:'numeric'
+      year:'numeric',
 
-  });
+      month:'long',
 
-// LOAD TODAY
-loadToday();
+      day:'numeric'
 
-async function loadToday(){
+    }
+
+  );
+
+// =========================
+// LOAD TODAY'S CHECKIN
+// =========================
+loadTodayCheckin();
+
+async function loadTodayCheckin(){
 
   try{
 
@@ -178,6 +444,8 @@ async function loadToday(){
 
     const data =
       await response.json();
+
+    console.log(data);
 
     if(!data.checkedIn){
       return;
@@ -191,6 +459,12 @@ async function loadToday(){
 
     restoreButtons();
 
+    document.getElementById("status").innerText =
+      "Today's check-in already saved";
+
+    document.getElementById("status").className =
+      "success";
+
   }
 
   catch(err){
@@ -201,44 +475,57 @@ async function loadToday(){
 
 }
 
-// SELECT
+// =========================
+// CLEAR BUTTON GROUP
+// =========================
+function clearGroup(groupId){
+
+  document.querySelectorAll(`#${groupId} button`)
+    .forEach(btn=>{
+
+      btn.classList.remove("selected");
+
+    });
+
+}
+
+// =========================
+// SELECT MOOD
+// =========================
 function selectMood(btn){
 
   selectedMood =
     btn.innerText.trim();
 
-  document.querySelectorAll("#moodBtns button")
-    .forEach(b=>{
-
-      b.classList.remove("selected");
-
-    });
+  clearGroup("moodBtns");
 
   btn.classList.add("selected");
 
 }
 
+// =========================
+// SELECT MEDS
+// =========================
 function selectMeds(btn){
 
   selectedMeds =
     btn.innerText.trim();
 
-  document.querySelectorAll("#medBtns button")
-    .forEach(b=>{
-
-      b.classList.remove("selected");
-
-    });
+  clearGroup("medBtns");
 
   btn.classList.add("selected");
 
 }
 
-// RESTORE
+// =========================
+// RESTORE SAVED BUTTONS
+// =========================
 function restoreButtons(){
 
   document.querySelectorAll("#moodBtns button")
     .forEach(btn=>{
+
+      btn.classList.remove("saved");
 
       if(btn.innerText.trim() === selectedMood){
 
@@ -251,6 +538,8 @@ function restoreButtons(){
   document.querySelectorAll("#medBtns button")
     .forEach(btn=>{
 
+      btn.classList.remove("saved");
+
       if(btn.innerText.trim() === selectedMeds){
 
         btn.classList.add("saved");
@@ -261,7 +550,9 @@ function restoreButtons(){
 
 }
 
+// =========================
 // SAVE MOOD
+// =========================
 async function submitMood(){
 
   try{
@@ -287,27 +578,39 @@ async function submitMood(){
 
     if(!data.success){
 
-      throw new Error(data.error);
+      throw new Error(
+        data.error
+      );
 
     }
 
-    document.getElementById("status").innerText =
-      "Mood saved";
-
     restoreButtons();
+
+    document.getElementById("status").innerText =
+      "Mood saved successfully";
+
+    document.getElementById("status").className =
+      "success";
 
   }
 
   catch(err){
 
+    console.log(err);
+
     document.getElementById("status").innerText =
       err.message;
+
+    document.getElementById("status").className =
+      "error";
 
   }
 
 }
 
+// =========================
 // SAVE MEDS
+// =========================
 async function submitMeds(){
 
   try{
@@ -333,27 +636,39 @@ async function submitMeds(){
 
     if(!data.success){
 
-      throw new Error(data.error);
+      throw new Error(
+        data.error
+      );
 
     }
 
-    document.getElementById("status").innerText =
-      "Medication saved";
-
     restoreButtons();
+
+    document.getElementById("status").innerText =
+      "Medication saved successfully";
+
+    document.getElementById("status").className =
+      "success";
 
   }
 
   catch(err){
 
+    console.log(err);
+
     document.getElementById("status").innerText =
       err.message;
+
+    document.getElementById("status").className =
+      "error";
 
   }
 
 }
 
-// NAV
+// =========================
+// NAVIGATION
+// =========================
 function goHome(){
 
   window.location='/home';

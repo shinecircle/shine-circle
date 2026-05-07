@@ -133,6 +133,7 @@ async function initDB(){
 
   catch(err){
 
+    console.log("DATABASE INIT ERROR");
     console.log(err);
 
   }
@@ -140,57 +141,6 @@ async function initDB(){
 }
 
 initDB();
-
-// =========================
-// RESET CHECKINS TABLE
-// TEMPORARY ROUTE
-// VISIT ONCE THEN DELETE
-// =========================
-app.get('/reset-checkins', async (req,res)=>{
-
-  try{
-
-    // DELETE OLD TABLE
-    await pool.query(`
-
-      DROP TABLE IF EXISTS checkins
-
-    `);
-
-    // CREATE NEW TABLE
-    await pool.query(`
-
-      CREATE TABLE checkins (
-
-        id SERIAL PRIMARY KEY,
-
-        userid INTEGER,
-
-        date TEXT,
-
-        mood TEXT,
-
-        meds TEXT
-
-      )
-
-    `);
-
-    res.send(
-      "checkins table rebuilt successfully"
-    );
-
-  }
-
-  catch(err){
-
-    console.log(err);
-
-    res.send(err.message);
-
-  }
-
-});
 
 // =========================
 // PAGES
@@ -321,6 +271,7 @@ app.post('/login', async (req,res)=>{
 
   catch(err){
 
+    console.log("LOGIN ERROR");
     console.log(err);
 
     res.status(500).json({
@@ -353,15 +304,7 @@ app.post('/api/checkin', async (req,res)=>{
 
   try{
 
-    console.log("CHECKIN REQUEST");
-
     const user = req.session.user;
-
-    console.log("SESSION USER:");
-    console.log(user);
-
-    console.log("BODY:");
-    console.log(req.body);
 
     if(!user){
 
@@ -383,7 +326,7 @@ app.post('/api/checkin', async (req,res)=>{
     const today =
       new Date().toISOString().split('T')[0];
 
-    // FIND TODAY'S ROW
+    // FIND TODAY'S CHECKIN
     const existing = await pool.query(
 
       `SELECT *
@@ -591,6 +534,7 @@ app.get('/api/checkin-today', async (req,res)=>{
 
   catch(err){
 
+    console.log("LOAD CHECKIN ERROR");
     console.log(err);
 
     res.status(500).json({

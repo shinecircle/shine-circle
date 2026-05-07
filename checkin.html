@@ -1,107 +1,234 @@
 <!DOCTYPE html>
 <html>
 <head>
+
   <title>Daily Check-In</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="styles.css">
 
   <style>
 
     body{
-      font-family:Arial;
+      font-family:Arial, sans-serif;
+      margin:0;
+      padding:0;
+      background:#F7F9FC;
     }
 
-    .panel {
-      margin:20px auto;
-      padding:20px;
-      border-radius:12px;
-      max-width:500px;
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:15px 20px;
+      background:white;
+      box-shadow:0 2px 6px rgba(0,0,0,.08);
     }
 
-    .mood-panel {
-      background:#E8F0FE;
+    .logo{
+      height:60px;
     }
 
-    .meds-panel {
-      background:#E8F8F5;
-    }
-
-    .btn-group button{
-      margin:5px;
-      padding:12px 18px;
-      border-radius:8px;
-      border:none;
+    .btn{
       background:#1E6FDB;
       color:white;
+      border:none;
+      padding:10px 16px;
+      border-radius:8px;
       cursor:pointer;
-      transition:.2s;
-      font-size:16px;
+      margin-left:6px;
+      font-size:14px;
     }
 
-    /* currently selected */
-    .selected {
-      outline:3px solid #0B2A5B;
+    .btn:hover{
+      opacity:.92;
     }
 
-    /* successfully saved to DB */
-    .saved {
-      background:#1E8E3E !important;
-      color:white;
+    .container{
+      max-width:700px;
+      margin:auto;
+      padding:20px;
+      text-align:center;
+    }
+
+    h2{
+      margin-top:10px;
+      color:#1B1B1B;
+    }
+
+    .date{
+      color:#555;
+      margin-bottom:8px;
+      font-size:17px;
+    }
+
+    .status{
+      margin-bottom:20px;
+      font-weight:bold;
+      min-height:22px;
     }
 
     .status-success{
       color:green;
-      font-weight:bold;
     }
 
     .status-error{
       color:red;
-      font-weight:bold;
+    }
+
+    .panel{
+      margin:25px auto;
+      padding:25px;
+      border-radius:14px;
+      box-shadow:0 3px 8px rgba(0,0,0,.06);
+    }
+
+    .mood-panel{
+      background:#E8F0FE;
+    }
+
+    .meds-panel{
+      background:#E8F8F5;
+    }
+
+    .panel h3{
+      margin-top:0;
+      margin-bottom:18px;
+      color:#222;
+    }
+
+    .btn-group{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:10px;
+    }
+
+    .btn-group button{
+
+      padding:14px 18px;
+
+      border:none;
+
+      border-radius:10px;
+
+      background:#1E6FDB;
+
+      color:white;
+
+      cursor:pointer;
+
+      font-size:16px;
+
+      transition:.2s;
+
+      min-width:120px;
+    }
+
+    /* user clicked */
+    .selected{
+      outline:4px solid #0B2A5B;
+      transform:scale(1.03);
+    }
+
+    /* successfully saved to postgres */
+    .saved{
+      background:#1E8E3E !important;
+      color:white;
+    }
+
+    .save-btn{
+      margin-top:20px;
+      padding:12px 22px;
+      font-size:15px;
+    }
+
+    @media(max-width:600px){
+
+      .btn-group button{
+        width:100%;
+      }
+
+      .header{
+        flex-direction:column;
+        gap:10px;
+      }
+
     }
 
   </style>
+
 </head>
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
+
   <img src="logo.jpg" class="logo">
 
   <div>
-    <button class="btn" onclick="goHome()">Home</button>
-    <button class="btn" onclick="goActivities()">Activities</button>
-    <button class="btn" onclick="logout()">Logout</button>
+
+    <button class="btn"
+            onclick="goHome()">
+      Home
+    </button>
+
+    <button class="btn"
+            onclick="goActivities()">
+      Activities
+    </button>
+
+    <button class="btn"
+            onclick="logout()">
+      Logout
+    </button>
+
   </div>
+
 </div>
 
-<div style="text-align:center;padding:20px;">
+<!-- CONTENT -->
+<div class="container">
 
   <h2>Daily Check-In</h2>
 
-  <p id="today"></p>
+  <div id="today"
+       class="date"></div>
 
-  <p id="status"></p>
+  <div id="status"
+       class="status"></div>
 
   <!-- MOOD -->
   <div class="panel mood-panel">
 
     <h3>How are you feeling today?</h3>
 
-    <div id="moodBtns" class="btn-group">
+    <div id="moodBtns"
+         class="btn-group">
 
-      <button onclick="selectMood(this)">Great</button>
+      <button onclick="selectMood(this)">
+        Great
+      </button>
 
-      <button onclick="selectMood(this)">Good</button>
+      <button onclick="selectMood(this)">
+        Good
+      </button>
 
-      <button onclick="selectMood(this)">Low</button>
+      <button onclick="selectMood(this)">
+        Low
+      </button>
 
-      <button onclick="selectMood(this)">Struggling</button>
+      <button onclick="selectMood(this)">
+        Struggling
+      </button>
 
     </div>
 
-    <br>
-
-    <button class="btn" onclick="submitMood()">
+    <button class="btn save-btn"
+            onclick="submitMood()">
       Save Mood
     </button>
 
@@ -112,17 +239,21 @@
 
     <h3>Did you take your medicine today?</h3>
 
-    <div id="medBtns" class="btn-group">
+    <div id="medBtns"
+         class="btn-group">
 
-      <button onclick="selectMeds(this)">Yes</button>
+      <button onclick="selectMeds(this)">
+        Yes
+      </button>
 
-      <button onclick="selectMeds(this)">No</button>
+      <button onclick="selectMeds(this)">
+        No
+      </button>
 
     </div>
 
-    <br>
-
-    <button class="btn" onclick="submitMeds()">
+    <button class="btn save-btn"
+            onclick="submitMeds()">
       Save Medication
     </button>
 
@@ -132,6 +263,9 @@
 
 <script>
 
+// =========================
+// GLOBALS
+// =========================
 let selectedMood = "";
 let selectedMeds = "";
 
@@ -139,12 +273,24 @@ let selectedMeds = "";
 // DATE
 // =========================
 document.getElementById("today").innerText =
-  new Date().toLocaleDateString('en-US',{
-    weekday:'long',
-    year:'numeric',
-    month:'long',
-    day:'numeric'
-  });
+
+  new Date().toLocaleDateString(
+
+    'en-US',
+
+    {
+
+      weekday:'long',
+
+      year:'numeric',
+
+      month:'long',
+
+      day:'numeric'
+
+    }
+
+  );
 
 // =========================
 // LOAD SAVED DATA
@@ -155,69 +301,104 @@ async function loadTodayCheckin(){
 
   try{
 
-    const response = await fetch('/checkin-today');
-    const data = await response.json();
+    const response =
+      await fetch('/api/checkin-today');
+
+    const data =
+      await response.json();
+
+    console.log("LOADED CHECKIN:");
+    console.log(data);
 
     if(!data.checkedIn){
       return;
     }
 
-    selectedMood = data.mood || "";
-    selectedMeds = data.meds || "";
+    // restore globals
+    selectedMood =
+      data.mood || "";
 
-    document.getElementById("status").innerHTML =
+    selectedMeds =
+      data.meds || "";
+
+    // status message
+    document.getElementById("status").innerText =
       "Today's check-in already saved";
 
     document.getElementById("status").className =
-      "status-success";
+      "status status-success";
 
+    // restore button states
     restoreSavedSelections();
 
-  }catch(err){
+  }
 
-    console.error(err);
+  catch(err){
+
+    console.log(err);
+
+    document.getElementById("status").innerText =
+      "Could not load today's check-in";
+
+    document.getElementById("status").className =
+      "status status-error";
 
   }
+
 }
 
 // =========================
-// SELECT FUNCTIONS
+// CLEAR SELECTIONS
 // =========================
-function clearSelection(groupId){
+function clearGroup(groupId){
 
   document.querySelectorAll(`#${groupId} button`)
     .forEach(btn=>{
+
       btn.classList.remove("selected");
+
     });
-}
 
-function selectMood(btn){
-
-  selectedMood = btn.innerText;
-
-  clearSelection("moodBtns");
-
-  btn.classList.add("selected");
-}
-
-function selectMeds(btn){
-
-  selectedMeds = btn.innerText;
-
-  clearSelection("medBtns");
-
-  btn.classList.add("selected");
 }
 
 // =========================
-// RESTORE SAVED BUTTONS
+// MOOD SELECT
+// =========================
+function selectMood(btn){
+
+  selectedMood =
+    btn.innerText.trim();
+
+  clearGroup("moodBtns");
+
+  btn.classList.add("selected");
+
+}
+
+// =========================
+// MEDS SELECT
+// =========================
+function selectMeds(btn){
+
+  selectedMeds =
+    btn.innerText.trim();
+
+  clearGroup("medBtns");
+
+  btn.classList.add("selected");
+
+}
+
+// =========================
+// RESTORE SAVED STATES
 // =========================
 function restoreSavedSelections(){
 
+  // MOOD
   document.querySelectorAll("#moodBtns button")
     .forEach(btn=>{
 
-      if(btn.innerText === selectedMood){
+      if(btn.innerText.trim() === selectedMood){
 
         btn.classList.add("saved");
 
@@ -225,16 +406,18 @@ function restoreSavedSelections(){
 
     });
 
+  // MEDS
   document.querySelectorAll("#medBtns button")
     .forEach(btn=>{
 
-      if(btn.innerText === selectedMeds){
+      if(btn.innerText.trim() === selectedMeds){
 
         btn.classList.add("saved");
 
       }
 
     });
+
 }
 
 // =========================
@@ -244,14 +427,14 @@ async function submitMood(){
 
   if(!selectedMood){
 
-    alert("Select a mood first");
+    alert("Please select a mood");
 
     return;
   }
 
   try{
 
-    const response = await fetch('/checkin',{
+    const response = await fetch('/api/checkin',{
 
       method:'POST',
 
@@ -260,56 +443,69 @@ async function submitMood(){
       },
 
       body:JSON.stringify({
+
         mood:selectedMood
+
       })
 
     });
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
-    if(data.success){
+    console.log("SAVE MOOD RESPONSE:");
+    console.log(data);
 
-      document.getElementById("status").innerText =
-        "Mood saved successfully";
+    // FAILED
+    if(!response.ok || !data.success){
 
-      document.getElementById("status").className =
-        "status-success";
-
-      // clear old saved state
-      document.querySelectorAll("#moodBtns button")
-        .forEach(btn=>{
-          btn.classList.remove("saved");
-        });
-
-      // mark saved button
-      document.querySelectorAll("#moodBtns button")
-        .forEach(btn=>{
-
-          if(btn.innerText === selectedMood){
-
-            btn.classList.add("saved");
-
-          }
-
-        });
-
-    }else{
-
-      throw new Error();
+      throw new Error(
+        data.error || "Save failed"
+      );
 
     }
 
-  }catch(err){
-
-    console.error(err);
-
+    // SUCCESS
     document.getElementById("status").innerText =
-      "Error saving mood";
+      "Mood saved successfully";
 
     document.getElementById("status").className =
-      "status-error";
+      "status status-success";
+
+    // clear old saved
+    document.querySelectorAll("#moodBtns button")
+      .forEach(btn=>{
+
+        btn.classList.remove("saved");
+
+      });
+
+    // mark saved
+    document.querySelectorAll("#moodBtns button")
+      .forEach(btn=>{
+
+        if(btn.innerText.trim() === selectedMood){
+
+          btn.classList.add("saved");
+
+        }
+
+      });
 
   }
+
+  catch(err){
+
+    console.log(err);
+
+    document.getElementById("status").innerText =
+      "Error saving mood: " + err.message;
+
+    document.getElementById("status").className =
+      "status status-error";
+
+  }
+
 }
 
 // =========================
@@ -319,14 +515,14 @@ async function submitMeds(){
 
   if(!selectedMeds){
 
-    alert("Select Yes or No");
+    alert("Please select Yes or No");
 
     return;
   }
 
   try{
 
-    const response = await fetch('/checkin',{
+    const response = await fetch('/api/checkin',{
 
       method:'POST',
 
@@ -335,74 +531,93 @@ async function submitMeds(){
       },
 
       body:JSON.stringify({
+
         meds:selectedMeds
+
       })
 
     });
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
-    if(data.success){
+    console.log("SAVE MEDS RESPONSE:");
+    console.log(data);
 
-      document.getElementById("status").innerText =
-        "Medication saved successfully";
+    // FAILED
+    if(!response.ok || !data.success){
 
-      document.getElementById("status").className =
-        "status-success";
-
-      // clear old saved state
-      document.querySelectorAll("#medBtns button")
-        .forEach(btn=>{
-          btn.classList.remove("saved");
-        });
-
-      // mark saved button
-      document.querySelectorAll("#medBtns button")
-        .forEach(btn=>{
-
-          if(btn.innerText === selectedMeds){
-
-            btn.classList.add("saved");
-
-          }
-
-        });
-
-    }else{
-
-      throw new Error();
+      throw new Error(
+        data.error || "Save failed"
+      );
 
     }
 
-  }catch(err){
-
-    console.error(err);
-
+    // SUCCESS
     document.getElementById("status").innerText =
-      "Error saving medication";
+      "Medication saved successfully";
 
     document.getElementById("status").className =
-      "status-error";
+      "status status-success";
+
+    // clear old saved
+    document.querySelectorAll("#medBtns button")
+      .forEach(btn=>{
+
+        btn.classList.remove("saved");
+
+      });
+
+    // mark saved
+    document.querySelectorAll("#medBtns button")
+      .forEach(btn=>{
+
+        if(btn.innerText.trim() === selectedMeds){
+
+          btn.classList.add("saved");
+
+        }
+
+      });
 
   }
+
+  catch(err){
+
+    console.log(err);
+
+    document.getElementById("status").innerText =
+      "Error saving medication: " + err.message;
+
+    document.getElementById("status").className =
+      "status status-error";
+
+  }
+
 }
 
 // =========================
-// NAV
+// NAVIGATION
 // =========================
 function goHome(){
+
   window.location='/home';
+
 }
 
 function goActivities(){
+
   window.location='/activities';
+
 }
 
 function logout(){
 
   fetch('/logout')
     .then(()=>{
+
       window.location='/';
+
     });
 
 }

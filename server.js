@@ -6,7 +6,7 @@ const path = require('path');
 const app = express();
 
 // =========================
-// TRUST RENDER PROXY
+// TRUST PROXY
 // =========================
 app.set('trust proxy', 1);
 
@@ -17,8 +17,8 @@ const pool = new Pool({
 
   connectionString: process.env.DATABASE_URL,
 
-  ssl: {
-    rejectUnauthorized: false
+  ssl:{
+    rejectUnauthorized:false
   }
 
 });
@@ -58,7 +58,7 @@ app.use(session({
 }));
 
 // =========================
-// DATABASE INIT
+// INIT DATABASE
 // =========================
 async function initDB(){
 
@@ -92,7 +92,7 @@ async function initDB(){
 
         id SERIAL PRIMARY KEY,
 
-        clientid INTEGER,
+        "clientId" INTEGER,
 
         date TEXT,
 
@@ -104,36 +104,12 @@ async function initDB(){
 
     `);
 
-    // SEED USERS
-    const users =
-      await pool.query(`SELECT * FROM clients`);
-
-    if(users.rows.length === 0){
-
-      await pool.query(`
-
-        INSERT INTO clients
-        (username, firstname, lastname, role, password)
-
-        VALUES
-
-        ('user','John','Doe','user','1234'),
-
-        ('family','Sarah','Doe','caregiver','1234')
-
-      `);
-
-      console.log("Seed users created");
-
-    }
-
     console.log("Database initialized");
 
   }
 
   catch(err){
 
-    console.log("DB INIT ERROR");
     console.log(err);
 
   }
@@ -145,7 +121,7 @@ initDB();
 // =========================
 // PAGES
 // =========================
-app.get('/', (req,res)=>{
+app.get('/',(req,res)=>{
 
   res.sendFile(
     path.join(__dirname,'howitworks.html')
@@ -153,7 +129,7 @@ app.get('/', (req,res)=>{
 
 });
 
-app.get('/login', (req,res)=>{
+app.get('/login',(req,res)=>{
 
   res.sendFile(
     path.join(__dirname,'login.html')
@@ -161,7 +137,7 @@ app.get('/login', (req,res)=>{
 
 });
 
-app.get('/home', (req,res)=>{
+app.get('/home',(req,res)=>{
 
   res.sendFile(
     path.join(__dirname,'home.html')
@@ -169,7 +145,7 @@ app.get('/home', (req,res)=>{
 
 });
 
-app.get('/family', (req,res)=>{
+app.get('/family',(req,res)=>{
 
   res.sendFile(
     path.join(__dirname,'family.html')
@@ -177,7 +153,7 @@ app.get('/family', (req,res)=>{
 
 });
 
-app.get('/checkin', (req,res)=>{
+app.get('/checkin',(req,res)=>{
 
   res.sendFile(
     path.join(__dirname,'checkin.html')
@@ -185,24 +161,11 @@ app.get('/checkin', (req,res)=>{
 
 });
 
-app.get('/activities', (req,res)=>{
+app.get('/activities',(req,res)=>{
 
   res.sendFile(
     path.join(__dirname,'activities.html')
   );
-
-});
-
-// =========================
-// AUTH CHECK
-// =========================
-app.get('/auth', (req,res)=>{
-
-  res.json({
-
-    user:req.session.user || null
-
-  });
 
 });
 
@@ -238,7 +201,6 @@ app.post('/login', async (req,res)=>{
 
     }
 
-    // SAVE SESSION
     req.session.user = {
 
       id:user.id,
@@ -249,21 +211,7 @@ app.post('/login', async (req,res)=>{
 
     };
 
-    // FORCE SAVE SESSION
-    req.session.save(err=>{
-
-      if(err){
-
-        console.log(err);
-
-        return res.json({
-          success:false
-        });
-
-      }
-
-      console.log("LOGIN SUCCESS");
-      console.log(req.session.user);
+    req.session.save(()=>{
 
       res.json({
 
@@ -292,7 +240,7 @@ app.post('/login', async (req,res)=>{
 // =========================
 // LOGOUT
 // =========================
-app.get('/logout', (req,res)=>{
+app.get('/logout',(req,res)=>{
 
   req.session.destroy(()=>{
 
@@ -305,22 +253,28 @@ app.get('/logout', (req,res)=>{
 });
 
 // =========================
+// AUTH
+// =========================
+app.get('/auth',(req,res)=>{
+
+  res.json({
+
+    user:req.session.user || null
+
+  });
+
+});
+
+// =========================
 // SAVE CHECKIN
 // =========================
 app.post('/api/checkin', async (req,res)=>{
 
   try{
 
-    console.log("CHECKIN REQUEST");
-
-    console.log("SESSION:");
-    console.log(req.session);
-
     const user = req.session.user;
 
     if(!user){
-
-      console.log("NO USER SESSION");
 
       return res.status(401).json({
 
@@ -340,17 +294,15 @@ app.post('/api/checkin', async (req,res)=>{
     const today =
       new Date().toISOString().split('T')[0];
 
-    console.log("USER:");
-    console.log(user);
-
-    console.log("BODY:");
-    console.log(req.body);
-
-    // FIND EXISTING ROW
+    // FIND EXISTING
     const existing = await pool.query(
 
-      `SELECT * FROM checkins
-       WHERE clientid=$1
+      `SELECT *
+
+       FROM checkins
+
+       WHERE "clientId"=$1
+
        AND date=$2`,
 
       [user.id, today]
@@ -363,7 +315,8 @@ app.post('/api/checkin', async (req,res)=>{
       await pool.query(
 
         `INSERT INTO checkins
-        (clientid, date, mood, meds)
+
+        ("clientId", date, mood, meds)
 
         VALUES ($1,$2,$3,$4)`,
 
@@ -381,8 +334,6 @@ app.post('/api/checkin', async (req,res)=>{
 
       );
 
-      console.log("Created new checkin");
-
     }
 
     // UPDATE EXISTING
@@ -393,8 +344,11 @@ app.post('/api/checkin', async (req,res)=>{
         await pool.query(
 
           `UPDATE checkins
+
            SET mood=$1
-           WHERE clientid=$2
+
+           WHERE "clientId"=$2
+
            AND date=$3`,
 
           [
@@ -409,8 +363,6 @@ app.post('/api/checkin', async (req,res)=>{
 
         );
 
-        console.log("Mood updated");
-
       }
 
       if(meds){
@@ -418,8 +370,11 @@ app.post('/api/checkin', async (req,res)=>{
         await pool.query(
 
           `UPDATE checkins
+
            SET meds=$1
-           WHERE clientid=$2
+
+           WHERE "clientId"=$2
+
            AND date=$3`,
 
           [
@@ -434,8 +389,6 @@ app.post('/api/checkin', async (req,res)=>{
 
         );
 
-        console.log("Medication updated");
-
       }
 
     }
@@ -443,16 +396,17 @@ app.post('/api/checkin', async (req,res)=>{
     // VERIFY SAVE
     const saved = await pool.query(
 
-      `SELECT * FROM checkins
-       WHERE clientid=$1
+      `SELECT *
+
+       FROM checkins
+
+       WHERE "clientId"=$1
+
        AND date=$2`,
 
       [user.id, today]
 
     );
-
-    console.log("FINAL SAVED ROW:");
-    console.log(saved.rows[0]);
 
     res.json({
 
@@ -466,7 +420,6 @@ app.post('/api/checkin', async (req,res)=>{
 
   catch(err){
 
-    console.log("CHECKIN ERROR");
     console.log(err);
 
     res.status(500).json({
@@ -503,8 +456,12 @@ app.get('/api/checkin-today', async (req,res)=>{
 
     const result = await pool.query(
 
-      `SELECT * FROM checkins
-       WHERE clientid=$1
+      `SELECT *
+
+       FROM checkins
+
+       WHERE "clientId"=$1
+
        AND date=$2`,
 
       [user.id, today]
@@ -538,7 +495,9 @@ app.get('/api/checkin-today', async (req,res)=>{
     console.log(err);
 
     res.status(500).json({
+
       checkedIn:false
+
     });
 
   }
@@ -548,29 +507,19 @@ app.get('/api/checkin-today', async (req,res)=>{
 // =========================
 // DEBUG ROUTES
 // =========================
-app.get('/debug-session', (req,res)=>{
-
-  res.json({
-
-    session:req.session,
-
-    user:req.session.user || null
-
-  });
-
-});
-
 app.get('/debug-checkins', async (req,res)=>{
 
   try{
 
-    const result =
-      await pool.query(`
+    const result = await pool.query(`
 
-        SELECT * FROM checkins
-        ORDER BY id DESC
+      SELECT *
 
-      `);
+      FROM checkins
+
+      ORDER BY id DESC
+
+    `);
 
     res.json(result.rows);
 
@@ -580,8 +529,38 @@ app.get('/debug-checkins', async (req,res)=>{
 
     console.log(err);
 
-    res.status(500).json({
-      success:false
+    res.json({
+      error:err.message
+    });
+
+  }
+
+});
+
+app.get('/debug-columns', async (req,res)=>{
+
+  try{
+
+    const result = await pool.query(`
+
+      SELECT column_name
+
+      FROM information_schema.columns
+
+      WHERE table_name='checkins'
+
+    `);
+
+    res.json(result.rows);
+
+  }
+
+  catch(err){
+
+    console.log(err);
+
+    res.json({
+      error:err.message
     });
 
   }

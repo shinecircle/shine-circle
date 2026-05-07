@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-
   <title>Daily Check-In</title>
 
   <meta name="viewport"
@@ -11,78 +10,11 @@
 
   <style>
 
-    body{
-      font-family:Arial, sans-serif;
-      margin:0;
-      padding:0;
-      background:#F7F9FC;
-    }
-
-    .header{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:15px 20px;
-      background:white;
-      box-shadow:0 2px 6px rgba(0,0,0,.08);
-    }
-
-    .logo{
-      height:60px;
-    }
-
-    .btn{
-      background:#1E6FDB;
-      color:white;
-      border:none;
-      padding:10px 16px;
-      border-radius:8px;
-      cursor:pointer;
-      margin-left:6px;
-      font-size:14px;
-    }
-
-    .btn:hover{
-      opacity:.92;
-    }
-
-    .container{
-      max-width:700px;
-      margin:auto;
-      padding:20px;
-      text-align:center;
-    }
-
-    h2{
-      margin-top:10px;
-      color:#1B1B1B;
-    }
-
-    .date{
-      color:#555;
-      margin-bottom:8px;
-      font-size:17px;
-    }
-
-    .status{
-      margin-bottom:20px;
-      font-weight:bold;
-      min-height:22px;
-    }
-
-    .status-success{
-      color:green;
-    }
-
-    .status-error{
-      color:red;
-    }
-
     .panel{
-      margin:25px auto;
-      padding:25px;
-      border-radius:14px;
-      box-shadow:0 3px 8px rgba(0,0,0,.06);
+      margin:20px auto;
+      padding:20px;
+      border-radius:12px;
+      max-width:500px;
     }
 
     .mood-panel{
@@ -93,69 +25,22 @@
       background:#E8F8F5;
     }
 
-    .panel h3{
-      margin-top:0;
-      margin-bottom:18px;
-      color:#222;
-    }
-
-    .btn-group{
-      display:flex;
-      flex-wrap:wrap;
-      justify-content:center;
-      gap:10px;
-    }
-
     .btn-group button{
-
-      padding:14px 18px;
-
+      margin:5px;
+      padding:12px;
       border:none;
-
-      border-radius:10px;
-
+      border-radius:8px;
       background:#1E6FDB;
-
       color:white;
-
       cursor:pointer;
-
-      font-size:16px;
-
-      transition:.2s;
-
-      min-width:120px;
     }
 
-    /* user clicked */
     .selected{
-      outline:4px solid #0B2A5B;
-      transform:scale(1.03);
+      outline:3px solid #0B2A5B;
     }
 
-    /* successfully saved to postgres */
     .saved{
-      background:#1E8E3E !important;
-      color:white;
-    }
-
-    .save-btn{
-      margin-top:20px;
-      padding:12px 22px;
-      font-size:15px;
-    }
-
-    @media(max-width:600px){
-
-      .btn-group button{
-        width:100%;
-      }
-
-      .header{
-        flex-direction:column;
-        gap:10px;
-      }
-
+      background:green !important;
     }
 
   </style>
@@ -164,7 +49,6 @@
 
 <body>
 
-<!-- HEADER -->
 <div class="header">
 
   <img src="logo.jpg" class="logo">
@@ -190,16 +74,13 @@
 
 </div>
 
-<!-- CONTENT -->
-<div class="container">
+<div style="text-align:center;padding:20px;">
 
   <h2>Daily Check-In</h2>
 
-  <div id="today"
-       class="date"></div>
+  <p id="today"></p>
 
-  <div id="status"
-       class="status"></div>
+  <p id="status"></p>
 
   <!-- MOOD -->
   <div class="panel mood-panel">
@@ -227,7 +108,9 @@
 
     </div>
 
-    <button class="btn save-btn"
+    <br>
+
+    <button class="btn"
             onclick="submitMood()">
       Save Mood
     </button>
@@ -252,7 +135,9 @@
 
     </div>
 
-    <button class="btn save-btn"
+    <br>
+
+    <button class="btn"
             onclick="submitMeds()">
       Save Medication
     </button>
@@ -263,41 +148,28 @@
 
 <script>
 
-// =========================
-// GLOBALS
-// =========================
 let selectedMood = "";
 let selectedMeds = "";
 
-// =========================
 // DATE
-// =========================
 document.getElementById("today").innerText =
 
-  new Date().toLocaleDateString(
+  new Date().toLocaleDateString('en-US',{
 
-    'en-US',
+    weekday:'long',
 
-    {
+    year:'numeric',
 
-      weekday:'long',
+    month:'long',
 
-      year:'numeric',
+    day:'numeric'
 
-      month:'long',
+  });
 
-      day:'numeric'
+// LOAD TODAY
+loadToday();
 
-    }
-
-  );
-
-// =========================
-// LOAD SAVED DATA
-// =========================
-loadTodayCheckin();
-
-async function loadTodayCheckin(){
+async function loadToday(){
 
   try{
 
@@ -307,29 +179,17 @@ async function loadTodayCheckin(){
     const data =
       await response.json();
 
-    console.log("LOADED CHECKIN:");
-    console.log(data);
-
     if(!data.checkedIn){
       return;
     }
 
-    // restore globals
     selectedMood =
       data.mood || "";
 
     selectedMeds =
       data.meds || "";
 
-    // status message
-    document.getElementById("status").innerText =
-      "Today's check-in already saved";
-
-    document.getElementById("status").className =
-      "status status-success";
-
-    // restore button states
-    restoreSavedSelections();
+    restoreButtons();
 
   }
 
@@ -337,64 +197,46 @@ async function loadTodayCheckin(){
 
     console.log(err);
 
-    document.getElementById("status").innerText =
-      "Could not load today's check-in";
-
-    document.getElementById("status").className =
-      "status status-error";
-
   }
 
 }
 
-// =========================
-// CLEAR SELECTIONS
-// =========================
-function clearGroup(groupId){
-
-  document.querySelectorAll(`#${groupId} button`)
-    .forEach(btn=>{
-
-      btn.classList.remove("selected");
-
-    });
-
-}
-
-// =========================
-// MOOD SELECT
-// =========================
+// SELECT
 function selectMood(btn){
 
   selectedMood =
     btn.innerText.trim();
 
-  clearGroup("moodBtns");
+  document.querySelectorAll("#moodBtns button")
+    .forEach(b=>{
+
+      b.classList.remove("selected");
+
+    });
 
   btn.classList.add("selected");
 
 }
 
-// =========================
-// MEDS SELECT
-// =========================
 function selectMeds(btn){
 
   selectedMeds =
     btn.innerText.trim();
 
-  clearGroup("medBtns");
+  document.querySelectorAll("#medBtns button")
+    .forEach(b=>{
+
+      b.classList.remove("selected");
+
+    });
 
   btn.classList.add("selected");
 
 }
 
-// =========================
-// RESTORE SAVED STATES
-// =========================
-function restoreSavedSelections(){
+// RESTORE
+function restoreButtons(){
 
-  // MOOD
   document.querySelectorAll("#moodBtns button")
     .forEach(btn=>{
 
@@ -406,7 +248,6 @@ function restoreSavedSelections(){
 
     });
 
-  // MEDS
   document.querySelectorAll("#medBtns button")
     .forEach(btn=>{
 
@@ -420,17 +261,8 @@ function restoreSavedSelections(){
 
 }
 
-// =========================
 // SAVE MOOD
-// =========================
 async function submitMood(){
-
-  if(!selectedMood){
-
-    alert("Please select a mood");
-
-    return;
-  }
 
   try{
 
@@ -453,72 +285,30 @@ async function submitMood(){
     const data =
       await response.json();
 
-    console.log("SAVE MOOD RESPONSE:");
-    console.log(data);
+    if(!data.success){
 
-    // FAILED
-    if(!response.ok || !data.success){
-
-      throw new Error(
-        data.error || "Save failed"
-      );
+      throw new Error(data.error);
 
     }
 
-    // SUCCESS
     document.getElementById("status").innerText =
-      "Mood saved successfully";
+      "Mood saved";
 
-    document.getElementById("status").className =
-      "status status-success";
-
-    // clear old saved
-    document.querySelectorAll("#moodBtns button")
-      .forEach(btn=>{
-
-        btn.classList.remove("saved");
-
-      });
-
-    // mark saved
-    document.querySelectorAll("#moodBtns button")
-      .forEach(btn=>{
-
-        if(btn.innerText.trim() === selectedMood){
-
-          btn.classList.add("saved");
-
-        }
-
-      });
+    restoreButtons();
 
   }
 
   catch(err){
 
-    console.log(err);
-
     document.getElementById("status").innerText =
-      "Error saving mood: " + err.message;
-
-    document.getElementById("status").className =
-      "status status-error";
+      err.message;
 
   }
 
 }
 
-// =========================
 // SAVE MEDS
-// =========================
 async function submitMeds(){
-
-  if(!selectedMeds){
-
-    alert("Please select Yes or No");
-
-    return;
-  }
 
   try{
 
@@ -541,64 +331,29 @@ async function submitMeds(){
     const data =
       await response.json();
 
-    console.log("SAVE MEDS RESPONSE:");
-    console.log(data);
+    if(!data.success){
 
-    // FAILED
-    if(!response.ok || !data.success){
-
-      throw new Error(
-        data.error || "Save failed"
-      );
+      throw new Error(data.error);
 
     }
 
-    // SUCCESS
     document.getElementById("status").innerText =
-      "Medication saved successfully";
+      "Medication saved";
 
-    document.getElementById("status").className =
-      "status status-success";
-
-    // clear old saved
-    document.querySelectorAll("#medBtns button")
-      .forEach(btn=>{
-
-        btn.classList.remove("saved");
-
-      });
-
-    // mark saved
-    document.querySelectorAll("#medBtns button")
-      .forEach(btn=>{
-
-        if(btn.innerText.trim() === selectedMeds){
-
-          btn.classList.add("saved");
-
-        }
-
-      });
+    restoreButtons();
 
   }
 
   catch(err){
 
-    console.log(err);
-
     document.getElementById("status").innerText =
-      "Error saving medication: " + err.message;
-
-    document.getElementById("status").className =
-      "status status-error";
+      err.message;
 
   }
 
 }
 
-// =========================
-// NAVIGATION
-// =========================
+// NAV
 function goHome(){
 
   window.location='/home';

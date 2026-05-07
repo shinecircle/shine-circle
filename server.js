@@ -64,7 +64,7 @@ async function initDB(){
 
   try{
 
-    // USERS
+    // USERS TABLE
     await pool.query(`
 
       CREATE TABLE IF NOT EXISTS clients (
@@ -85,14 +85,14 @@ async function initDB(){
 
     `);
 
-    // CHECKINS
+    // CHECKINS TABLE
     await pool.query(`
 
       CREATE TABLE IF NOT EXISTS checkins (
 
         id SERIAL PRIMARY KEY,
 
-        "clientId" INTEGER,
+        userid INTEGER,
 
         date TEXT,
 
@@ -103,6 +103,29 @@ async function initDB(){
       )
 
     `);
+
+    // SEED USERS
+    const users =
+      await pool.query(`SELECT * FROM clients`);
+
+    if(users.rows.length === 0){
+
+      await pool.query(`
+
+        INSERT INTO clients
+        (username, firstname, lastname, role, password)
+
+        VALUES
+
+        ('user','John','Doe','user','1234'),
+
+        ('family','Sarah','Doe','caregiver','1234')
+
+      `);
+
+      console.log("Seed users created");
+
+    }
 
     console.log("Database initialized");
 
@@ -117,6 +140,57 @@ async function initDB(){
 }
 
 initDB();
+
+// =========================
+// RESET CHECKINS TABLE
+// TEMPORARY ROUTE
+// VISIT ONCE THEN DELETE
+// =========================
+app.get('/reset-checkins', async (req,res)=>{
+
+  try{
+
+    // DELETE OLD TABLE
+    await pool.query(`
+
+      DROP TABLE IF EXISTS checkins
+
+    `);
+
+    // CREATE NEW TABLE
+    await pool.query(`
+
+      CREATE TABLE checkins (
+
+        id SERIAL PRIMARY KEY,
+
+        userid INTEGER,
+
+        date TEXT,
+
+        mood TEXT,
+
+        meds TEXT
+
+      )
+
+    `);
+
+    res.send(
+      "checkins table rebuilt successfully"
+    );
+
+  }
+
+  catch(err){
+
+    console.log(err);
+
+    res.send(err.message);
+
+  }
+
+});
 
 // =========================
 // PAGES
@@ -170,6 +244,19 @@ app.get('/activities',(req,res)=>{
 });
 
 // =========================
+// AUTH
+// =========================
+app.get('/auth',(req,res)=>{
+
+  res.json({
+
+    user:req.session.user || null
+
+  });
+
+});
+
+// =========================
 // LOGIN
 // =========================
 app.post('/login', async (req,res)=>{
@@ -183,8 +270,12 @@ app.post('/login', async (req,res)=>{
 
     const result = await pool.query(
 
-      `SELECT * FROM clients
+      `SELECT *
+
+       FROM clients
+
        WHERE username=$1
+
        AND password=$2`,
 
       [username,password]
@@ -212,6 +303,9 @@ app.post('/login', async (req,res)=>{
     };
 
     req.session.save(()=>{
+
+      console.log("LOGIN SUCCESS");
+      console.log(req.session.user);
 
       res.json({
 
@@ -253,26 +347,21 @@ app.get('/logout',(req,res)=>{
 });
 
 // =========================
-// AUTH
-// =========================
-app.get('/auth',(req,res)=>{
-
-  res.json({
-
-    user:req.session.user || null
-
-  });
-
-});
-
-// =========================
 // SAVE CHECKIN
 // =========================
 app.post('/api/checkin', async (req,res)=>{
 
   try{
 
+    console.log("CHECKIN REQUEST");
+
     const user = req.session.user;
+
+    console.log("SESSION USER:");
+    console.log(user);
+
+    console.log("BODY:");
+    console.log(req.body);
 
     if(!user){
 
@@ -294,14 +383,14 @@ app.post('/api/checkin', async (req,res)=>{
     const today =
       new Date().toISOString().split('T')[0];
 
-    // FIND EXISTING
+    // FIND TODAY'S ROW
     const existing = await pool.query(
 
       `SELECT *
 
        FROM checkins
 
-       WHERE "clientId"=$1
+       WHERE userid=$1
 
        AND date=$2`,
 
@@ -309,14 +398,14 @@ app.post('/api/checkin', async (req,res)=>{
 
     );
 
-    // CREATE NEW
+    // CREATE NEW ROW
     if(existing.rows.length === 0){
 
       await pool.query(
 
         `INSERT INTO checkins
 
-        ("clientId", date, mood, meds)
+        (userid, date, mood, meds)
 
         VALUES ($1,$2,$3,$4)`,
 
@@ -334,9 +423,11 @@ app.post('/api/checkin', async (req,res)=>{
 
       );
 
+      console.log("Created new checkin");
+
     }
 
-    // UPDATE EXISTING
+    // UPDATE EXISTING ROW
     else{
 
       if(mood){
@@ -347,7 +438,7 @@ app.post('/api/checkin', async (req,res)=>{
 
            SET mood=$1
 
-           WHERE "clientId"=$2
+           WHERE userid=$2
 
            AND date=$3`,
 
@@ -363,6 +454,8 @@ app.post('/api/checkin', async (req,res)=>{
 
         );
 
+        console.log("Mood updated");
+
       }
 
       if(meds){
@@ -373,7 +466,7 @@ app.post('/api/checkin', async (req,res)=>{
 
            SET meds=$1
 
-           WHERE "clientId"=$2
+           WHERE userid=$2
 
            AND date=$3`,
 
@@ -389,6 +482,8 @@ app.post('/api/checkin', async (req,res)=>{
 
         );
 
+        console.log("Medication updated");
+
       }
 
     }
@@ -400,13 +495,16 @@ app.post('/api/checkin', async (req,res)=>{
 
        FROM checkins
 
-       WHERE "clientId"=$1
+       WHERE userid=$1
 
        AND date=$2`,
 
       [user.id, today]
 
     );
+
+    console.log("SAVED ROW:");
+    console.log(saved.rows[0]);
 
     res.json({
 
@@ -420,6 +518,7 @@ app.post('/api/checkin', async (req,res)=>{
 
   catch(err){
 
+    console.log("CHECKIN ERROR");
     console.log(err);
 
     res.status(500).json({
@@ -460,7 +559,7 @@ app.get('/api/checkin-today', async (req,res)=>{
 
        FROM checkins
 
-       WHERE "clientId"=$1
+       WHERE userid=$1
 
        AND date=$2`,
 
@@ -507,17 +606,17 @@ app.get('/api/checkin-today', async (req,res)=>{
 // =========================
 // DEBUG ROUTES
 // =========================
-app.get('/debug-checkins', async (req,res)=>{
+app.get('/debug-columns', async (req,res)=>{
 
   try{
 
     const result = await pool.query(`
 
-      SELECT *
+      SELECT column_name
 
-      FROM checkins
+      FROM information_schema.columns
 
-      ORDER BY id DESC
+      WHERE table_name='checkins'
 
     `);
 
@@ -537,17 +636,17 @@ app.get('/debug-checkins', async (req,res)=>{
 
 });
 
-app.get('/debug-columns', async (req,res)=>{
+app.get('/debug-checkins', async (req,res)=>{
 
   try{
 
     const result = await pool.query(`
 
-      SELECT column_name
+      SELECT *
 
-      FROM information_schema.columns
+      FROM checkins
 
-      WHERE table_name='checkins'
+      ORDER BY id DESC
 
     `);
 

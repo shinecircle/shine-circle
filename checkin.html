@@ -6,6 +6,11 @@
   <link rel="stylesheet" href="styles.css">
 
   <style>
+
+    body{
+      font-family:Arial;
+    }
+
     .panel {
       margin:20px auto;
       padding:20px;
@@ -13,20 +18,47 @@
       max-width:500px;
     }
 
-    .mood-panel { background:#E8F0FE; }
-    .meds-panel { background:#E8F8F5; }
+    .mood-panel {
+      background:#E8F0FE;
+    }
+
+    .meds-panel {
+      background:#E8F8F5;
+    }
 
     .btn-group button{
       margin:5px;
-      padding:12px;
+      padding:12px 18px;
       border-radius:8px;
       border:none;
       background:#1E6FDB;
       color:white;
       cursor:pointer;
+      transition:.2s;
+      font-size:16px;
     }
 
-    .selected { background:#0B2A5B; }
+    /* currently selected */
+    .selected {
+      outline:3px solid #0B2A5B;
+    }
+
+    /* successfully saved to DB */
+    .saved {
+      background:#1E8E3E !important;
+      color:white;
+    }
+
+    .status-success{
+      color:green;
+      font-weight:bold;
+    }
+
+    .status-error{
+      color:red;
+      font-weight:bold;
+    }
+
   </style>
 </head>
 
@@ -34,6 +66,7 @@
 
 <div class="header">
   <img src="logo.jpg" class="logo">
+
   <div>
     <button class="btn" onclick="goHome()">Home</button>
     <button class="btn" onclick="goActivities()">Activities</button>
@@ -46,34 +79,53 @@
   <h2>Daily Check-In</h2>
 
   <p id="today"></p>
-  <p id="status" style="color:green;font-weight:bold;"></p>
+
+  <p id="status"></p>
 
   <!-- MOOD -->
   <div class="panel mood-panel">
+
     <h3>How are you feeling today?</h3>
 
     <div id="moodBtns" class="btn-group">
+
       <button onclick="selectMood(this)">Great</button>
+
       <button onclick="selectMood(this)">Good</button>
+
       <button onclick="selectMood(this)">Low</button>
+
       <button onclick="selectMood(this)">Struggling</button>
+
     </div>
 
     <br>
-    <button class="btn" onclick="submitMood()">Save Mood</button>
+
+    <button class="btn" onclick="submitMood()">
+      Save Mood
+    </button>
+
   </div>
 
   <!-- MEDS -->
   <div class="panel meds-panel">
+
     <h3>Did you take your medicine today?</h3>
 
     <div id="medBtns" class="btn-group">
+
       <button onclick="selectMeds(this)">Yes</button>
+
       <button onclick="selectMeds(this)">No</button>
+
     </div>
 
     <br>
-    <button class="btn" onclick="submitMeds()">Save Medication</button>
+
+    <button class="btn" onclick="submitMeds()">
+      Save Medication
+    </button>
+
   </div>
 
 </div>
@@ -84,7 +136,7 @@ let selectedMood = "";
 let selectedMeds = "";
 
 // =========================
-// DATE (FULL FORMAT)
+// DATE
 // =========================
 document.getElementById("today").innerText =
   new Date().toLocaleDateString('en-US',{
@@ -97,30 +149,53 @@ document.getElementById("today").innerText =
 // =========================
 // LOAD SAVED DATA
 // =========================
-fetch('/checkin-today')
-.then(r=>r.json())
-.then(d=>{
+loadTodayCheckin();
 
-  if(!d.checkedIn) return;
+async function loadTodayCheckin(){
 
-  selectedMood = d.mood || "";
-  selectedMeds = d.meds || "";
+  try{
 
-  document.getElementById("status").innerText =
-    "You already checked in today";
+    const response = await fetch('/checkin-today');
+    const data = await response.json();
 
-  highlightSelections();
-});
+    if(!data.checkedIn){
+      return;
+    }
+
+    selectedMood = data.mood || "";
+    selectedMeds = data.meds || "";
+
+    document.getElementById("status").innerHTML =
+      "Today's check-in already saved";
+
+    document.getElementById("status").className =
+      "status-success";
+
+    restoreSavedSelections();
+
+  }catch(err){
+
+    console.error(err);
+
+  }
+}
 
 // =========================
 // SELECT FUNCTIONS
 // =========================
+function clearSelection(groupId){
+
+  document.querySelectorAll(`#${groupId} button`)
+    .forEach(btn=>{
+      btn.classList.remove("selected");
+    });
+}
+
 function selectMood(btn){
 
   selectedMood = btn.innerText;
 
-  document.querySelectorAll("#moodBtns button")
-    .forEach(b=>b.classList.remove("selected"));
+  clearSelection("moodBtns");
 
   btn.classList.add("selected");
 }
@@ -129,77 +204,208 @@ function selectMeds(btn){
 
   selectedMeds = btn.innerText;
 
-  document.querySelectorAll("#medBtns button")
-    .forEach(b=>b.classList.remove("selected"));
+  clearSelection("medBtns");
 
   btn.classList.add("selected");
 }
 
 // =========================
-// RESTORE SELECTIONS
+// RESTORE SAVED BUTTONS
 // =========================
-function highlightSelections(){
+function restoreSavedSelections(){
 
   document.querySelectorAll("#moodBtns button")
-    .forEach(b=>{
-      if(b.innerText === selectedMood){
-        b.classList.add("selected");
+    .forEach(btn=>{
+
+      if(btn.innerText === selectedMood){
+
+        btn.classList.add("saved");
+
       }
+
     });
 
   document.querySelectorAll("#medBtns button")
-    .forEach(b=>{
-      if(b.innerText === selectedMeds){
-        b.classList.add("selected");
+    .forEach(btn=>{
+
+      if(btn.innerText === selectedMeds){
+
+        btn.classList.add("saved");
+
       }
+
     });
 }
 
 // =========================
-// SUBMIT (SAFE)
+// SAVE MOOD
 // =========================
-function submitMood(){
+async function submitMood(){
 
   if(!selectedMood){
+
     alert("Select a mood first");
+
     return;
   }
 
-  fetch('/checkin',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      mood:selectedMood
-    })
-  })
-  .then(()=> {
-    document.getElementById("status").innerText="Mood saved!";
-  });
+  try{
+
+    const response = await fetch('/checkin',{
+
+      method:'POST',
+
+      headers:{
+        'Content-Type':'application/json'
+      },
+
+      body:JSON.stringify({
+        mood:selectedMood
+      })
+
+    });
+
+    const data = await response.json();
+
+    if(data.success){
+
+      document.getElementById("status").innerText =
+        "Mood saved successfully";
+
+      document.getElementById("status").className =
+        "status-success";
+
+      // clear old saved state
+      document.querySelectorAll("#moodBtns button")
+        .forEach(btn=>{
+          btn.classList.remove("saved");
+        });
+
+      // mark saved button
+      document.querySelectorAll("#moodBtns button")
+        .forEach(btn=>{
+
+          if(btn.innerText === selectedMood){
+
+            btn.classList.add("saved");
+
+          }
+
+        });
+
+    }else{
+
+      throw new Error();
+
+    }
+
+  }catch(err){
+
+    console.error(err);
+
+    document.getElementById("status").innerText =
+      "Error saving mood";
+
+    document.getElementById("status").className =
+      "status-error";
+
+  }
 }
 
-function submitMeds(){
+// =========================
+// SAVE MEDS
+// =========================
+async function submitMeds(){
 
   if(!selectedMeds){
+
     alert("Select Yes or No");
+
     return;
   }
 
-  fetch('/checkin',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      meds:selectedMeds
-    })
-  })
-  .then(()=> {
-    document.getElementById("status").innerText="Medication saved!";
-  });
+  try{
+
+    const response = await fetch('/checkin',{
+
+      method:'POST',
+
+      headers:{
+        'Content-Type':'application/json'
+      },
+
+      body:JSON.stringify({
+        meds:selectedMeds
+      })
+
+    });
+
+    const data = await response.json();
+
+    if(data.success){
+
+      document.getElementById("status").innerText =
+        "Medication saved successfully";
+
+      document.getElementById("status").className =
+        "status-success";
+
+      // clear old saved state
+      document.querySelectorAll("#medBtns button")
+        .forEach(btn=>{
+          btn.classList.remove("saved");
+        });
+
+      // mark saved button
+      document.querySelectorAll("#medBtns button")
+        .forEach(btn=>{
+
+          if(btn.innerText === selectedMeds){
+
+            btn.classList.add("saved");
+
+          }
+
+        });
+
+    }else{
+
+      throw new Error();
+
+    }
+
+  }catch(err){
+
+    console.error(err);
+
+    document.getElementById("status").innerText =
+      "Error saving medication";
+
+    document.getElementById("status").className =
+      "status-error";
+
+  }
 }
 
+// =========================
 // NAV
-function goHome(){ window.location='/home'; }
-function goActivities(){ window.location='/activities'; }
-function logout(){ fetch('/logout').then(()=>window.location='/'); }
+// =========================
+function goHome(){
+  window.location='/home';
+}
+
+function goActivities(){
+  window.location='/activities';
+}
+
+function logout(){
+
+  fetch('/logout')
+    .then(()=>{
+      window.location='/';
+    });
+
+}
 
 </script>
 

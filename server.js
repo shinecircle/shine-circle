@@ -108,14 +108,13 @@ await pool.query(`
   );
 `);
 
-// SEED USERS
-const users = await pool.query(
-  `SELECT * FROM clients`
-);
+// DEFAULT USERS
+const users =
+  await pool.query(
+    `SELECT * FROM clients`
+  );
 
 if(users.rows.length === 0){
-
-  console.log("Creating default users...");
 
   await pool.query(`
 
@@ -219,7 +218,7 @@ path.join(__dirname,'family.html')
 });
 
 // =========================
-// REUSABLE HEADER
+// HEADER
 // =========================
 app.get('/header',(req,res)=>{
 
@@ -294,7 +293,9 @@ catch(err){
 ```
 console.log(err);
 
-res.status(500).send("Login error");
+res.status(500).json({
+  success:false
+});
 ```
 
 }
@@ -319,7 +320,7 @@ res.send("Logged out");
 // =========================
 // SAVE CHECKIN
 // =========================
-app.post('/checkin', async(req,res)=>{
+app.post('/api/checkin', async(req,res)=>{
 
 try{
 
@@ -328,7 +329,10 @@ const user = req.session.user;
 
 if(!user){
 
-  return res.status(401).send("Not logged in");
+  return res.json({
+    success:false,
+    error:"Not logged in"
+  });
 
 }
 
@@ -340,7 +344,6 @@ const {
   meds
 } = req.body;
 
-// FIND TODAY
 const existing = await pool.query(
 
   `
@@ -356,7 +359,6 @@ const existing = await pool.query(
 
 if(existing.rows.length === 0){
 
-  // CREATE
   await pool.query(
 
     `
@@ -384,8 +386,8 @@ if(existing.rows.length === 0){
 
 else{
 
-  // UPDATE ONLY PROVIDED FIELD
-  const row = existing.rows[0];
+  const row =
+    existing.rows[0];
 
   await pool.query(
 
@@ -410,7 +412,9 @@ else{
 
 }
 
-res.send("Saved");
+res.json({
+  success:true
+});
 ```
 
 }
@@ -420,7 +424,10 @@ catch(err){
 ```
 console.log(err);
 
-res.status(500).send("Error saving");
+res.json({
+  success:false,
+  error:"Error saving"
+});
 ```
 
 }
@@ -428,9 +435,9 @@ res.status(500).send("Error saving");
 });
 
 // =========================
-// TODAY CHECKIN
+// LOAD TODAY CHECKIN
 // =========================
-app.get('/checkin-today', async(req,res)=>{
+app.get('/api/checkin-today', async(req,res)=>{
 
 try{
 
@@ -469,7 +476,8 @@ if(result.rows.length === 0){
 
 }
 
-const row = result.rows[0];
+const row =
+  result.rows[0];
 
 res.json({
 
@@ -477,9 +485,7 @@ res.json({
 
   mood:row.mood,
 
-  meds:row.meds,
-
-  timestamp:row.date
+  meds:row.meds
 
 });
 ```
@@ -503,7 +509,7 @@ res.json({
 // =========================
 // SAVE ACTIVITIES
 // =========================
-app.post('/activities', async(req,res)=>{
+app.post('/api/activities', async(req,res)=>{
 
 try{
 
@@ -512,7 +518,9 @@ const user = req.session.user;
 
 if(!user){
 
-  return res.status(401).send("Not logged in");
+  return res.json({
+    success:false
+  });
 
 }
 
@@ -522,13 +530,11 @@ const {
   timezone
 } = req.body;
 
-// DELETE OLD
 await pool.query(
   `DELETE FROM activities WHERE clientid=$1`,
   [user.id]
 );
 
-// INSERT NEW
 await pool.query(
 
   `
@@ -552,7 +558,9 @@ await pool.query(
 
 );
 
-res.send("Saved");
+res.json({
+  success:true
+});
 ```
 
 }
@@ -562,7 +570,9 @@ catch(err){
 ```
 console.log(err);
 
-res.status(500).send("Error saving");
+res.json({
+  success:false
+});
 ```
 
 }
@@ -572,7 +582,7 @@ res.status(500).send("Error saving");
 // =========================
 // LOAD ACTIVITIES
 // =========================
-app.get('/activities-data', async(req,res)=>{
+app.get('/api/activities', async(req,res)=>{
 
 try{
 
@@ -658,35 +668,6 @@ console.log(err);
 res.json({
   checkins:[]
 });
-```
-
-}
-
-});
-
-// =========================
-// DEBUG USERS
-// =========================
-app.get('/debug-users', async(req,res)=>{
-
-try{
-
-```
-const result = await pool.query(
-  `SELECT id,username,role FROM clients`
-);
-
-res.json(result.rows);
-```
-
-}
-
-catch(err){
-
-```
-console.log(err);
-
-res.send("Error");
 ```
 
 }

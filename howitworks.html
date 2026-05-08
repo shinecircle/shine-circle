@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="styles.css">
 
   <style>
+
     .flow, .trust {
       max-width:800px;
       margin:40px auto;
@@ -16,9 +17,10 @@
 
     .flow-step {
       margin:20px 0;
-      padding:15px;
+      padding:18px;
       background:#f5f5f5;
       border-radius:10px;
+      line-height:1.6;
     }
 
     .trust-box {
@@ -26,33 +28,40 @@
       padding:20px;
       border-radius:12px;
       margin-top:20px;
+      line-height:1.7;
     }
+
+    .disclaimer{
+      margin-top:40px;
+      font-size:12px;
+      color:#777;
+      text-align:center;
+      line-height:1.6;
+      padding:0 20px;
+    }
+
   </style>
 
 </head>
 
 <body>
 
-<!-- HEADER -->
+<!-- REUSABLE HEADER -->
 
-<div class="header">
-  <img src="logo.jpg" class="logo">
-
-  <div>
-    <button class="btn btn-light" onclick="goHome()">Home</button>
-    <button class="btn btn-primary" onclick="goLogin()">Login</button>
-  </div>
-</div>
+<div id="header"></div>
 
 <div class="container">
 
   <!-- HERO -->
 
   <div class="hero">
-    <h1>Brighter days start here.</h1>
 
 ```
-<p>Staying connected shouldn’t feel like a constant worry.</p>
+<h1>Brighter days start here.</h1>
+
+<p>
+  Staying connected shouldn’t feel like a constant worry.
+</p>
 
 <p>
   Shine Circle brings structure to daily connection—so conversations happen,
@@ -63,15 +72,16 @@
   Simple, consistent touchpoints that help your loved one feel supported—
   and give you peace of mind.
 </p>
-
+```
 
   </div>
 
   <!-- VISUAL FLOW -->
 
   <div class="flow">
-    <h2>How it works in real life</h2>
 
+```
+<h2>How it works in real life</h2>
 
 <div class="flow-step">
   <b>A simple daily routine</b><br>
@@ -84,15 +94,15 @@
 </div>
 
 <div class="flow-step">
- <b>Subtle insights</b><br>
+  <b>Subtle insights</b><br>
   You stay aware of patterns without needing to ask.
 </div>
 
 <div class="flow-step">
- <b>Peace of mind</b><br>
+  <b>Peace of mind</b><br>
   You know things are okay—or when to step in.
 </div>
-
+```
 
   </div>
 
@@ -100,35 +110,44 @@
 
   <div class="steps">
 
-
+```
 <div class="step">
   <h3>1. Daily Check-Ins</h3>
-  <p>Consistent, friendly conversations that create routine and connection.</p>
+  <p>
+    Consistent, friendly conversations that create routine and connection.
+  </p>
 </div>
 
 <div class="step">
   <h3>2. Mood Awareness</h3>
-  <p>Subtle insights that help you notice changes over time.</p>
+  <p>
+    Subtle insights that help you notice changes over time.
+  </p>
 </div>
 
 <div class="step">
   <h3>3. Medication Support</h3>
-  <p>Gentle reminders that fit naturally into the day.</p>
+  <p>
+    Gentle reminders that fit naturally into the day.
+  </p>
 </div>
 
 <div class="step">
   <h3>4. Family Visibility</h3>
-  <p>Stay informed without needing to constantly check in.</p>
+  <p>
+    Stay informed without needing to constantly check in.
+  </p>
 </div>
-
+```
 
   </div>
 
   <!-- AUDIENCE -->
 
   <div class="section">
-    <h2>Designed for real life</h2>
 
+```
+<h2>Designed for real life</h2>
 
 <p>
   For adult children balancing careers, kids, and aging parents—
@@ -139,18 +158,19 @@
   Shine Circle helps you stay connected in a way that feels natural,
   not overwhelming.
 </p>
-
-
+```
 
   </div>
 
-  <!-- TRUST SECTION -->
+  <!-- TRUST -->
 
   <div class="trust">
-    <h2>Built with care</h2>
 
+```
+<h2>Built with care</h2>
 
 <div class="trust-box">
+
   <p>
     Shine Circle is designed to support independence.
   </p>
@@ -163,15 +183,36 @@
   <p>
     Your loved one stays in control. You stay informed.
   </p>
+
 </div>
+```
 
   </div>
 
   <!-- CTA -->
 
   <div class="cta">
-    <h2>Stay connected—without the constant worry</h2>
-    <button class="btn btn-primary" onclick="goLogin()">Get Started</button>
+
+```
+<h2>Stay connected—without the constant worry</h2>
+
+<button class="btn btn-primary" onclick="goLogin()">
+  Get Started
+</button>
+```
+
+  </div>
+
+  <!-- DISCLAIMER -->
+
+  <div class="disclaimer">
+
+```
+Shine Circle is designed to support connection, routine, and family visibility.
+It is not a medical service, emergency response system,
+or substitute for professional healthcare or caregiving.
+```
+
   </div>
 
 </div>
@@ -184,7 +225,24 @@
 
 <script>
 
+// =========================
+// LOAD REUSABLE HEADER
+// =========================
+fetch('/header')
+.then(r=>r.text())
+.then(html=>{
+
+  document.getElementById('header').innerHTML = html;
+
+  document.getElementById("headerButtons").innerHTML = `
+    <button class="btn btn-light" onclick="goHome()">Home</button>
+    <button class="btn btn-primary" onclick="goLogin()">Login</button>
+  `;
+});
+
+// =========================
 // SAFE REDIRECT ONLY AFTER LOGIN
+// =========================
 fetch('/auth')
 .then(r => r.json())
 .then(user => {
@@ -192,6 +250,7 @@ fetch('/auth')
   if(!user) return;
 
   const justLoggedIn = sessionStorage.getItem("justLoggedIn");
+
   if(justLoggedIn !== "true") return;
 
   sessionStorage.removeItem("justLoggedIn");
@@ -204,9 +263,16 @@ fetch('/auth')
 
 });
 
+// =========================
 // NAV
-function goHome(){ window.location='/'; }
-function goLogin(){ window.location='/login'; }
+// =========================
+function goHome(){
+  window.location='/';
+}
+
+function goLogin(){
+  window.location='/login';
+}
 
 </script>
 

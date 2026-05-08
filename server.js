@@ -14,13 +14,10 @@ app.set('trust proxy', 1);
 // DATABASE
 // =========================
 const pool = new Pool({
-
-  connectionString: process.env.DATABASE_URL,
-
-  ssl:{
-    rejectUnauthorized:false
-  }
-
+connectionString: process.env.DATABASE_URL,
+ssl: {
+rejectUnauthorized: false
+}
 });
 
 // =========================
@@ -29,200 +26,206 @@ const pool = new Pool({
 app.use(express.json());
 
 app.use(express.urlencoded({
-  extended:true
+extended:true
 }));
 
 app.use(express.static(__dirname));
 
-// =========================
-// SESSION
-// =========================
 app.use(session({
 
-  secret:'shine-secret',
+secret:'shine-secret',
 
-  resave:false,
+resave:false,
 
-  saveUninitialized:false,
+saveUninitialized:false,
 
-  cookie:{
-
-    secure:false,
-
-    sameSite:'lax',
-
-    maxAge:1000 * 60 * 60 * 24
-
-  }
+cookie:{
+secure:false
+}
 
 }));
 
 // =========================
-// INIT DATABASE
+// DATABASE INIT
 // =========================
 async function initDB(){
 
-  try{
+try{
 
-    // =========================
-    // CLIENTS TABLE
-    // =========================
-    await pool.query(`
+```
+console.log("Initializing database...");
 
-      CREATE TABLE IF NOT EXISTS clients (
+// CLIENTS
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS clients (
 
-        id SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
 
-        username TEXT,
+    username TEXT,
 
-        firstname TEXT,
+    firstname TEXT,
 
-        lastname TEXT,
+    lastname TEXT,
 
-        role TEXT,
+    role TEXT,
 
-        password TEXT
+    password TEXT
 
-      )
+  );
+`);
 
-    `);
+// CHECKINS
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS checkins (
 
-    // =========================
-    // CHECKINS TABLE
-    // =========================
-    await pool.query(`
+    id SERIAL PRIMARY KEY,
 
-      CREATE TABLE IF NOT EXISTS checkins (
+    clientid INTEGER,
 
-        id SERIAL PRIMARY KEY,
+    date TEXT,
 
-        userid INTEGER,
+    mood TEXT,
 
-        date TEXT,
+    meds TEXT
 
-        mood TEXT,
+  );
+`);
 
-        meds TEXT
+// ACTIVITIES
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS activities (
 
-      )
+    id SERIAL PRIMARY KEY,
 
-    `);
+    clientid INTEGER,
 
-    // =========================
-    // ACTIVITIES TABLE
-    // =========================
-    await pool.query(`
+    dayforcall TEXT,
 
-      CREATE TABLE IF NOT EXISTS activities (
+    timeforcall TEXT,
 
-        id SERIAL PRIMARY KEY,
+    timezone TEXT
 
-        userid INTEGER,
+  );
+`);
 
-        dayforcall TEXT,
+// SEED USERS
+const users = await pool.query(
+  `SELECT * FROM clients`
+);
 
-        timeforcall TEXT,
+if(users.rows.length === 0){
 
-        timezone TEXT
+  console.log("Creating default users...");
 
-      )
+  await pool.query(`
 
-    `);
+    INSERT INTO clients
+    (
+      username,
+      firstname,
+      lastname,
+      role,
+      password
+    )
 
-    // =========================
-    // SEED USERS
-    // =========================
-    const users =
-      await pool.query(`
+    VALUES
 
-        SELECT *
+    (
+      'user',
+      'John',
+      'Doe',
+      'user',
+      '1234'
+    ),
 
-        FROM clients
+    (
+      'family',
+      'Sarah',
+      'Doe',
+      'family',
+      '1234'
+    )
 
-      `);
+  `);
 
-    if(users.rows.length === 0){
+}
 
-      await pool.query(`
+console.log("Database ready.");
+```
 
-        INSERT INTO clients
-        (username, firstname, lastname, role, password)
+}
 
-        VALUES
+catch(err){
 
-        ('user','John','Doe','user','1234'),
+```
+console.log(err);
+```
 
-        ('family','Sarah','Doe','caregiver','1234')
-
-      `);
-
-      console.log("Seed users created");
-
-    }
-
-    console.log("Database initialized");
-
-  }
-
-  catch(err){
-
-    console.log("DATABASE INIT ERROR");
-    console.log(err);
-
-  }
+}
 
 }
 
 initDB();
 
 // =========================
-// PAGES
+// PAGE ROUTES
 // =========================
 app.get('/',(req,res)=>{
 
-  res.sendFile(
-    path.join(__dirname,'howitworks.html')
-  );
+res.sendFile(
+path.join(__dirname,'howitworks.html')
+);
 
 });
 
 app.get('/login',(req,res)=>{
 
-  res.sendFile(
-    path.join(__dirname,'login.html')
-  );
+res.sendFile(
+path.join(__dirname,'login.html')
+);
 
 });
 
 app.get('/home',(req,res)=>{
 
-  res.sendFile(
-    path.join(__dirname,'home.html')
-  );
-
-});
-
-app.get('/family',(req,res)=>{
-
-  res.sendFile(
-    path.join(__dirname,'family.html')
-  );
+res.sendFile(
+path.join(__dirname,'home.html')
+);
 
 });
 
 app.get('/checkin',(req,res)=>{
 
-  res.sendFile(
-    path.join(__dirname,'checkin.html')
-  );
+res.sendFile(
+path.join(__dirname,'checkin.html')
+);
 
 });
 
 app.get('/activities',(req,res)=>{
 
-  res.sendFile(
-    path.join(__dirname,'activities.html')
-  );
+res.sendFile(
+path.join(__dirname,'activities.html')
+);
+
+});
+
+app.get('/family',(req,res)=>{
+
+res.sendFile(
+path.join(__dirname,'family.html')
+);
+
+});
+
+// =========================
+// REUSABLE HEADER
+// =========================
+app.get('/header',(req,res)=>{
+
+res.sendFile(
+path.join(__dirname,'header.html')
+);
 
 });
 
@@ -231,89 +234,70 @@ app.get('/activities',(req,res)=>{
 // =========================
 app.get('/auth',(req,res)=>{
 
-  res.json({
-
-    user:req.session.user || null
-
-  });
+res.json(
+req.session.user || null
+);
 
 });
 
 // =========================
 // LOGIN
 // =========================
-app.post('/login', async (req,res)=>{
+app.post('/login', async(req,res)=>{
 
-  try{
+try{
 
-    const {
-      username,
-      password
-    } = req.body;
+```
+const {
+  username,
+  password
+} = req.body;
 
-    const result = await pool.query(
+const result = await pool.query(
 
-      `SELECT *
+  `
+  SELECT *
+  FROM clients
+  WHERE username=$1
+  AND password=$2
+  `,
 
-       FROM clients
+  [username,password]
 
-       WHERE username=$1
+);
 
-       AND password=$2`,
+const user = result.rows[0];
 
-      [username,password]
+if(!user){
 
-    );
+  return res.json({
+    success:false
+  });
 
-    const user = result.rows[0];
+}
 
-    if(!user){
+req.session.user = user;
 
-      return res.json({
-        success:false
-      });
+res.json({
 
-    }
+  success:true,
 
-    req.session.user = {
+  role:user.role
 
-      id:user.id,
+});
+```
 
-      username:user.username,
+}
 
-      role:user.role
+catch(err){
 
-    };
+```
+console.log(err);
 
-    req.session.save(()=>{
+res.status(500).send("Login error");
+```
 
-      console.log("LOGIN SUCCESS");
-
-      console.log(req.session.user);
-
-      res.json({
-
-        success:true,
-
-        role:user.role
-
-      });
-
-    });
-
-  }
-
-  catch(err){
-
-    console.log("LOGIN ERROR");
-
-    console.log(err);
-
-    res.status(500).json({
-      success:false
-    });
-
-  }
+}
 
 });
 
@@ -322,494 +306,399 @@ app.post('/login', async (req,res)=>{
 // =========================
 app.get('/logout',(req,res)=>{
 
-  req.session.destroy(()=>{
+req.session.destroy(()=>{
 
-    res.json({
-      success:true
-    });
+```
+res.send("Logged out");
+```
 
-  });
+});
 
 });
 
 // =========================
 // SAVE CHECKIN
 // =========================
-app.post('/api/checkin', async (req,res)=>{
+app.post('/checkin', async(req,res)=>{
 
-  try{
+try{
 
-    const user = req.session.user;
+```
+const user = req.session.user;
 
-    if(!user){
+if(!user){
 
-      return res.status(401).json({
+  return res.status(401).send("Not logged in");
 
-        success:false,
+}
 
-        error:'Not logged in'
+const today =
+  new Date().toISOString().split('T')[0];
 
-      });
+const {
+  mood,
+  meds
+} = req.body;
 
-    }
+// FIND TODAY
+const existing = await pool.query(
 
-    const {
+  `
+  SELECT *
+  FROM checkins
+  WHERE clientid=$1
+  AND date=$2
+  `,
+
+  [user.id,today]
+
+);
+
+if(existing.rows.length === 0){
+
+  // CREATE
+  await pool.query(
+
+    `
+    INSERT INTO checkins
+    (
+      clientid,
+      date,
       mood,
       meds
-    } = req.body;
+    )
 
-    const today =
-      new Date().toISOString().split('T')[0];
+    VALUES($1,$2,$3,$4)
+    `,
 
-    // EXISTING?
-    const existing = await pool.query(
+    [
+      user.id,
+      today,
+      mood || null,
+      meds || null
+    ]
 
-      `SELECT *
+  );
 
-       FROM checkins
+}
 
-       WHERE userid=$1
+else{
 
-       AND date=$2`,
+  // UPDATE ONLY PROVIDED FIELD
+  const row = existing.rows[0];
 
-      [user.id, today]
+  await pool.query(
 
-    );
+    `
+    UPDATE checkins
+    SET mood=$1,
+        meds=$2
+    WHERE id=$3
+    `,
 
-    // CREATE
-    if(existing.rows.length === 0){
+    [
 
-      await pool.query(
+      mood || row.mood,
 
-        `INSERT INTO checkins
+      meds || row.meds,
 
-        (userid, date, mood, meds)
+      row.id
 
-        VALUES ($1,$2,$3,$4)`,
+    ]
 
-        [
+  );
 
-          user.id,
+}
 
-          today,
+res.send("Saved");
+```
 
-          mood || null,
+}
 
-          meds || null
+catch(err){
 
-        ]
+```
+console.log(err);
 
-      );
+res.status(500).send("Error saving");
+```
 
-    }
-
-    // UPDATE
-    else{
-
-      if(mood){
-
-        await pool.query(
-
-          `UPDATE checkins
-
-           SET mood=$1
-
-           WHERE userid=$2
-
-           AND date=$3`,
-
-          [
-
-            mood,
-
-            user.id,
-
-            today
-
-          ]
-
-        );
-
-      }
-
-      if(meds){
-
-        await pool.query(
-
-          `UPDATE checkins
-
-           SET meds=$1
-
-           WHERE userid=$2
-
-           AND date=$3`,
-
-          [
-
-            meds,
-
-            user.id,
-
-            today
-
-          ]
-
-        );
-
-      }
-
-    }
-
-    const saved = await pool.query(
-
-      `SELECT *
-
-       FROM checkins
-
-       WHERE userid=$1
-
-       AND date=$2`,
-
-      [user.id, today]
-
-    );
-
-    res.json({
-
-      success:true,
-
-      checkin:saved.rows[0]
-
-    });
-
-  }
-
-  catch(err){
-
-    console.log("CHECKIN ERROR");
-
-    console.log(err);
-
-    res.status(500).json({
-
-      success:false,
-
-      error:err.message
-
-    });
-
-  }
+}
 
 });
 
 // =========================
-// LOAD TODAY CHECKIN
+// TODAY CHECKIN
 // =========================
-app.get('/api/checkin-today', async (req,res)=>{
+app.get('/checkin-today', async(req,res)=>{
 
-  try{
+try{
 
-    const user = req.session.user;
+```
+const user = req.session.user;
 
-    if(!user){
+if(!user){
 
-      return res.json({
-        checkedIn:false
-      });
+  return res.json({
+    checkedIn:false
+  });
 
-    }
+}
 
-    const today =
-      new Date().toISOString().split('T')[0];
+const today =
+  new Date().toISOString().split('T')[0];
 
-    const result = await pool.query(
+const result = await pool.query(
 
-      `SELECT *
+  `
+  SELECT *
+  FROM checkins
+  WHERE clientid=$1
+  AND date=$2
+  `,
 
-       FROM checkins
+  [user.id,today]
 
-       WHERE userid=$1
+);
 
-       AND date=$2`,
+if(result.rows.length === 0){
 
-      [user.id, today]
+  return res.json({
+    checkedIn:false
+  });
 
-    );
+}
 
-    if(result.rows.length === 0){
+const row = result.rows[0];
 
-      return res.json({
-        checkedIn:false
-      });
+res.json({
 
-    }
+  checkedIn:true,
 
-    const c = result.rows[0];
+  mood:row.mood,
 
-    res.json({
+  meds:row.meds,
 
-      checkedIn:true,
-
-      mood:c.mood,
-
-      meds:c.meds
-
-    });
-
-  }
-
-  catch(err){
-
-    console.log("LOAD CHECKIN ERROR");
-
-    console.log(err);
-
-    res.status(500).json({
-
-      checkedIn:false
-
-    });
-
-  }
+  timestamp:row.date
 
 });
+```
 
-// =========================
-// LOAD ACTIVITIES
-// =========================
-app.get('/api/activities', async (req,res)=>{
+}
 
-  try{
+catch(err){
 
-    const user = req.session.user;
+```
+console.log(err);
 
-    if(!user){
+res.json({
+  checkedIn:false
+});
+```
 
-      return res.json({});
-    }
-
-    const result = await pool.query(
-
-      `SELECT *
-
-       FROM activities
-
-       WHERE userid=$1`,
-
-      [user.id]
-
-    );
-
-    if(result.rows.length === 0){
-
-      return res.json({});
-    }
-
-    res.json(result.rows[0]);
-
-  }
-
-  catch(err){
-
-    console.log("LOAD ACTIVITIES ERROR");
-
-    console.log(err);
-
-    res.status(500).json({});
-  }
+}
 
 });
 
 // =========================
 // SAVE ACTIVITIES
 // =========================
-app.post('/api/activities', async (req,res)=>{
+app.post('/activities', async(req,res)=>{
 
-  try{
+try{
 
-    const user = req.session.user;
+```
+const user = req.session.user;
 
-    if(!user){
+if(!user){
 
-      return res.status(401).json({
+  return res.status(401).send("Not logged in");
 
-        success:false
+}
 
-      });
+const {
+  dayForCall,
+  timeForCall,
+  timezone
+} = req.body;
 
-    }
+// DELETE OLD
+await pool.query(
+  `DELETE FROM activities WHERE clientid=$1`,
+  [user.id]
+);
 
-    const {
+// INSERT NEW
+await pool.query(
 
-      dayForCall,
+  `
+  INSERT INTO activities
+  (
+    clientid,
+    dayforcall,
+    timeforcall,
+    timezone
+  )
 
-      timeForCall,
+  VALUES($1,$2,$3,$4)
+  `,
 
-      timezone
+  [
+    user.id,
+    dayForCall,
+    timeForCall,
+    timezone
+  ]
 
-    } = req.body;
+);
 
-    // EXISTING?
-    const existing = await pool.query(
+res.send("Saved");
+```
 
-      `SELECT *
+}
 
-       FROM activities
+catch(err){
 
-       WHERE userid=$1`,
+```
+console.log(err);
 
-      [user.id]
+res.status(500).send("Error saving");
+```
 
-    );
-
-    // CREATE
-    if(existing.rows.length === 0){
-
-      await pool.query(
-
-        `INSERT INTO activities
-
-        (userid, dayforcall, timeforcall, timezone)
-
-        VALUES ($1,$2,$3,$4)`,
-
-        [
-
-          user.id,
-
-          dayForCall,
-
-          timeForCall,
-
-          timezone
-
-        ]
-
-      );
-
-      console.log("Created activities");
-
-    }
-
-    // UPDATE
-    else{
-
-      await pool.query(
-
-        `UPDATE activities
-
-         SET
-
-         dayforcall=$1,
-
-         timeforcall=$2,
-
-         timezone=$3
-
-         WHERE userid=$4`,
-
-        [
-
-          dayForCall,
-
-          timeForCall,
-
-          timezone,
-
-          user.id
-
-        ]
-
-      );
-
-      console.log("Updated activities");
-
-    }
-
-    res.json({
-
-      success:true
-
-    });
-
-  }
-
-  catch(err){
-
-    console.log("SAVE ACTIVITIES ERROR");
-
-    console.log(err);
-
-    res.status(500).json({
-
-      success:false
-
-    });
-
-  }
+}
 
 });
 
 // =========================
-// DEBUG ROUTES
+// LOAD ACTIVITIES
 // =========================
-app.get('/debug-columns', async (req,res)=>{
+app.get('/activities-data', async(req,res)=>{
 
-  try{
+try{
 
-    const result = await pool.query(`
+```
+const user = req.session.user;
 
-      SELECT column_name
+if(!user){
 
-      FROM information_schema.columns
+  return res.json({});
+}
 
-      WHERE table_name='checkins'
+const result = await pool.query(
 
-    `);
+  `
+  SELECT *
+  FROM activities
+  WHERE clientid=$1
+  `,
 
-    res.json(result.rows);
+  [user.id]
 
-  }
+);
 
-  catch(err){
+res.json(
+  result.rows[0] || {}
+);
+```
 
-    console.log(err);
+}
 
-    res.json({
-      error:err.message
-    });
+catch(err){
 
-  }
+```
+console.log(err);
+
+res.json({});
+```
+
+}
 
 });
 
-app.get('/debug-checkins', async (req,res)=>{
+// =========================
+// FAMILY DASHBOARD
+// =========================
+app.get('/family-data', async(req,res)=>{
 
-  try{
+try{
 
-    const result = await pool.query(`
+```
+const result = await pool.query(
 
-      SELECT *
+  `
+  SELECT
+    c.firstname,
+    c.lastname,
+    k.date,
+    k.mood,
+    k.meds
 
-      FROM checkins
+  FROM checkins k
 
-      ORDER BY id DESC
+  JOIN clients c
+  ON c.id = k.clientid
 
-    `);
+  ORDER BY k.date DESC
+  `
 
-    res.json(result.rows);
+);
 
-  }
+res.json({
+  checkins:result.rows
+});
+```
 
-  catch(err){
+}
 
-    console.log(err);
+catch(err){
 
-    res.json({
-      error:err.message
-    });
+```
+console.log(err);
 
-  }
+res.json({
+  checkins:[]
+});
+```
+
+}
+
+});
+
+// =========================
+// DEBUG USERS
+// =========================
+app.get('/debug-users', async(req,res)=>{
+
+try{
+
+```
+const result = await pool.query(
+  `SELECT id,username,role FROM clients`
+);
+
+res.json(result.rows);
+```
+
+}
+
+catch(err){
+
+```
+console.log(err);
+
+res.send("Error");
+```
+
+}
+
+});
+
+// =========================
+// TEST
+// =========================
+app.get('/test',(req,res)=>{
+
+res.send("TEST WORKING");
 
 });
 
@@ -817,12 +706,12 @@ app.get('/debug-checkins', async (req,res)=>{
 // START SERVER
 // =========================
 const PORT =
-  process.env.PORT || 3000;
+process.env.PORT || 3000;
 
-app.listen(PORT, ()=>{
+app.listen(PORT,()=>{
 
-  console.log(
-    "Server running on port " + PORT
-  );
+console.log(
+"Server running on port " + PORT
+);
 
 });

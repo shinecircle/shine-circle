@@ -1,12 +1,15 @@
 <!DOCTYPE html>
+
 <html>
 <head>
   <title>SHINE Circle</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="stylesheet" href="styles.css">
 
   <style>
+
     body {
       text-align:center;
       padding:20px;
@@ -40,27 +43,31 @@
       width:90%;
       padding:12px;
       margin:5px 0;
+      border-radius:6px;
+      border:1px solid #ccc;
     }
+
   </style>
+
 </head>
 
 <body>
 
-<div class="header">
-  <img src="logo.jpg" class="logo">
-  <div>
-    <button class="btn btn-light" onclick="goHome()">Home</button>
-  </div>
-</div>
+<!-- REUSABLE HEADER -->
+
+<div id="header"></div>
 
 <div class="hero">
 
   <h2>SHINE Circle</h2>
 
-  <p><b>A bright spot you can count on.</b></p>
+  <p>
+    <b>A bright spot you can count on.</b>
+  </p>
 
   <p>
-    Daily check-ins, real human connection, and peace of mind for families.
+    Daily check-ins, real human connection,
+    and peace of mind for families.
   </p>
 
   <button class="big-btn" onclick="showLogin()">
@@ -69,12 +76,21 @@
 
   <div id="loginBox" class="card" style="display:none;">
 
-    <input id="username" placeholder="Username"><br>
-    <input id="password" type="password" placeholder="Password"><br>
+```
+<input id="username" placeholder="Username"><br>
 
-    <button class="btn" onclick="login()">Login</button>
+<input
+  id="password"
+  type="password"
+  placeholder="Password"
+><br>
 
-    <p id="error" style="color:red;"></p>
+<button class="btn" onclick="login()">
+  Login
+</button>
+
+<p id="error" style="color:red;"></p>
+```
 
   </div>
 
@@ -82,43 +98,98 @@
 
 <script>
 
+// =========================
+// LOAD HEADER
+// =========================
+fetch('/header')
+.then(r=>r.text())
+.then(html=>{
+
+  document.getElementById('header').innerHTML = html;
+
+  document.getElementById("headerButtons").innerHTML = `
+    <button class="btn btn-light" onclick="goHome()">
+      Home
+    </button>
+  `;
+});
+
+// =========================
+// SHOW LOGIN
+// =========================
 function showLogin(){
-  document.getElementById("loginBox").style.display = "block";
+
+  document.getElementById("loginBox")
+    .style.display = "block";
+
 }
 
+// =========================
+// LOGIN
+// =========================
 function login(){
 
   fetch('/login',{
+
     method:'POST',
-    headers:{'Content-Type':'application/json'},
+
+    headers:{
+      'Content-Type':'application/json'
+    },
+
     body: JSON.stringify({
-      username: document.getElementById("username").value,
-      password: document.getElementById("password").value
+
+      username:
+        document.getElementById("username").value,
+
+      password:
+        document.getElementById("password").value
+
     })
+
   })
+
   .then(r=>r.json())
+
   .then(data=>{
 
     if(!data.success){
-      document.getElementById("error").innerText = "Login failed";
+
+      document.getElementById("error")
+        .innerText = "Login failed";
+
       return;
+
     }
 
-    // ✅ SET REDIRECT FLAG
-    sessionStorage.setItem("justLoggedIn", "true");
+    sessionStorage.setItem(
+      "justLoggedIn",
+      "true"
+    );
 
     if(data.role === 'user'){
+
       window.location = '/home';
-    } else {
+
+    }
+
+    else{
+
       window.location = '/family';
+
     }
 
   });
+
 }
 
+// =========================
 // NAV
+// =========================
 function goHome(){
+
   window.location = '/';
+
 }
 
 </script>

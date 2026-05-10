@@ -50,7 +50,7 @@ try {
 ```
 console.log("Initializing database...");
 
-// CLIENTS
+// CLIENTS TABLE
 await pool.query(`
   CREATE TABLE IF NOT EXISTS clients (
     id SERIAL PRIMARY KEY,
@@ -62,7 +62,7 @@ await pool.query(`
   );
 `);
 
-// CHECKINS
+// CHECKINS TABLE
 await pool.query(`
   CREATE TABLE IF NOT EXISTS checkins (
     id SERIAL PRIMARY KEY,
@@ -73,7 +73,7 @@ await pool.query(`
   );
 `);
 
-// ACTIVITIES
+// ACTIVITIES TABLE
 await pool.query(`
   CREATE TABLE IF NOT EXISTS activities (
     id SERIAL PRIMARY KEY,
@@ -84,12 +84,15 @@ await pool.query(`
   );
 `);
 
-// DEFAULT USERS
+// CHECK FOR USERS
 const existingUsers = await pool.query(
   'SELECT * FROM clients'
 );
 
+// CREATE DEFAULT USERS
 if (existingUsers.rows.length === 0) {
+
+  console.log("Creating default users...");
 
   await pool.query(`
     INSERT INTO clients
@@ -164,7 +167,7 @@ res.sendFile(path.join(__dirname, 'family.html'));
 });
 
 // =========================
-// HEADER
+// REUSABLE HEADER
 // =========================
 app.get('/header', (req, res) => {
 res.sendFile(path.join(__dirname, 'header.html'));
@@ -518,14 +521,13 @@ res.json({});
 });
 
 // =========================
-// FAMILY DASHBOARD DATA
+// FAMILY DATA
 // =========================
-app.get('/family-data', async(req,res)=>{
+app.get('/family-data', async (req, res) => {
 
-try{
+try {
 
 ```
-// PRIMARY USER
 const userResult = await pool.query(`
   SELECT
     id,
@@ -538,16 +540,15 @@ const userResult = await pool.query(`
 
 const user = userResult.rows[0];
 
-if(!user){
+if (!user) {
 
   return res.json({
-    user:null,
-    checkins:[]
+    user: null,
+    checkins: []
   });
 
 }
 
-// ACTIVITIES
 const activityResult = await pool.query(`
   SELECT
     dayforcall,
@@ -556,12 +557,11 @@ const activityResult = await pool.query(`
   FROM activities
   WHERE clientid=$1
   LIMIT 1
-`,[user.id]);
+`, [user.id]);
 
 const activity =
   activityResult.rows[0] || {};
 
-// CHECKINS
 const checkinsResult = await pool.query(`
   SELECT
     mood,
@@ -570,15 +570,15 @@ const checkinsResult = await pool.query(`
   FROM checkins
   WHERE clientid=$1
   ORDER BY date ASC
-`,[user.id]);
+`, [user.id]);
 
 res.json({
 
-  user:{
+  user: {
 
-    firstName:user.firstname,
+    firstName: user.firstname,
 
-    lastName:user.lastname,
+    lastName: user.lastname,
 
     dayForCall:
       activity.dayforcall || "",
@@ -599,16 +599,14 @@ res.json({
 
 }
 
-catch(err){
+catch (err) {
 
 ```
-console.log(err);
+console.error(err);
 
 res.json({
-
-  user:null,
-  checkins:[]
-
+  user: null,
+  checkins: []
 });
 ```
 
@@ -617,7 +615,7 @@ res.json({
 });
 
 // =========================
-// TEST ROUTE
+// TEST
 // =========================
 app.get('/test', (req, res) => {
 res.send("TEST WORKING");

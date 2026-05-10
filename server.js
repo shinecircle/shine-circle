@@ -50,7 +50,7 @@ try {
 ```
 console.log("Initializing database...");
 
-// CLIENTS TABLE
+// CLIENTS
 await pool.query(`
   CREATE TABLE IF NOT EXISTS clients (
     id SERIAL PRIMARY KEY,
@@ -62,7 +62,7 @@ await pool.query(`
   );
 `);
 
-// CHECKINS TABLE
+// CHECKINS
 await pool.query(`
   CREATE TABLE IF NOT EXISTS checkins (
     id SERIAL PRIMARY KEY,
@@ -73,7 +73,7 @@ await pool.query(`
   );
 `);
 
-// ACTIVITIES TABLE
+// ACTIVITIES
 await pool.query(`
   CREATE TABLE IF NOT EXISTS activities (
     id SERIAL PRIMARY KEY,
@@ -84,14 +84,12 @@ await pool.query(`
   );
 `);
 
-// CREATE DEFAULT USERS
+// DEFAULT USERS
 const existingUsers = await pool.query(
   'SELECT * FROM clients'
 );
 
 if (existingUsers.rows.length === 0) {
-
-  console.log("Creating default users...");
 
   await pool.query(`
     INSERT INTO clients
@@ -166,7 +164,7 @@ res.sendFile(path.join(__dirname, 'family.html'));
 });
 
 // =========================
-// REUSABLE HEADER
+// HEADER
 // =========================
 app.get('/header', (req, res) => {
 res.sendFile(path.join(__dirname, 'header.html'));
@@ -255,9 +253,11 @@ try {
 const user = req.session.user;
 
 if (!user) {
+
   return res.status(401).json({
     success: false
   });
+
 }
 
 const today =
@@ -511,6 +511,105 @@ catch (err) {
 console.error(err);
 
 res.json({});
+```
+
+}
+
+});
+
+// =========================
+// FAMILY DASHBOARD DATA
+// =========================
+app.get('/family-data', async(req,res)=>{
+
+try{
+
+```
+// PRIMARY USER
+const userResult = await pool.query(`
+  SELECT
+    id,
+    firstname,
+    lastname
+  FROM clients
+  WHERE role='user'
+  LIMIT 1
+`);
+
+const user = userResult.rows[0];
+
+if(!user){
+
+  return res.json({
+    user:null,
+    checkins:[]
+  });
+
+}
+
+// ACTIVITIES
+const activityResult = await pool.query(`
+  SELECT
+    dayforcall,
+    timeforcall,
+    timezone
+  FROM activities
+  WHERE clientid=$1
+  LIMIT 1
+`,[user.id]);
+
+const activity =
+  activityResult.rows[0] || {};
+
+// CHECKINS
+const checkinsResult = await pool.query(`
+  SELECT
+    mood,
+    meds,
+    date as timestamp
+  FROM checkins
+  WHERE clientid=$1
+  ORDER BY date ASC
+`,[user.id]);
+
+res.json({
+
+  user:{
+
+    firstName:user.firstname,
+
+    lastName:user.lastname,
+
+    dayForCall:
+      activity.dayforcall || "",
+
+    timeForCall:
+      activity.timeforcall || "",
+
+    timezone:
+      activity.timezone || ""
+
+  },
+
+  checkins:
+    checkinsResult.rows
+
+});
+```
+
+}
+
+catch(err){
+
+```
+console.log(err);
+
+res.json({
+
+  user:null,
+  checkins:[]
+
+});
 ```
 
 }

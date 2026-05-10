@@ -5,14 +5,10 @@ const path = require('path');
 
 const app = express();
 
-// =========================
 // TRUST PROXY
-// =========================
 app.set('trust proxy', 1);
 
-// =========================
 // DATABASE
-// =========================
 const pool = new Pool({
 connectionString: process.env.DATABASE_URL,
 ssl: {
@@ -20,9 +16,7 @@ rejectUnauthorized: false
 }
 });
 
-// =========================
 // MIDDLEWARE
-// =========================
 app.use(express.json());
 
 app.use(express.urlencoded({
@@ -40,9 +34,7 @@ secure: false
 }
 }));
 
-// =========================
 // DATABASE INIT
-// =========================
 async function initDB() {
 
 try {
@@ -89,7 +81,7 @@ const existingUsers = await pool.query(
   "SELECT * FROM clients"
 );
 
-// DEFAULT USERS
+// CREATE DEFAULT USERS
 if (existingUsers.rows.length === 0) {
 
   console.log("Creating default users...");
@@ -121,9 +113,7 @@ console.error("DB INIT ERROR:", err);
 
 initDB();
 
-// =========================
 // PAGE ROUTES
-// =========================
 app.get('/', (req, res) => {
 res.sendFile(path.join(__dirname, 'howitworks.html'));
 });
@@ -148,23 +138,17 @@ app.get('/family', (req, res) => {
 res.sendFile(path.join(__dirname, 'family.html'));
 });
 
-// =========================
-// REUSABLE HEADER
-// =========================
+// HEADER
 app.get('/header', (req, res) => {
 res.sendFile(path.join(__dirname, 'header.html'));
 });
 
-// =========================
 // AUTH
-// =========================
 app.get('/auth', (req, res) => {
 res.json(req.session.user || null);
 });
 
-// =========================
 // LOGIN
-// =========================
 app.post('/login', async (req, res) => {
 
 try {
@@ -212,9 +196,7 @@ res.status(500).json({
 
 });
 
-// =========================
 // LOGOUT
-// =========================
 app.get('/logout', (req, res) => {
 
 req.session.destroy(() => {
@@ -223,9 +205,7 @@ res.send("Logged out");
 
 });
 
-// =========================
 // SAVE CHECKIN
-// =========================
 app.post('/api/checkin', async (req, res) => {
 
 try {
@@ -306,9 +286,7 @@ res.status(500).json({
 
 });
 
-// =========================
 // LOAD TODAY CHECKIN
-// =========================
 app.get('/api/checkin-today', async (req, res) => {
 
 try {
@@ -365,9 +343,7 @@ res.json({
 
 });
 
-// =========================
 // SAVE ACTIVITIES
-// =========================
 app.post('/api/activities', async (req, res) => {
 
 try {
@@ -425,9 +401,7 @@ res.status(500).json({
 
 });
 
-// =========================
 // LOAD ACTIVITIES
-// =========================
 app.get('/api/activities', async (req, res) => {
 
 try {
@@ -465,9 +439,7 @@ res.json({});
 
 });
 
-// =========================
 // FAMILY DASHBOARD DATA
-// =========================
 app.get('/family-data', async (req, res) => {
 
 try {
@@ -552,16 +524,12 @@ res.json({
 
 });
 
-// =========================
 // TEST ROUTE
-// =========================
 app.get('/test', (req, res) => {
 res.send("TEST WORKING");
 });
 
-// =========================
 // START SERVER
-// =========================
 const PORT =
 process.env.PORT || 3000;
 

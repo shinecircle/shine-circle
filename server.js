@@ -51,74 +51,56 @@ try {
 console.log("Initializing database...");
 
 // CLIENTS TABLE
-await pool.query(`
-  CREATE TABLE IF NOT EXISTS clients (
-    id SERIAL PRIMARY KEY,
-    username TEXT,
-    firstname TEXT,
-    lastname TEXT,
-    role TEXT,
-    password TEXT
-  );
-`);
-
-// CHECKINS TABLE
-await pool.query(`
-  CREATE TABLE IF NOT EXISTS checkins (
-    id SERIAL PRIMARY KEY,
-    clientid INTEGER,
-    date TEXT,
-    mood TEXT,
-    meds TEXT
-  );
-`);
-
-// ACTIVITIES TABLE
-await pool.query(`
-  CREATE TABLE IF NOT EXISTS activities (
-    id SERIAL PRIMARY KEY,
-    clientid INTEGER,
-    dayforcall TEXT,
-    timeforcall TEXT,
-    timezone TEXT
-  );
-`);
-
-// CHECK FOR USERS
-const existingUsers = await pool.query(
-  'SELECT * FROM clients'
+await pool.query(
+  "CREATE TABLE IF NOT EXISTS clients (" +
+  "id SERIAL PRIMARY KEY," +
+  "username TEXT," +
+  "firstname TEXT," +
+  "lastname TEXT," +
+  "role TEXT," +
+  "password TEXT" +
+  ");"
 );
 
-// CREATE DEFAULT USERS
+// CHECKINS TABLE
+await pool.query(
+  "CREATE TABLE IF NOT EXISTS checkins (" +
+  "id SERIAL PRIMARY KEY," +
+  "clientid INTEGER," +
+  "date TEXT," +
+  "mood TEXT," +
+  "meds TEXT" +
+  ");"
+);
+
+// ACTIVITIES TABLE
+await pool.query(
+  "CREATE TABLE IF NOT EXISTS activities (" +
+  "id SERIAL PRIMARY KEY," +
+  "clientid INTEGER," +
+  "dayforcall TEXT," +
+  "timeforcall TEXT," +
+  "timezone TEXT" +
+  ");"
+);
+
+// CHECK USERS
+const existingUsers = await pool.query(
+  "SELECT * FROM clients"
+);
+
+// DEFAULT USERS
 if (existingUsers.rows.length === 0) {
 
   console.log("Creating default users...");
 
-  await pool.query(`
-    INSERT INTO clients
-    (
-      username,
-      firstname,
-      lastname,
-      role,
-      password
-    )
-    VALUES
-    (
-      'user',
-      'John',
-      'Doe',
-      'user',
-      '1234'
-    ),
-    (
-      'family',
-      'Sarah',
-      'Doe',
-      'family',
-      '1234'
-    );
-  `);
+  await pool.query(
+    "INSERT INTO clients " +
+    "(username, firstname, lastname, role, password) " +
+    "VALUES " +
+    "('user','John','Doe','user','1234')," +
+    "('family','Sarah','Doe','family','1234');"
+  );
 
 }
 
@@ -188,15 +170,11 @@ app.post('/login', async (req, res) => {
 try {
 
 ```
-const { username, password } = req.body;
+const username = req.body.username;
+const password = req.body.password;
 
 const result = await pool.query(
-  `
-  SELECT *
-  FROM clients
-  WHERE username=$1
-  AND password=$2
-  `,
+  "SELECT * FROM clients WHERE username=$1 AND password=$2",
   [username, password]
 );
 
@@ -266,31 +244,20 @@ if (!user) {
 const today =
   new Date().toISOString().split('T')[0];
 
-const { mood, meds } = req.body;
+const mood = req.body.mood;
+const meds = req.body.meds;
 
 const existing = await pool.query(
-  `
-  SELECT *
-  FROM checkins
-  WHERE clientid=$1
-  AND date=$2
-  `,
+  "SELECT * FROM checkins WHERE clientid=$1 AND date=$2",
   [user.id, today]
 );
 
 if (existing.rows.length === 0) {
 
   await pool.query(
-    `
-    INSERT INTO checkins
-    (
-      clientid,
-      date,
-      mood,
-      meds
-    )
-    VALUES($1,$2,$3,$4)
-    `,
+    "INSERT INTO checkins " +
+    "(clientid, date, mood, meds) " +
+    "VALUES($1,$2,$3,$4)",
     [
       user.id,
       today,
@@ -306,12 +273,9 @@ else {
   const row = existing.rows[0];
 
   await pool.query(
-    `
-    UPDATE checkins
-    SET mood=$1,
-        meds=$2
-    WHERE id=$3
-    `,
+    "UPDATE checkins " +
+    "SET mood=$1, meds=$2 " +
+    "WHERE id=$3",
     [
       mood || row.mood,
       meds || row.meds,
@@ -364,12 +328,7 @@ const today =
   new Date().toISOString().split('T')[0];
 
 const result = await pool.query(
-  `
-  SELECT *
-  FROM checkins
-  WHERE clientid=$1
-  AND date=$2
-  `,
+  "SELECT * FROM checkins WHERE clientid=$1 AND date=$2",
   [user.id, today]
 );
 
@@ -424,31 +383,19 @@ if (!user) {
 
 }
 
-const {
-  dayForCall,
-  timeForCall,
-  timezone
-} = req.body;
+const dayForCall = req.body.dayForCall;
+const timeForCall = req.body.timeForCall;
+const timezone = req.body.timezone;
 
 await pool.query(
-  `
-  DELETE FROM activities
-  WHERE clientid=$1
-  `,
+  "DELETE FROM activities WHERE clientid=$1",
   [user.id]
 );
 
 await pool.query(
-  `
-  INSERT INTO activities
-  (
-    clientid,
-    dayforcall,
-    timeforcall,
-    timezone
-  )
-  VALUES($1,$2,$3,$4)
-  `,
+  "INSERT INTO activities " +
+  "(clientid, dayforcall, timeforcall, timezone) " +
+  "VALUES($1,$2,$3,$4)",
   [
     user.id,
     dayForCall,
@@ -489,15 +436,13 @@ try {
 const user = req.session.user;
 
 if (!user) {
+
   return res.json({});
+
 }
 
 const result = await pool.query(
-  `
-  SELECT *
-  FROM activities
-  WHERE clientid=$1
-  `,
+  "SELECT * FROM activities WHERE clientid=$1",
   [user.id]
 );
 
@@ -521,22 +466,19 @@ res.json({});
 });
 
 // =========================
-// FAMILY DATA
+// FAMILY DASHBOARD DATA
 // =========================
 app.get('/family-data', async (req, res) => {
 
 try {
 
 ```
-const userResult = await pool.query(`
-  SELECT
-    id,
-    firstname,
-    lastname
-  FROM clients
-  WHERE role='user'
-  LIMIT 1
-`);
+const userResult = await pool.query(
+  "SELECT id, firstname, lastname " +
+  "FROM clients " +
+  "WHERE role='user' " +
+  "LIMIT 1"
+);
 
 const user = userResult.rows[0];
 
@@ -549,28 +491,24 @@ if (!user) {
 
 }
 
-const activityResult = await pool.query(`
-  SELECT
-    dayforcall,
-    timeforcall,
-    timezone
-  FROM activities
-  WHERE clientid=$1
-  LIMIT 1
-`, [user.id]);
+const activityResult = await pool.query(
+  "SELECT dayforcall, timeforcall, timezone " +
+  "FROM activities " +
+  "WHERE clientid=$1 " +
+  "LIMIT 1",
+  [user.id]
+);
 
 const activity =
   activityResult.rows[0] || {};
 
-const checkinsResult = await pool.query(`
-  SELECT
-    mood,
-    meds,
-    date as timestamp
-  FROM checkins
-  WHERE clientid=$1
-  ORDER BY date ASC
-`, [user.id]);
+const checkinsResult = await pool.query(
+  "SELECT mood, meds, date as timestamp " +
+  "FROM checkins " +
+  "WHERE clientid=$1 " +
+  "ORDER BY date ASC",
+  [user.id]
+);
 
 res.json({
 
@@ -615,7 +553,7 @@ res.json({
 });
 
 // =========================
-// TEST
+// TEST ROUTE
 // =========================
 app.get('/test', (req, res) => {
 res.send("TEST WORKING");

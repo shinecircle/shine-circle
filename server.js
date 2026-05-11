@@ -72,6 +72,12 @@ async function initDB() {
       ");"
     );
 
+    // FIX OLD CHECKINS TABLES
+    await pool.query(
+      "ALTER TABLE checkins " +
+      "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
+    );
+
     // ACTIVITIES TABLE
     await pool.query(
       "CREATE TABLE IF NOT EXISTS activities (" +
@@ -81,6 +87,12 @@ async function initDB() {
       "timeforcall TEXT," +
       "timezone TEXT" +
       ");"
+    );
+
+    // FIX OLD ACTIVITIES TABLES
+    await pool.query(
+      "ALTER TABLE activities " +
+      "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
     );
 
     // CHECK USERS
@@ -109,7 +121,8 @@ async function initDB() {
 
   catch (err) {
 
-    console.error("DB INIT ERROR:", err);
+    console.log("DB INIT ERROR:");
+    console.log(err);
 
   }
 
@@ -196,7 +209,7 @@ app.post('/login', async (req, res) => {
 
   catch (err) {
 
-    console.error(err);
+    console.log(err);
 
     res.status(500).json({
       success: false
@@ -226,9 +239,9 @@ app.post('/api/checkin', async (req, res) => {
 
     console.log("CHECKIN BODY:", req.body);
 
-    console.log("SESSION USER:", req.session.user);
-
     const user = req.session.user;
+
+    console.log("SESSION USER:", user);
 
     if (!user) {
 
@@ -245,16 +258,10 @@ app.post('/api/checkin', async (req, res) => {
     const mood = req.body.mood;
     const meds = req.body.meds;
 
-    console.log("TODAY:", today);
-    console.log("MOOD:", mood);
-    console.log("MEDS:", meds);
-
     const existing = await pool.query(
       "SELECT * FROM checkins WHERE clientid=$1 AND date=$2",
       [user.id, today]
     );
-
-    console.log("EXISTING:", existing.rows);
 
     // INSERT
     if (existing.rows.length === 0) {

@@ -43,16 +43,15 @@
     }
 
     .panel h2 {
-      margin-top:0;
-      margin-bottom:20px;
       text-align:center;
+      margin-bottom:20px;
     }
 
     .btn-group {
 
       display:flex;
-      flex-wrap:wrap;
       justify-content:center;
+      flex-wrap:wrap;
       gap:12px;
 
     }
@@ -62,10 +61,9 @@
       padding:14px 20px;
       border:none;
       border-radius:10px;
+      background:#d9d9d9;
       cursor:pointer;
       font-size:16px;
-      background:#d9d9d9;
-      transition:0.2s;
 
     }
 
@@ -73,17 +71,14 @@
 
       background:#1E6FDB;
       color:white;
-      transform:scale(1.05);
 
     }
 
     .save-btn {
 
-      margin-top:20px;
       display:block;
+      margin:20px auto 0 auto;
       width:220px;
-      margin-left:auto;
-      margin-right:auto;
 
     }
 
@@ -91,8 +86,8 @@
 
       text-align:center;
       margin-top:15px;
-      font-weight:bold;
       color:green;
+      font-weight:bold;
 
     }
 
@@ -110,5 +105,335 @@
   <!-- DATE -->
   <div class="today" id="today"></div>
 
-  <!-- MOOD PANEL -->
-  <div class
+  <!-- MOOD -->
+  <div class="panel mood-panel">
+
+    <h2>How are you feeling today?</h2>
+
+    <div class="btn-group" id="moodBtns">
+
+      <button class="choice-btn">Great</button>
+      <button class="choice-btn">Good</button>
+      <button class="choice-btn">Low</button>
+      <button class="choice-btn">Struggling</button>
+
+    </div>
+
+    <button class="btn save-btn"
+            onclick="saveMood()">
+
+      Save Mood
+
+    </button>
+
+    <div class="status"
+         id="moodStatus"></div>
+
+  </div>
+
+  <!-- MEDICATION -->
+  <div class="panel med-panel">
+
+    <h2>Did you take your medication today?</h2>
+
+    <div class="btn-group" id="medBtns">
+
+      <button class="choice-btn">Yes</button>
+      <button class="choice-btn">No</button>
+
+    </div>
+
+    <button class="btn save-btn"
+            onclick="saveMeds()">
+
+      Save Medication
+
+    </button>
+
+    <div class="status"
+         id="medStatus"></div>
+
+  </div>
+
+</div>
+
+<script>
+
+// =========================
+// LOAD HEADER
+// =========================
+fetch('/header')
+
+.then(r=>r.text())
+
+.then(html=>{
+
+  document.getElementById('header')
+    .innerHTML = html;
+
+  const buttons =
+    document.getElementById("headerButtons");
+
+  if(buttons){
+
+    buttons.innerHTML = `
+
+      <button class="btn btn-light"
+              onclick="goHome()">
+
+        Home
+
+      </button>
+
+      <button class="btn btn-light"
+              onclick="goActivities()">
+
+        Activities
+
+      </button>
+
+      <button class="btn"
+              onclick="logout()">
+
+        Logout
+
+      </button>
+
+    `;
+
+  }
+
+});
+
+// =========================
+// DATE
+// =========================
+document.getElementById("today").innerText =
+  new Date().toLocaleDateString(
+    'en-US',
+    {
+      weekday:'long',
+      year:'numeric',
+      month:'long',
+      day:'numeric'
+    }
+  );
+
+// =========================
+// STATE
+// =========================
+let selectedMood = "";
+let selectedMeds = "";
+
+// =========================
+// BUTTON REFERENCES
+// =========================
+const moodButtons =
+  document.querySelectorAll("#moodBtns .choice-btn");
+
+const medButtons =
+  document.querySelectorAll("#medBtns .choice-btn");
+
+// =========================
+// MOOD CLICK
+// =========================
+moodButtons.forEach(btn => {
+
+  btn.onclick = function(){
+
+    selectedMood = btn.innerText;
+
+    moodButtons.forEach(b=>{
+      b.classList.remove('selected');
+    });
+
+    btn.classList.add('selected');
+
+  };
+
+});
+
+// =========================
+// MED CLICK
+// =========================
+medButtons.forEach(btn => {
+
+  btn.onclick = function(){
+
+    selectedMeds = btn.innerText;
+
+    medButtons.forEach(b=>{
+      b.classList.remove('selected');
+    });
+
+    btn.classList.add('selected');
+
+  };
+
+});
+
+// =========================
+// LOAD SAVED VALUES
+// =========================
+fetch('/api/checkin-today')
+
+.then(r=>r.json())
+
+.then(data=>{
+
+  if(!data.checkedIn) return;
+
+  // RESTORE MOOD
+  if(data.mood){
+
+    selectedMood = data.mood;
+
+    moodButtons.forEach(btn=>{
+
+      if(btn.innerText === data.mood){
+
+        btn.classList.add('selected');
+
+      }
+
+    });
+
+    document.getElementById("moodStatus")
+      .innerText = "Mood already saved today";
+
+  }
+
+  // RESTORE MEDS
+  if(data.meds){
+
+    selectedMeds = data.meds;
+
+    medButtons.forEach(btn=>{
+
+      if(btn.innerText === data.meds){
+
+        btn.classList.add('selected');
+
+      }
+
+    });
+
+    document.getElementById("medStatus")
+      .innerText = "Medication already saved today";
+
+  }
+
+});
+
+// =========================
+// SAVE MOOD
+// =========================
+function saveMood(){
+
+  if(!selectedMood){
+
+    alert("Please select a mood.");
+
+    return;
+
+  }
+
+  fetch('/api/checkin',{
+
+    method:'POST',
+
+    headers:{
+      'Content-Type':'application/json'
+    },
+
+    body:JSON.stringify({
+      mood:selectedMood
+    })
+
+  })
+
+  .then(r=>r.json())
+
+  .then(data=>{
+
+    if(data.success){
+
+      document.getElementById("moodStatus")
+        .innerText = "Mood saved";
+
+    }
+
+  });
+
+}
+
+// =========================
+// SAVE MEDS
+// =========================
+function saveMeds(){
+
+  if(!selectedMeds){
+
+    alert("Please choose Yes or No.");
+
+    return;
+
+  }
+
+  fetch('/api/checkin',{
+
+    method:'POST',
+
+    headers:{
+      'Content-Type':'application/json'
+    },
+
+    body:JSON.stringify({
+      meds:selectedMeds
+    })
+
+  })
+
+  .then(r=>r.json())
+
+  .then(data=>{
+
+    if(data.success){
+
+      document.getElementById("medStatus")
+        .innerText = "Medication saved";
+
+    }
+
+  });
+
+}
+
+// =========================
+// NAV
+// =========================
+function goHome(){
+
+  window.location='/home';
+
+}
+
+function goActivities(){
+
+  window.location='/activities';
+
+}
+
+function logout(){
+
+  fetch('/logout')
+  .then(()=>{
+    window.location='/login';
+  });
+
+}
+
+</script>
+
+</body>
+</html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
   <title>Daily Check-In</title>
@@ -11,281 +12,82 @@
 
   <style>
 
-    body{
-      font-family:Arial, sans-serif;
-      margin:0;
-      padding:0;
-      background:#F4F7FB;
-      color:#222;
-    }
-
-    /* =========================
-       HEADER
-    ========================== */
-    .header{
-
-      display:flex;
-
-      justify-content:space-between;
-
-      align-items:center;
-
-      padding:15px 20px;
-
-      background:white;
-
-      box-shadow:0 2px 8px rgba(0,0,0,.08);
-
-    }
-
-    .logo{
-      height:60px;
-    }
-
-    .btn{
-
-      background:#1E6FDB;
-
-      color:white;
-
-      border:none;
-
-      padding:12px 18px;
-
-      border-radius:10px;
-
-      cursor:pointer;
-
-      font-size:15px;
-
-      font-weight:bold;
-
-      margin-left:6px;
-
-      transition:.2s;
-
-    }
-
-    .btn:hover{
-      transform:scale(1.03);
-      opacity:.95;
-    }
-
-    /* =========================
-       MAIN
-    ========================== */
-    .container{
-
-      max-width:750px;
-
+    .page {
+      max-width:800px;
       margin:auto;
+      padding:20px;
+    }
+
+    .today {
+      text-align:center;
+      font-size:20px;
+      margin-bottom:30px;
+      color:#444;
+    }
+
+    .panel {
 
       padding:25px;
+      border-radius:14px;
+      margin-bottom:30px;
+
+    }
+
+    .mood-panel {
+      background:#eef6ff;
+    }
+
+    .med-panel {
+      background:#fff7e6;
+    }
+
+    .panel h2 {
+      margin-top:0;
+      margin-bottom:20px;
+      text-align:center;
+    }
+
+    .btn-group {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:12px;
+    }
+
+    .choice-btn {
+
+      padding:14px 20px;
+      border:none;
+      border-radius:10px;
+      cursor:pointer;
+      font-size:16px;
+      background:#d9d9d9;
+      transition:0.2s;
+
+    }
+
+    .choice-btn.selected {
+      background:#1E6FDB;
+      color:white;
+      transform:scale(1.05);
+    }
+
+    .save-btn {
+
+      margin-top:20px;
+      display:block;
+      width:220px;
+      margin-left:auto;
+      margin-right:auto;
+
+    }
+
+    .status {
 
       text-align:center;
-
-    }
-
-    h2{
-
-      font-size:34px;
-
-      margin-bottom:10px;
-
-      font-weight:800;
-
-      color:#0B2A5B;
-
-    }
-
-    #today{
-
-      font-size:20px;
-
-      font-weight:600;
-
-      margin-bottom:15px;
-
-      color:#555;
-
-    }
-
-    #status{
-
-      min-height:24px;
-
-      font-size:18px;
-
-      font-weight:700;
-
-      margin-bottom:15px;
-
-    }
-
-    .success{
-      color:#138A36;
-    }
-
-    .error{
-      color:#C62828;
-    }
-
-    /* =========================
-       PANELS
-    ========================== */
-    .panel{
-
-      margin:25px auto;
-
-      padding:30px;
-
-      border-radius:18px;
-
-      box-shadow:0 4px 12px rgba(0,0,0,.08);
-
-    }
-
-    .mood-panel{
-      background:#E8F0FE;
-    }
-
-    .meds-panel{
-      background:#E8F8F5;
-    }
-
-    .panel h3{
-
-      margin-top:0;
-
-      margin-bottom:22px;
-
-      font-size:26px;
-
-      font-weight:800;
-
-      color:#0B2A5B;
-
-    }
-
-    /* =========================
-       BUTTON GROUPS
-    ========================== */
-    .btn-group{
-
-      display:flex;
-
-      flex-wrap:wrap;
-
-      justify-content:center;
-
-      gap:14px;
-
-      margin-bottom:20px;
-
-    }
-
-    .btn-group button{
-
-      min-width:130px;
-
-      padding:16px 20px;
-
-      border:none;
-
-      border-radius:14px;
-
-      background:#2F80ED;
-
-      color:white;
-
-      cursor:pointer;
-
-      font-size:18px;
-
-      font-weight:800;
-
-      letter-spacing:.3px;
-
-      transition:.2s;
-
-      box-shadow:0 3px 8px rgba(0,0,0,.12);
-
-    }
-
-    .btn-group button:hover{
-
-      transform:translateY(-2px);
-
-      opacity:.96;
-
-    }
-
-    /* =========================
-       CURRENTLY SELECTED
-    ========================== */
-    .selected{
-
-      background:#0B2A5B !important;
-
-      color:white !important;
-
-      transform:scale(1.08);
-
-      border:4px solid #FFD54F;
-
-      box-shadow:0 0 14px rgba(255,213,79,.8);
-
-    }
-
-    /* =========================
-       SAVED TO DATABASE
-    ========================== */
-    .saved{
-
-      background:#138A36 !important;
-
-      color:white !important;
-
-      border:4px solid #A5D6A7;
-
-      transform:scale(1.08);
-
-      box-shadow:0 0 16px rgba(19,138,54,.65);
-
-    }
-
-    .save-btn{
-
-      margin-top:10px;
-
-      padding:14px 28px;
-
-      font-size:18px;
-
-      font-weight:800;
-
-      border-radius:12px;
-
-    }
-
-    /* =========================
-       MOBILE
-    ========================== */
-    @media(max-width:600px){
-
-      .header{
-
-        flex-direction:column;
-
-        gap:10px;
-
-      }
-
-      .btn-group button{
-
-        width:100%;
-
-      }
+      margin-top:15px;
+      font-weight:bold;
+      color:green;
 
     }
 
@@ -295,105 +97,58 @@
 
 <body>
 
-<!-- =========================
-     HEADER
-========================= -->
-<div class="header">
+<!-- HEADER -->
+<div id="header"></div>
 
-  <img src="logo.jpg"
-       class="logo">
+<div class="page">
 
-  <div>
+  <div class="today" id="today"></div>
 
-    <button class="btn"
-            onclick="goHome()">
-      Home
-    </button>
-
-    <button class="btn"
-            onclick="goActivities()">
-      Activities
-    </button>
-
-    <button class="btn"
-            onclick="logout()">
-      Logout
-    </button>
-
-  </div>
-
-</div>
-
-<!-- =========================
-     MAIN CONTENT
-========================= -->
-<div class="container">
-
-  <h2>Daily Check-In</h2>
-
-  <p id="today"></p>
-
-  <p id="status"></p>
-
-  <!-- =========================
-       MOOD PANEL
-  ========================== -->
+  <!-- MOOD -->
   <div class="panel mood-panel">
 
-    <h3>How are you feeling today?</h3>
+    <h2>How are you feeling today?</h2>
 
-    <div id="moodBtns"
-         class="btn-group">
+    <div class="btn-group" id="moodBtns">
 
-      <button onclick="selectMood(this)">
-        Great
-      </button>
-
-      <button onclick="selectMood(this)">
-        Good
-      </button>
-
-      <button onclick="selectMood(this)">
-        Low
-      </button>
-
-      <button onclick="selectMood(this)">
-        Struggling
-      </button>
+      <button class="choice-btn">Great</button>
+      <button class="choice-btn">Good</button>
+      <button class="choice-btn">Low</button>
+      <button class="choice-btn">Struggling</button>
 
     </div>
 
     <button class="btn save-btn"
-            onclick="submitMood()">
+            onclick="saveMood()">
+
       Save Mood
+
     </button>
+
+    <div class="status" id="moodStatus"></div>
 
   </div>
 
-  <!-- =========================
-       MEDICATION PANEL
-  ========================== -->
-  <div class="panel meds-panel">
+  <!-- MEDICATION -->
+  <div class="panel med-panel">
 
-    <h3>Did you take your medicine today?</h3>
+    <h2>Did you take your medication today?</h2>
 
-    <div id="medBtns"
-         class="btn-group">
+    <div class="btn-group" id="medBtns">
 
-      <button onclick="selectMeds(this)">
-        Yes
-      </button>
-
-      <button onclick="selectMeds(this)">
-        No
-      </button>
+      <button class="choice-btn">Yes</button>
+      <button class="choice-btn">No</button>
 
     </div>
 
     <button class="btn save-btn"
-            onclick="submitMeds()">
+            onclick="saveMeds()">
+
       Save Medication
+
     </button>
+
+    <div class="status" id="medStatus"></div>
 
   </div>
 
@@ -402,293 +157,244 @@
 <script>
 
 // =========================
-// GLOBALS
+// LOAD HEADER
 // =========================
-let selectedMood = "";
-let selectedMeds = "";
+fetch('/header')
+
+.then(r=>r.text())
+
+.then(html=>{
+
+  document.getElementById('header')
+    .innerHTML = html;
+
+  document.getElementById("headerButtons")
+    .innerHTML = `
+
+      <button class="btn btn-light"
+              onclick="goHome()">
+
+        Home
+
+      </button>
+
+      <button class="btn btn-light"
+              onclick="goActivities()">
+
+        Activities
+
+      </button>
+
+      <button class="btn"
+              onclick="logout()">
+
+        Logout
+
+      </button>
+
+    `;
+
+});
 
 // =========================
 // DATE
 // =========================
 document.getElementById("today").innerText =
-
   new Date().toLocaleDateString(
-
     'en-US',
-
     {
-
       weekday:'long',
-
       year:'numeric',
-
       month:'long',
-
       day:'numeric'
-
     }
-
   );
 
 // =========================
-// LOAD TODAY'S CHECKIN
+// STATE
 // =========================
-loadTodayCheckin();
+let selectedMood = "";
+let selectedMeds = "";
 
-async function loadTodayCheckin(){
+// =========================
+// BUTTON CLICK HANDLERS
+// =========================
+document.querySelectorAll("#moodBtns button")
+.forEach(btn=>{
 
-  try{
+  btn.onclick = () => {
 
-    const response =
-      await fetch('/api/checkin-today');
+    selectedMood = btn.innerText;
 
-    const data =
-      await response.json();
+    document
+      .querySelectorAll("#moodBtns button")
+      .forEach(b=>b.classList.remove("selected"));
 
-    console.log(data);
+    btn.classList.add("selected");
 
-    if(!data.checkedIn){
-      return;
-    }
+  };
 
-    selectedMood =
-      data.mood || "";
+});
 
-    selectedMeds =
-      data.meds || "";
+document.querySelectorAll("#medBtns button")
+.forEach(btn=>{
 
-    restoreButtons();
+  btn.onclick = () => {
 
-    document.getElementById("status").innerText =
-      "Today's check-in already saved";
+    selectedMeds = btn.innerText;
 
-    document.getElementById("status").className =
-      "success";
+    document
+      .querySelectorAll("#medBtns button")
+      .forEach(b=>b.classList.remove("selected"));
+
+    btn.classList.add("selected");
+
+  };
+
+});
+
+// =========================
+// LOAD SAVED DATA
+// =========================
+fetch('/api/checkin-today')
+
+.then(r=>r.json())
+
+.then(data=>{
+
+  if(!data.checkedIn) return;
+
+  // MOOD
+  if(data.mood){
+
+    selectedMood = data.mood;
+
+    document
+      .querySelectorAll("#moodBtns button")
+      .forEach(btn=>{
+
+        if(btn.innerText === data.mood){
+
+          btn.classList.add("selected");
+
+        }
+
+      });
+
+    document.getElementById("moodStatus")
+      .innerText = "Mood saved today";
 
   }
 
-  catch(err){
+  // MEDS
+  if(data.meds){
 
-    console.log(err);
+    selectedMeds = data.meds;
+
+    document
+      .querySelectorAll("#medBtns button")
+      .forEach(btn=>{
+
+        if(btn.innerText === data.meds){
+
+          btn.classList.add("selected");
+
+        }
+
+      });
+
+    document.getElementById("medStatus")
+      .innerText = "Medication saved today";
 
   }
 
-}
-
-// =========================
-// CLEAR BUTTON GROUP
-// =========================
-function clearGroup(groupId){
-
-  document.querySelectorAll(`#${groupId} button`)
-    .forEach(btn=>{
-
-      btn.classList.remove("selected");
-
-    });
-
-}
-
-// =========================
-// SELECT MOOD
-// =========================
-function selectMood(btn){
-
-  selectedMood =
-    btn.innerText.trim();
-
-  clearGroup("moodBtns");
-
-  btn.classList.add("selected");
-
-}
-
-// =========================
-// SELECT MEDS
-// =========================
-function selectMeds(btn){
-
-  selectedMeds =
-    btn.innerText.trim();
-
-  clearGroup("medBtns");
-
-  btn.classList.add("selected");
-
-}
-
-// =========================
-// RESTORE SAVED BUTTONS
-// =========================
-function restoreButtons(){
-
-  document.querySelectorAll("#moodBtns button")
-    .forEach(btn=>{
-
-      btn.classList.remove("saved");
-
-      if(btn.innerText.trim() === selectedMood){
-
-        btn.classList.add("saved");
-
-      }
-
-    });
-
-  document.querySelectorAll("#medBtns button")
-    .forEach(btn=>{
-
-      btn.classList.remove("saved");
-
-      if(btn.innerText.trim() === selectedMeds){
-
-        btn.classList.add("saved");
-
-      }
-
-    });
-
-}
+});
 
 // =========================
 // SAVE MOOD
 // =========================
-async function submitMood(){
+function saveMood(){
 
-  try{
+  fetch('/api/checkin',{
 
-    const response = await fetch('/api/checkin',{
+    method:'POST',
 
-      method:'POST',
+    headers:{
+      'Content-Type':'application/json'
+    },
 
-      headers:{
-        'Content-Type':'application/json'
-      },
+    body:JSON.stringify({
+      mood:selectedMood
+    })
 
-      body:JSON.stringify({
+  })
 
-        mood:selectedMood
+  .then(r=>r.json())
 
-      })
+  .then(data=>{
 
-    });
+    if(data.success){
 
-    const data =
-      await response.json();
-
-    if(!data.success){
-
-      throw new Error(
-        data.error
-      );
+      document.getElementById("moodStatus")
+        .innerText = "Mood saved";
 
     }
 
-    restoreButtons();
-
-    document.getElementById("status").innerText =
-      "Mood saved successfully";
-
-    document.getElementById("status").className =
-      "success";
-
-  }
-
-  catch(err){
-
-    console.log(err);
-
-    document.getElementById("status").innerText =
-      err.message;
-
-    document.getElementById("status").className =
-      "error";
-
-  }
+  });
 
 }
 
 // =========================
 // SAVE MEDS
 // =========================
-async function submitMeds(){
+function saveMeds(){
 
-  try{
+  fetch('/api/checkin',{
 
-    const response = await fetch('/api/checkin',{
+    method:'POST',
 
-      method:'POST',
+    headers:{
+      'Content-Type':'application/json'
+    },
 
-      headers:{
-        'Content-Type':'application/json'
-      },
+    body:JSON.stringify({
+      meds:selectedMeds
+    })
 
-      body:JSON.stringify({
+  })
 
-        meds:selectedMeds
+  .then(r=>r.json())
 
-      })
+  .then(data=>{
 
-    });
+    if(data.success){
 
-    const data =
-      await response.json();
-
-    if(!data.success){
-
-      throw new Error(
-        data.error
-      );
+      document.getElementById("medStatus")
+        .innerText = "Medication saved";
 
     }
 
-    restoreButtons();
-
-    document.getElementById("status").innerText =
-      "Medication saved successfully";
-
-    document.getElementById("status").className =
-      "success";
-
-  }
-
-  catch(err){
-
-    console.log(err);
-
-    document.getElementById("status").innerText =
-      err.message;
-
-    document.getElementById("status").className =
-      "error";
-
-  }
+  });
 
 }
 
 // =========================
-// NAVIGATION
+// NAV
 // =========================
 function goHome(){
-
   window.location='/home';
-
 }
 
 function goActivities(){
-
   window.location='/activities';
-
 }
 
 function logout(){
 
   fetch('/logout')
-    .then(()=>{
-
-      window.location='/';
-
-    });
+  .then(()=>{
+    window.location='/login';
+  });
 
 }
 

@@ -281,6 +281,8 @@ fetch('/api/checkin-today')
 
 .then(data=>{
 
+  console.log("Loaded data:", data);
+
   if(!data.checkedIn) return;
 
   // RESTORE MOOD
@@ -323,6 +325,12 @@ fetch('/api/checkin-today')
 
   }
 
+})
+
+.catch(err=>{
+
+  console.log("LOAD ERROR:", err);
+
 });
 
 // =========================
@@ -333,12 +341,11 @@ function saveMood(){
   if(!selectedMood){
 
     alert("Please select a mood.");
-
     return;
 
   }
 
-  fetch('/api/checkin',{
+  fetch('/api/checkin', {
 
     method:'POST',
 
@@ -352,16 +359,32 @@ function saveMood(){
 
   })
 
-  .then(r=>r.json())
+  .then(r => r.json())
 
-  .then(data=>{
+  .then(data => {
+
+    console.log("Mood response:", data);
 
     if(data.success){
 
       document.getElementById("moodStatus")
-        .innerText = "Mood saved";
+        .innerText = "Mood saved successfully";
+
+    } else {
+
+      document.getElementById("moodStatus")
+        .innerText = "Database save failed";
 
     }
+
+  })
+
+  .catch(err => {
+
+    console.log(err);
+
+    document.getElementById("moodStatus")
+      .innerText = "Server error saving mood";
 
   });
 
@@ -375,12 +398,11 @@ function saveMeds(){
   if(!selectedMeds){
 
     alert("Please choose Yes or No.");
-
     return;
 
   }
 
-  fetch('/api/checkin',{
+  fetch('/api/checkin', {
 
     method:'POST',
 
@@ -394,16 +416,32 @@ function saveMeds(){
 
   })
 
-  .then(r=>r.json())
+  .then(r => r.json())
 
-  .then(data=>{
+  .then(data => {
+
+    console.log("Medication response:", data);
 
     if(data.success){
 
       document.getElementById("medStatus")
-        .innerText = "Medication saved";
+        .innerText = "Medication saved successfully";
+
+    } else {
+
+      document.getElementById("medStatus")
+        .innerText = "Database save failed";
 
     }
+
+  })
+
+  .catch(err => {
+
+    console.log(err);
+
+    document.getElementById("medStatus")
+      .innerText = "Server error saving medication";
 
   });
 

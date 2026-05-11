@@ -20,9 +20,10 @@
 
     .today {
       text-align:center;
-      font-size:20px;
+      font-size:22px;
       margin-bottom:30px;
       color:#444;
+      font-weight:bold;
     }
 
     .panel {
@@ -48,10 +49,12 @@
     }
 
     .btn-group {
+
       display:flex;
       flex-wrap:wrap;
       justify-content:center;
       gap:12px;
+
     }
 
     .choice-btn {
@@ -67,9 +70,11 @@
     }
 
     .choice-btn.selected {
+
       background:#1E6FDB;
       color:white;
       transform:scale(1.05);
+
     }
 
     .save-btn {
@@ -102,303 +107,8 @@
 
 <div class="page">
 
+  <!-- DATE -->
   <div class="today" id="today"></div>
 
-  <!-- MOOD -->
-  <div class="panel mood-panel">
-
-    <h2>How are you feeling today?</h2>
-
-    <div class="btn-group" id="moodBtns">
-
-      <button class="choice-btn">Great</button>
-      <button class="choice-btn">Good</button>
-      <button class="choice-btn">Low</button>
-      <button class="choice-btn">Struggling</button>
-
-    </div>
-
-    <button class="btn save-btn"
-            onclick="saveMood()">
-
-      Save Mood
-
-    </button>
-
-    <div class="status" id="moodStatus"></div>
-
-  </div>
-
-  <!-- MEDICATION -->
-  <div class="panel med-panel">
-
-    <h2>Did you take your medication today?</h2>
-
-    <div class="btn-group" id="medBtns">
-
-      <button class="choice-btn">Yes</button>
-      <button class="choice-btn">No</button>
-
-    </div>
-
-    <button class="btn save-btn"
-            onclick="saveMeds()">
-
-      Save Medication
-
-    </button>
-
-    <div class="status" id="medStatus"></div>
-
-  </div>
-
-</div>
-
-<script>
-
-// =========================
-// LOAD HEADER
-// =========================
-fetch('/header')
-
-.then(r=>r.text())
-
-.then(html=>{
-
-  document.getElementById('header')
-    .innerHTML = html;
-
-  document.getElementById("headerButtons")
-    .innerHTML = `
-
-      <button class="btn btn-light"
-              onclick="goHome()">
-
-        Home
-
-      </button>
-
-      <button class="btn btn-light"
-              onclick="goActivities()">
-
-        Activities
-
-      </button>
-
-      <button class="btn"
-              onclick="logout()">
-
-        Logout
-
-      </button>
-
-    `;
-
-});
-
-// =========================
-// DATE
-// =========================
-document.getElementById("today").innerText =
-  new Date().toLocaleDateString(
-    'en-US',
-    {
-      weekday:'long',
-      year:'numeric',
-      month:'long',
-      day:'numeric'
-    }
-  );
-
-// =========================
-// STATE
-// =========================
-let selectedMood = "";
-let selectedMeds = "";
-
-// =========================
-// BUTTON CLICK HANDLERS
-// =========================
-document.querySelectorAll("#moodBtns button")
-.forEach(btn=>{
-
-  btn.onclick = () => {
-
-    selectedMood = btn.innerText;
-
-    document
-      .querySelectorAll("#moodBtns button")
-      .forEach(b=>b.classList.remove("selected"));
-
-    btn.classList.add("selected");
-
-  };
-
-});
-
-document.querySelectorAll("#medBtns button")
-.forEach(btn=>{
-
-  btn.onclick = () => {
-
-    selectedMeds = btn.innerText;
-
-    document
-      .querySelectorAll("#medBtns button")
-      .forEach(b=>b.classList.remove("selected"));
-
-    btn.classList.add("selected");
-
-  };
-
-});
-
-// =========================
-// LOAD SAVED DATA
-// =========================
-fetch('/api/checkin-today')
-
-.then(r=>r.json())
-
-.then(data=>{
-
-  if(!data.checkedIn) return;
-
-  // MOOD
-  if(data.mood){
-
-    selectedMood = data.mood;
-
-    document
-      .querySelectorAll("#moodBtns button")
-      .forEach(btn=>{
-
-        if(btn.innerText === data.mood){
-
-          btn.classList.add("selected");
-
-        }
-
-      });
-
-    document.getElementById("moodStatus")
-      .innerText = "Mood saved today";
-
-  }
-
-  // MEDS
-  if(data.meds){
-
-    selectedMeds = data.meds;
-
-    document
-      .querySelectorAll("#medBtns button")
-      .forEach(btn=>{
-
-        if(btn.innerText === data.meds){
-
-          btn.classList.add("selected");
-
-        }
-
-      });
-
-    document.getElementById("medStatus")
-      .innerText = "Medication saved today";
-
-  }
-
-});
-
-// =========================
-// SAVE MOOD
-// =========================
-function saveMood(){
-
-  fetch('/api/checkin',{
-
-    method:'POST',
-
-    headers:{
-      'Content-Type':'application/json'
-    },
-
-    body:JSON.stringify({
-      mood:selectedMood
-    })
-
-  })
-
-  .then(r=>r.json())
-
-  .then(data=>{
-
-    if(data.success){
-
-      document.getElementById("moodStatus")
-        .innerText = "Mood saved";
-
-    }
-
-  });
-
-}
-
-// =========================
-// SAVE MEDS
-// =========================
-function saveMeds(){
-
-  fetch('/api/checkin',{
-
-    method:'POST',
-
-    headers:{
-      'Content-Type':'application/json'
-    },
-
-    body:JSON.stringify({
-      meds:selectedMeds
-    })
-
-  })
-
-  .then(r=>r.json())
-
-  .then(data=>{
-
-    if(data.success){
-
-      document.getElementById("medStatus")
-        .innerText = "Medication saved";
-
-    }
-
-  });
-
-}
-
-// =========================
-// NAV
-// =========================
-function goHome(){
-  window.location='/home';
-}
-
-function goActivities(){
-  window.location='/activities';
-}
-
-function logout(){
-
-  fetch('/logout')
-  .then(()=>{
-    window.location='/login';
-  });
-
-}
-
-</script>
-
-</body>
-</html>
+  <!-- MOOD PANEL -->
+  <div class

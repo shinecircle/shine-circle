@@ -185,6 +185,8 @@ app.post('/login', async (req, res) => {
 
     req.session.user = user;
 
+    console.log("LOGIN SUCCESS:", user.username);
+
     res.json({
       success: true,
       role: user.role
@@ -222,12 +224,17 @@ app.post('/api/checkin', async (req, res) => {
 
   try {
 
+    console.log("CHECKIN BODY:", req.body);
+
+    console.log("SESSION USER:", req.session.user);
+
     const user = req.session.user;
 
     if (!user) {
 
       return res.status(401).json({
-        success: false
+        success: false,
+        error: "No session user"
       });
 
     }
@@ -238,11 +245,18 @@ app.post('/api/checkin', async (req, res) => {
     const mood = req.body.mood;
     const meds = req.body.meds;
 
+    console.log("TODAY:", today);
+    console.log("MOOD:", mood);
+    console.log("MEDS:", meds);
+
     const existing = await pool.query(
       "SELECT * FROM checkins WHERE clientid=$1 AND date=$2",
       [user.id, today]
     );
 
+    console.log("EXISTING:", existing.rows);
+
+    // INSERT
     if (existing.rows.length === 0) {
 
       await pool.query(
@@ -257,7 +271,10 @@ app.post('/api/checkin', async (req, res) => {
         ]
       );
 
-    } else {
+    }
+
+    // UPDATE
+    else {
 
       const row = existing.rows[0];
 
@@ -282,10 +299,12 @@ app.post('/api/checkin', async (req, res) => {
 
   catch (err) {
 
-    console.error(err);
+    console.log("CHECKIN SAVE ERROR:");
+    console.log(err);
 
     res.status(500).json({
-      success: false
+      success: false,
+      error: err.message
     });
 
   }
@@ -337,7 +356,7 @@ app.get('/api/checkin-today', async (req, res) => {
 
   catch (err) {
 
-    console.error(err);
+    console.log(err);
 
     res.json({
       checkedIn: false
@@ -393,7 +412,7 @@ app.post('/api/activities', async (req, res) => {
 
   catch (err) {
 
-    console.error(err);
+    console.log(err);
 
     res.status(500).json({
       success: false
@@ -431,7 +450,7 @@ app.get('/api/activities', async (req, res) => {
 
   catch (err) {
 
-    console.error(err);
+    console.log(err);
 
     res.json({});
 
@@ -511,12 +530,37 @@ app.get('/family-data', async (req, res) => {
 
   catch (err) {
 
-    console.error(err);
+    console.log(err);
 
     res.json({
       user: null,
       checkins: []
     });
+
+  }
+
+});
+
+// =========================
+// DEBUG CHECKINS
+// =========================
+app.get('/debug-checkins', async (req, res) => {
+
+  try {
+
+    const result = await pool.query(
+      "SELECT * FROM checkins ORDER BY id DESC"
+    );
+
+    res.json(result.rows);
+
+  }
+
+  catch(err){
+
+    console.log(err);
+
+    res.json([]);
 
   }
 

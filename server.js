@@ -181,8 +181,9 @@ app.post('/login', async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
 
+    // CASE-INSENSITIVE USERNAME LOGIN
     const result = await pool.query(
-      "SELECT * FROM clients WHERE username=$1 AND password=$2",
+      "SELECT * FROM clients WHERE LOWER(username)=LOWER($1) AND password=$2",
       [username, password]
     );
 

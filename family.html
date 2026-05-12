@@ -120,7 +120,7 @@ fetch('/family-data')
     `<div class="card"><h3>Loved One: ${name}</h3></div>`;
 
   // =========================
-  // CALL SCHEDULE (FIXED)
+  // CALL SCHEDULE
   // =========================
   const map = {
     Mon:"Monday", Tue:"Tuesday", Wed:"Wednesday",
@@ -149,7 +149,12 @@ fetch('/family-data')
   // =========================
   // CHECKINS
   // =========================
-  dataGlobal = (data.checkins || []).reverse();
+  dataGlobal = data.checkins || [];
+
+  // SORT OLDEST -> NEWEST
+  dataGlobal.sort((a,b)=>
+    new Date(a.timestamp) - new Date(b.timestamp)
+  );
 
   if(!dataGlobal.length){
     document.getElementById("list").innerText = "No activity yet.";
@@ -179,6 +184,7 @@ function moodScore(m){
 // =========================
 function renderChart(){
 
+  // LAST 10 IN CHRONOLOGICAL ORDER
   const last10 = dataGlobal.slice(-10);
 
   const labels = last10.map(d =>
@@ -246,18 +252,22 @@ function renderList(){
 
   let html = "";
 
-  dataGlobal.slice(-10).forEach(d=>{
+  // SHOW NEWEST FIRST IN ACTIVITY LIST
+  [...dataGlobal]
+    .reverse()
+    .slice(0,10)
+    .forEach(d=>{
 
-    const date = new Date(d.timestamp);
+      const date = new Date(d.timestamp);
 
-    html += `
-      <div style="margin-bottom:12px;">
-        <b>Mood:</b> ${d.mood}<br>
-        <b>Meds:</b> ${d.meds || "Not recorded"}<br>
-        <small>${date.toLocaleString()}</small>
-      </div>
-    `;
-  });
+      html += `
+        <div style="margin-bottom:12px;">
+          <b>Mood:</b> ${d.mood}<br>
+          <b>Meds:</b> ${d.meds || "Not recorded"}<br>
+          <small>${date.toLocaleString()}</small>
+        </div>
+      `;
+    });
 
   document.getElementById("list").innerHTML = html;
 }
@@ -294,7 +304,11 @@ function renderAlerts(){
 // NAV
 // =========================
 function goHome(){ window.location='home.html'; }
-function logout(){ fetch('/logout').then(()=>window.location='login.html'); }
+
+function logout(){
+  fetch('/logout')
+    .then(()=>window.location='login.html');
+}
 
 </script>
 

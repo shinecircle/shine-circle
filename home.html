@@ -104,114 +104,237 @@
 <script>
 
 // =========================
-// LOAD HEADER
+// CHECK USER ROLE
 // =========================
-fetch('/header')
+async function checkUserRole() {
 
-.then(r=>r.text())
+  try {
 
-.then(html=>{
+    const response = await fetch('/auth');
+    const user = await response.json();
 
-  document.getElementById('header')
-    .innerHTML = html;
+    // NOT LOGGED IN
+    if (!user) {
 
-  const buttons =
-    document.getElementById("headerButtons");
+      document.body.innerHTML = `
 
-  if(buttons){
+        <div style="
+          text-align:center;
+          margin-top:100px;
+          font-family:Arial;
+        ">
 
-    buttons.innerHTML = `
+          <h2>Please log in</h2>
 
-      <button class="btn"
-              onclick="logout()">
+        </div>
 
-        Logout
+      `;
 
-      </button>
+      return false;
 
-    `;
+    }
+
+    // WRONG ROLE
+    if (user.role !== 'user') {
+
+      document.body.innerHTML = `
+
+        <div style="
+          text-align:center;
+          margin-top:100px;
+          font-family:Arial;
+          padding:20px;
+        ">
+
+          <h2>
+            This page is only available for Users.
+          </h2>
+
+          <p>
+            You are currently logged in as a Caregiver.
+          </p>
+
+          <div style="margin-top:30px;">
+
+            <button class="btn"
+                    onclick="window.location='/family'">
+
+              Go To Family Dashboard
+
+            </button>
+
+            <button class="btn btn-light"
+                    onclick="logout()">
+
+              Logout
+
+            </button>
+
+          </div>
+
+        </div>
+
+      `;
+
+      return false;
+
+    }
+
+    return true;
 
   }
 
-});
+  catch (err) {
+
+    console.log(err);
+
+    return false;
+
+  }
+
+}
+
+// =========================
+// LOAD PAGE
+// =========================
+window.onload = async function () {
+
+  const allowed =
+    await checkUserRole();
+
+  if (!allowed) {
+    return;
+  }
+
+  loadHeader();
+
+  loadTodayDate();
+
+  loadTodayStatus();
+
+};
+
+// =========================
+// LOAD HEADER
+// =========================
+function loadHeader(){
+
+  fetch('/header')
+
+  .then(r=>r.text())
+
+  .then(html=>{
+
+    document.getElementById('header')
+      .innerHTML = html;
+
+    const buttons =
+      document.getElementById("headerButtons");
+
+    if(buttons){
+
+      buttons.innerHTML = `
+
+        <button class="btn"
+                onclick="logout()">
+
+          Logout
+
+        </button>
+
+      `;
+
+    }
+
+  });
+
+}
 
 // =========================
 // DATE
 // =========================
-document.getElementById("todayDate")
-  .innerText =
-    new Date().toLocaleDateString(
-      'en-US',
-      {
-        weekday:'long',
-        year:'numeric',
-        month:'long',
-        day:'numeric'
-      }
-    );
+function loadTodayDate(){
+
+  document.getElementById("todayDate")
+    .innerText =
+      new Date().toLocaleDateString(
+        'en-US',
+        {
+          weekday:'long',
+          year:'numeric',
+          month:'long',
+          day:'numeric'
+        }
+      );
+
+}
 
 // =========================
 // LOAD TODAY STATUS
 // =========================
-fetch('/api/checkin-today')
+function loadTodayStatus(){
 
-.then(r=>r.json())
+  fetch('/api/checkin-today')
 
-.then(data=>{
+  .then(r=>r.json())
 
-  console.log("HOME CHECKIN:", data);
+  .then(data=>{
 
-  // MOOD
-  if(data.mood){
+    console.log("HOME CHECKIN:", data);
+
+    // MOOD
+    if(data.mood){
+
+      document.getElementById("moodStatus")
+        .innerHTML =
+          'Mood Check-In: <span class="good">' +
+          data.mood +
+          '</span>';
+
+    }
+
+    else {
+
+      document.getElementById("moodStatus")
+        .innerHTML =
+          'Mood Check-In: <span class="missing">Not completed today</span>';
+
+    }
+
+    // MEDS
+    if(data.meds){
+
+      document.getElementById("medStatus")
+        .innerHTML =
+          'Medication Check-In: <span class="good">' +
+          data.meds +
+          '</span>';
+
+    }
+
+    else {
+
+      document.getElementById("medStatus")
+        .innerHTML =
+          'Medication Check-In: <span class="missing">Not completed today</span>';
+
+    }
+
+  })
+
+  .catch(err=>{
+
+    console.log(err);
 
     document.getElementById("moodStatus")
-      .innerHTML =
-        'Mood Check-In: <span class="good">' +
-        data.mood +
-        '</span>';
-
-  }
-
-  else {
-
-    document.getElementById("moodStatus")
-      .innerHTML =
-        'Mood Check-In: <span class="missing">Not completed today</span>';
-
-  }
-
-  // MEDS
-  if(data.meds){
+      .innerText = "Unable to load mood status";
 
     document.getElementById("medStatus")
-      .innerHTML =
-        'Medication Check-In: <span class="good">' +
-        data.meds +
-        '</span>';
+      .innerText = "Unable to load medication status";
 
-  }
+  });
 
-  else {
-
-    document.getElementById("medStatus")
-      .innerHTML =
-        'Medication Check-In: <span class="missing">Not completed today</span>';
-
-  }
-
-})
-
-.catch(err=>{
-
-  console.log(err);
-
-  document.getElementById("moodStatus")
-    .innerText = "Unable to load mood status";
-
-  document.getElementById("medStatus")
-    .innerText = "Unable to load medication status";
-
-});
+}
 
 // =========================
 // NAV

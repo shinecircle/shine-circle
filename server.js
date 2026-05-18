@@ -95,6 +95,21 @@ async function initDB() {
       "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
     );
 
+    await pool.query(
+      "ALTER TABLE activities " +
+      "ADD COLUMN IF NOT EXISTS dayforcall TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE activities " +
+      "ADD COLUMN IF NOT EXISTS timeforcall TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE activities " +
+      "ADD COLUMN IF NOT EXISTS timezone TEXT;"
+    );
+
     // CHECK USERS
     const existingUsers = await pool.query(
       "SELECT * FROM clients"
@@ -420,10 +435,12 @@ app.post('/api/activities', async (req, res) => {
 
   catch (err) {
 
+    console.log("ACTIVITIES SAVE ERROR:");
     console.log(err);
 
     res.status(500).json({
-      success: false
+      success: false,
+      error: err.message
     });
 
   }

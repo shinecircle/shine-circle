@@ -22,17 +22,24 @@
     .status-card {
 
       background:white;
-      padding:25px;
-      border-radius:14px;
+      padding:30px 25px;
+      border-radius:18px;
       margin-top:25px;
       box-shadow:0 4px 12px rgba(0,0,0,0.08);
 
     }
 
-    .status-line {
+    .welcome-title{
+      font-size:32px;
+      margin-bottom:10px;
+    }
 
+    .encouragement {
+
+      font-size:22px;
+      line-height:1.5;
       margin-top:15px;
-      font-size:18px;
+      color:#444;
 
     }
 
@@ -57,31 +64,27 @@
 
 <div class="page">
 
-  <h1>Welcome Back</h1>
+  <h1 class="welcome-title"
+      id="welcomeTitle">
+
+    Welcome Back
+
+  </h1>
 
   <p id="todayDate"></p>
 
   <div class="status-card">
 
-    <h2>Today's Check-In Status</h2>
+    <div class="encouragement"
+         id="encouragementMessage">
 
-    <div class="status-line"
-         id="moodStatus">
-
-      Loading mood status...
-
-    </div>
-
-    <div class="status-line"
-         id="medStatus">
-
-      Loading medication status...
+      Loading today's update...
 
     </div>
 
   </div>
 
-  <div style="margin-top:30px;">
+  <div style="margin-top:35px;">
 
     <button class="btn"
             onclick="goCheckin()">
@@ -103,6 +106,8 @@
 
 <script>
 
+let currentUser = null;
+
 // =========================
 // CHECK USER ROLE
 // =========================
@@ -112,6 +117,8 @@ async function checkUserRole() {
 
     const response = await fetch('/auth');
     const user = await response.json();
+
+    currentUser = user;
 
     // NOT LOGGED IN
     if (!user) {
@@ -282,43 +289,57 @@ function loadTodayStatus(){
 
     console.log("HOME CHECKIN:", data);
 
-    // MOOD
-    if(data.mood){
+    // =========================
+    // WELCOME MESSAGE
+    // =========================
+    const name =
+      currentUser.firstname ||
+      currentUser.username ||
+      "User";
 
-      document.getElementById("moodStatus")
-        .innerHTML =
-          'Mood Check-In: <span class="good">' +
-          data.mood +
-          '</span>';
+    document.getElementById("welcomeTitle")
+      .innerText =
+        "Welcome back " + name;
+
+    const moodDone = !!data.mood;
+    const medsDone = !!data.meds;
+
+    let message = "";
+
+    // NOTHING COMPLETED
+    if(!moodDone && !medsDone){
+
+      message =
+        "We really want to know how you are doing.";
 
     }
 
+    // MOOD ONLY
+    else if(moodDone && !medsDone){
+
+      message =
+        "It's important to take your medications as prescribed.";
+
+    }
+
+    // MEDS ONLY
+    else if(!moodDone && medsDone){
+
+      message =
+        "Please log your mood today.";
+
+    }
+
+    // BOTH COMPLETE
     else {
 
-      document.getElementById("moodStatus")
-        .innerHTML =
-          'Mood Check-In: <span class="missing">Not completed today</span>';
+      message =
+        "We are glad you have completed your daily check in.";
 
     }
 
-    // MEDS
-    if(data.meds){
-
-      document.getElementById("medStatus")
-        .innerHTML =
-          'Medication Check-In: <span class="good">' +
-          data.meds +
-          '</span>';
-
-    }
-
-    else {
-
-      document.getElementById("medStatus")
-        .innerHTML =
-          'Medication Check-In: <span class="missing">Not completed today</span>';
-
-    }
+    document.getElementById("encouragementMessage")
+      .innerHTML = message;
 
   })
 
@@ -326,11 +347,9 @@ function loadTodayStatus(){
 
     console.log(err);
 
-    document.getElementById("moodStatus")
-      .innerText = "Unable to load mood status";
-
-    document.getElementById("medStatus")
-      .innerText = "Unable to load medication status";
+    document.getElementById("encouragementMessage")
+      .innerText =
+        "Unable to load today's update.";
 
   });
 

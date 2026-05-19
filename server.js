@@ -97,7 +97,7 @@ async function initDB() {
       ");"
     );
 
-    // FIX OLD TABLES
+    // FIX OLD ACTIVITIES TABLES
     await pool.query(
       "ALTER TABLE activities " +
       "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
@@ -118,7 +118,7 @@ async function initDB() {
       "ADD COLUMN IF NOT EXISTS timezone TEXT;"
     );
 
-    // FIX CALL TABLES
+    // FIX OLD CALL TABLES
     await pool.query(
       "ALTER TABLE calls " +
       "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
@@ -160,6 +160,8 @@ async function initDB() {
     );
 
     if (existingUsers.rows.length === 0) {
+
+      console.log("Creating default users...");
 
       await pool.query(
         "INSERT INTO clients " +
@@ -217,8 +219,35 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'howitworks.html'));
 });
 
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+app.get('/home', (req, res) => {
+  res.sendFile(path.join(__dirname, 'home.html'));
+});
+
+app.get('/checkin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'checkin.html'));
+});
+
 app.get('/activities', (req, res) => {
   res.sendFile(path.join(__dirname, 'activities.html'));
+});
+
+app.get('/family', (req, res) => {
+  res.sendFile(path.join(__dirname, 'family.html'));
+});
+
+// =========================
+// HEADER
+// =========================
+app.get('/header', (req, res) => {
+
+  res.sendFile(
+    path.join(__dirname, 'header.html')
+  );
+
 });
 
 // =========================
@@ -254,6 +283,8 @@ app.post('/login', async (req, res) => {
     }
 
     req.session.user = user;
+
+    console.log("LOGIN SUCCESS:", user.username);
 
     res.json({
       success:true,

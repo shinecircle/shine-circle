@@ -1,0 +1,452 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+
+  <title>Admin Dashboard</title>
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+
+    .container{
+
+      max-width:1000px;
+      margin:auto;
+      padding:20px;
+
+    }
+
+    .card{
+
+      background:white;
+
+      padding:24px;
+
+      border-radius:18px;
+
+      margin-top:24px;
+
+      box-shadow:0 4px 12px rgba(0,0,0,0.06);
+
+    }
+
+    input,
+    select{
+
+      width:100%;
+
+      padding:14px;
+
+      border-radius:12px;
+
+      border:1px solid #ddd;
+
+      margin-top:10px;
+
+      font-size:16px;
+
+      box-sizing:border-box;
+
+    }
+
+    .grid{
+
+      display:grid;
+
+      grid-template-columns:1fr 1fr;
+
+      gap:16px;
+
+    }
+
+    .call-item{
+
+      padding:18px;
+
+      border:1px solid #eee;
+
+      border-radius:14px;
+
+      margin-top:16px;
+
+    }
+
+    .completed{
+
+      background:#f4fff4;
+
+    }
+
+    @media(max-width:700px){
+
+      .grid{
+        grid-template-columns:1fr;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+<div id="header"></div>
+
+<div class="container">
+
+  <h2>Admin Dashboard</h2>
+
+  <!-- SCHEDULE -->
+  <div class="card">
+
+    <h3>Schedule Call</h3>
+
+    <div class="grid">
+
+      <div>
+
+        <label>User</label>
+
+        <select id="clientid"></select>
+
+      </div>
+
+      <div>
+
+        <label>Caller Name</label>
+
+        <input type="text"
+               id="callername"
+               placeholder="Sarah">
+
+      </div>
+
+      <div>
+
+        <label>Date</label>
+
+        <input type="date"
+               id="calldate">
+
+      </div>
+
+      <div>
+
+        <label>Start Time</label>
+
+        <input type="time"
+               id="starttime">
+
+      </div>
+
+      <div>
+
+        <label>End Time</label>
+
+        <input type="time"
+               id="endtime">
+
+      </div>
+
+      <div>
+
+        <label>Timezone</label>
+
+        <select id="timezone">
+
+          <option value="EST">EST</option>
+          <option value="CST">CST</option>
+          <option value="MST">MST</option>
+          <option value="PST">PST</option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+    <div style="margin-top:24px;">
+
+      <button class="btn"
+              onclick="scheduleCall()">
+
+        Schedule Call
+
+      </button>
+
+    </div>
+
+    <p id="msg"></p>
+
+  </div>
+
+  <!-- UPCOMING -->
+  <div class="card">
+
+    <h3>Upcoming Calls</h3>
+
+    <div id="upcomingCalls"></div>
+
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="card">
+
+    <h3>Completed Calls</h3>
+
+    <div id="completedCalls"></div>
+
+  </div>
+
+</div>
+
+<script>
+
+// =========================
+// LOAD HEADER
+// =========================
+fetch('/header')
+
+.then(r=>r.text())
+
+.then(html=>{
+
+  document.getElementById('header')
+    .innerHTML = html;
+
+  document.getElementById("headerButtons")
+    .innerHTML = `
+
+      <button class="btn"
+              onclick="logout()">
+
+        Logout
+
+      </button>
+
+    `;
+
+});
+
+// =========================
+// LOAD USERS
+// =========================
+loadUsers();
+
+async function loadUsers(){
+
+  const response =
+    await fetch('/api/users');
+
+  const users =
+    await response.json();
+
+  const select =
+    document.getElementById('clientid');
+
+  select.innerHTML = "";
+
+  users.forEach(u=>{
+
+    select.innerHTML += `
+
+      <option value="${u.id}">
+
+        ${u.firstname} ${u.lastname}
+
+      </option>
+
+    `;
+
+  });
+
+}
+
+// =========================
+// LOAD CALLS
+// =========================
+loadCalls();
+
+async function loadCalls(){
+
+  const response =
+    await fetch('/api/calls');
+
+  const calls =
+    await response.json();
+
+  let upcoming = "";
+  let completed = "";
+
+  calls.forEach(call=>{
+
+    const html = `
+
+      <div class="call-item ${call.status === 'completed' ? 'completed' : ''}">
+
+        <strong>
+          ${call.firstname} ${call.lastname}
+        </strong>
+
+        <br><br>
+
+        ${call.calldate}
+
+        <br>
+
+        ${call.starttime} - ${call.endtime}
+
+        ${call.timezone}
+
+        <br><br>
+
+        Caller:
+        ${call.callername}
+
+        <br><br>
+
+        Status:
+        ${call.status}
+
+        ${call.status === 'scheduled'
+
+          ? `
+
+            <br><br>
+
+            <button class="btn"
+                    onclick="completeCall(${call.id})">
+
+              Mark Completed
+
+            </button>
+
+          `
+
+          : ''
+
+        }
+
+      </div>
+
+    `;
+
+    if(call.status === 'scheduled'){
+      upcoming += html;
+    }
+
+    else{
+      completed += html;
+    }
+
+  });
+
+  document.getElementById('upcomingCalls')
+    .innerHTML = upcoming || '<p>No upcoming calls.</p>';
+
+  document.getElementById('completedCalls')
+    .innerHTML = completed || '<p>No completed calls.</p>';
+
+}
+
+// =========================
+// SCHEDULE CALL
+// =========================
+async function scheduleCall(){
+
+  const response =
+    await fetch('/api/schedule-call',{
+
+      method:'POST',
+
+      headers:{
+        'Content-Type':'application/json'
+      },
+
+      body:JSON.stringify({
+
+        clientid:
+          document.getElementById('clientid').value,
+
+        callername:
+          document.getElementById('callername').value,
+
+        calldate:
+          document.getElementById('calldate').value,
+
+        starttime:
+          document.getElementById('starttime').value,
+
+        endtime:
+          document.getElementById('endtime').value,
+
+        timezone:
+          document.getElementById('timezone').value
+
+      })
+
+    });
+
+  const data =
+    await response.json();
+
+  if(data.success){
+
+    document.getElementById('msg')
+      .innerText = 'Call scheduled successfully';
+
+    loadCalls();
+
+  }
+
+  else{
+
+    document.getElementById('msg')
+      .innerText = 'Error scheduling call';
+
+  }
+
+}
+
+// =========================
+// COMPLETE CALL
+// =========================
+async function completeCall(id){
+
+  await fetch('/api/complete-call',{
+
+    method:'POST',
+
+    headers:{
+      'Content-Type':'application/json'
+    },
+
+    body:JSON.stringify({id})
+
+  });
+
+  loadCalls();
+
+}
+
+// =========================
+// LOGOUT
+// =========================
+function logout(){
+
+  fetch('/logout')
+    .then(()=>{
+      window.location='/login';
+    });
+
+}
+
+</script>
+
+</body>
+</html>

@@ -49,7 +49,7 @@ async function initDB() {
 
     console.log("Initializing database...");
 
-    // CLIENTS
+    // CLIENTS TABLE
     await pool.query(
       "CREATE TABLE IF NOT EXISTS clients (" +
       "id SERIAL PRIMARY KEY," +
@@ -61,7 +61,7 @@ async function initDB() {
       ");"
     );
 
-    // CHECKINS
+    // CHECKINS TABLE
     await pool.query(
       "CREATE TABLE IF NOT EXISTS checkins (" +
       "id SERIAL PRIMARY KEY," +
@@ -72,7 +72,7 @@ async function initDB() {
       ");"
     );
 
-    // ACTIVITIES
+    // ACTIVITIES TABLE
     await pool.query(
       "CREATE TABLE IF NOT EXISTS activities (" +
       "id SERIAL PRIMARY KEY," +
@@ -83,7 +83,7 @@ async function initDB() {
       ");"
     );
 
-    // CALLS
+    // CALLS TABLE
     await pool.query(
       "CREATE TABLE IF NOT EXISTS calls (" +
       "id SERIAL PRIMARY KEY," +
@@ -97,13 +97,71 @@ async function initDB() {
       ");"
     );
 
-    // DEFAULT USERS
-    const existingUsers =
-      await pool.query(
-        "SELECT * FROM clients"
-      );
+    // FIX OLD ACTIVITIES TABLES
+    await pool.query(
+      "ALTER TABLE activities " +
+      "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
+    );
 
-    if(existingUsers.rows.length === 0){
+    await pool.query(
+      "ALTER TABLE activities " +
+      "ADD COLUMN IF NOT EXISTS dayforcall TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE activities " +
+      "ADD COLUMN IF NOT EXISTS timeforcall TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE activities " +
+      "ADD COLUMN IF NOT EXISTS timezone TEXT;"
+    );
+
+    // FIX OLD CALL TABLES
+    await pool.query(
+      "ALTER TABLE calls " +
+      "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
+    );
+
+    await pool.query(
+      "ALTER TABLE calls " +
+      "ADD COLUMN IF NOT EXISTS callername TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE calls " +
+      "ADD COLUMN IF NOT EXISTS calldate TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE calls " +
+      "ADD COLUMN IF NOT EXISTS starttime TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE calls " +
+      "ADD COLUMN IF NOT EXISTS endtime TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE calls " +
+      "ADD COLUMN IF NOT EXISTS timezone TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE calls " +
+      "ADD COLUMN IF NOT EXISTS status TEXT;"
+    );
+
+    // DEFAULT USERS
+    const existingUsers = await pool.query(
+      "SELECT * FROM clients"
+    );
+
+    if (existingUsers.rows.length === 0) {
+
+      console.log("Creating default users...");
 
       await pool.query(
         "INSERT INTO clients " +
@@ -115,37 +173,13 @@ async function initDB() {
 
     }
 
-    // SAMPLE CALL
-    const existingCalls =
-      await pool.query(
-        "SELECT * FROM calls"
-      );
-
-    if(existingCalls.rows.length === 0){
-
-      await pool.query(
-        "INSERT INTO calls " +
-        "(clientid, callername, calldate, starttime, endtime, timezone, status) " +
-        "VALUES($1,$2,$3,$4,$5,$6,$7)",
-        [
-          1,
-          "Sarah",
-          "Friday, May 22, 2026",
-          "7:00 PM",
-          "7:30 PM",
-          "EST",
-          "scheduled"
-        ]
-      );
-
-    }
-
     console.log("Database ready.");
 
   }
 
-  catch(err){
+  catch (err) {
 
+    console.log("DB INIT ERROR:");
     console.log(err);
 
   }
@@ -157,37 +191,41 @@ initDB();
 // =========================
 // PAGE ROUTES
 // =========================
-app.get('/', (req,res)=>{
-  res.sendFile(path.join(__dirname,'howitworks.html'));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'howitworks.html'));
 });
 
-app.get('/login', (req,res)=>{
-  res.sendFile(path.join(__dirname,'login.html'));
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-app.get('/home', (req,res)=>{
-  res.sendFile(path.join(__dirname,'home.html'));
+app.get('/home', (req, res) => {
+  res.sendFile(path.join(__dirname, 'home.html'));
 });
 
-app.get('/checkin', (req,res)=>{
-  res.sendFile(path.join(__dirname,'checkin.html'));
+app.get('/checkin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'checkin.html'));
 });
 
-app.get('/activities', (req,res)=>{
-  res.sendFile(path.join(__dirname,'activities.html'));
+app.get('/activities', (req, res) => {
+  res.sendFile(path.join(__dirname, 'activities.html'));
 });
 
-app.get('/family', (req,res)=>{
-  res.sendFile(path.join(__dirname,'family.html'));
+app.get('/family', (req, res) => {
+  res.sendFile(path.join(__dirname, 'family.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 // =========================
 // HEADER
 // =========================
-app.get('/header', (req,res)=>{
+app.get('/header', (req, res) => {
 
   res.sendFile(
-    path.join(__dirname,'header.html')
+    path.join(__dirname, 'header.html')
   );
 
 });
@@ -195,7 +233,7 @@ app.get('/header', (req,res)=>{
 // =========================
 // AUTH
 // =========================
-app.get('/auth', (req,res)=>{
+app.get('/auth', (req, res) => {
 
   res.json(
     req.session.user || null
@@ -206,9 +244,9 @@ app.get('/auth', (req,res)=>{
 // =========================
 // LOGIN
 // =========================
-app.post('/login', async (req,res)=>{
+app.post('/login', async (req, res) => {
 
-  try{
+  try {
 
     const result = await pool.query(
       "SELECT * FROM clients " +
@@ -222,10 +260,10 @@ app.post('/login', async (req,res)=>{
 
     const user = result.rows[0];
 
-    if(!user){
+    if (!user) {
 
       return res.json({
-        success:false
+        success: false
       });
 
     }
@@ -238,18 +276,18 @@ app.post('/login', async (req,res)=>{
     );
 
     res.json({
-      success:true,
-      role:user.role
+      success: true,
+      role: user.role
     });
 
   }
 
-  catch(err){
+  catch (err) {
 
     console.log(err);
 
     res.json({
-      success:false
+      success: false
     });
 
   }
@@ -259,9 +297,9 @@ app.post('/login', async (req,res)=>{
 // =========================
 // LOGOUT
 // =========================
-app.get('/logout', (req,res)=>{
+app.get('/logout', (req, res) => {
 
-  req.session.destroy(()=>{
+  req.session.destroy(() => {
     res.send("Logged out");
   });
 
@@ -270,16 +308,16 @@ app.get('/logout', (req,res)=>{
 // =========================
 // SAVE CHECKIN
 // =========================
-app.post('/api/checkin', async (req,res)=>{
+app.post('/api/checkin', async (req, res) => {
 
-  try{
+  try {
 
     const user = req.session.user;
 
-    if(!user){
+    if (!user) {
 
       return res.status(401).json({
-        success:false
+        success: false
       });
 
     }
@@ -296,7 +334,7 @@ app.post('/api/checkin', async (req,res)=>{
         [user.id, today]
       );
 
-    if(existing.rows.length === 0){
+    if (existing.rows.length === 0) {
 
       await pool.query(
         "INSERT INTO checkins " +
@@ -312,7 +350,7 @@ app.post('/api/checkin', async (req,res)=>{
 
     }
 
-    else{
+    else {
 
       const row = existing.rows[0];
 
@@ -330,17 +368,17 @@ app.post('/api/checkin', async (req,res)=>{
     }
 
     res.json({
-      success:true
+      success: true
     });
 
   }
 
-  catch(err){
+  catch (err) {
 
     console.log(err);
 
     res.json({
-      success:false
+      success: false
     });
 
   }
@@ -350,16 +388,16 @@ app.post('/api/checkin', async (req,res)=>{
 // =========================
 // LOAD TODAY CHECKIN
 // =========================
-app.get('/api/checkin-today', async (req,res)=>{
+app.get('/api/checkin-today', async (req, res) => {
 
-  try{
+  try {
 
     const user = req.session.user;
 
-    if(!user){
+    if (!user) {
 
       return res.json({
-        checkedIn:false
+        checkedIn: false
       });
 
     }
@@ -376,10 +414,10 @@ app.get('/api/checkin-today', async (req,res)=>{
         [user.id, today]
       );
 
-    if(result.rows.length === 0){
+    if (result.rows.length === 0) {
 
       return res.json({
-        checkedIn:false
+        checkedIn: false
       });
 
     }
@@ -387,19 +425,19 @@ app.get('/api/checkin-today', async (req,res)=>{
     const row = result.rows[0];
 
     res.json({
-      checkedIn:true,
-      mood:row.mood,
-      meds:row.meds
+      checkedIn: true,
+      mood: row.mood,
+      meds: row.meds
     });
 
   }
 
-  catch(err){
+  catch (err) {
 
     console.log(err);
 
     res.json({
-      checkedIn:false
+      checkedIn: false
     });
 
   }
@@ -409,23 +447,22 @@ app.get('/api/checkin-today', async (req,res)=>{
 // =========================
 // SAVE ACTIVITIES
 // =========================
-app.post('/api/activities', async (req,res)=>{
+app.post('/api/activities', async (req, res) => {
 
-  try{
+  try {
 
     const user = req.session.user;
 
-    if(!user){
+    if (!user) {
 
       return res.status(401).json({
-        success:false
+        success: false
       });
 
     }
 
     await pool.query(
-      "DELETE FROM activities " +
-      "WHERE clientid=$1",
+      "DELETE FROM activities WHERE clientid=$1",
       [user.id]
     );
 
@@ -442,17 +479,17 @@ app.post('/api/activities', async (req,res)=>{
     );
 
     res.json({
-      success:true
+      success: true
     });
 
   }
 
-  catch(err){
+  catch (err) {
 
     console.log(err);
 
     res.json({
-      success:false
+      success: false
     });
 
   }
@@ -462,13 +499,13 @@ app.post('/api/activities', async (req,res)=>{
 // =========================
 // LOAD ACTIVITIES
 // =========================
-app.get('/api/activities', async (req,res)=>{
+app.get('/api/activities', async (req, res) => {
 
-  try{
+  try {
 
     const user = req.session.user;
 
-    if(!user){
+    if (!user) {
 
       return res.json({});
 
@@ -487,7 +524,7 @@ app.get('/api/activities', async (req,res)=>{
 
   }
 
-  catch(err){
+  catch (err) {
 
     console.log(err);
 
@@ -500,13 +537,13 @@ app.get('/api/activities', async (req,res)=>{
 // =========================
 // NEXT CALL
 // =========================
-app.get('/api/next-call', async (req,res)=>{
+app.get('/api/next-call', async (req, res) => {
 
-  try{
+  try {
 
     const user = req.session.user;
 
-    if(!user){
+    if (!user) {
 
       return res.json({});
 
@@ -528,7 +565,7 @@ app.get('/api/next-call', async (req,res)=>{
 
   }
 
-  catch(err){
+  catch (err) {
 
     console.log(err);
 
@@ -539,11 +576,149 @@ app.get('/api/next-call', async (req,res)=>{
 });
 
 // =========================
+// GET USERS
+// =========================
+app.get('/api/users', async (req, res) => {
+
+  try {
+
+    const result = await pool.query(
+      "SELECT id, firstname, lastname " +
+      "FROM clients " +
+      "WHERE role='user' " +
+      "ORDER BY firstname ASC"
+    );
+
+    res.json(result.rows);
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+
+    res.json([]);
+
+  }
+
+});
+
+// =========================
+// SCHEDULE CALL
+// =========================
+app.post('/api/schedule-call', async (req, res) => {
+
+  try {
+
+    const {
+      clientid,
+      callername,
+      calldate,
+      starttime,
+      endtime,
+      timezone
+    } = req.body;
+
+    await pool.query(
+      "INSERT INTO calls " +
+      "(clientid, callername, calldate, starttime, endtime, timezone, status) " +
+      "VALUES($1,$2,$3,$4,$5,$6,$7)",
+      [
+        clientid,
+        callername,
+        calldate,
+        starttime,
+        endtime,
+        timezone,
+        'scheduled'
+      ]
+    );
+
+    res.json({
+      success: true
+    });
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+
+    res.json({
+      success: false
+    });
+
+  }
+
+});
+
+// =========================
+// GET CALLS
+// =========================
+app.get('/api/calls', async (req, res) => {
+
+  try {
+
+    const result = await pool.query(
+
+      "SELECT calls.*, clients.firstname, clients.lastname " +
+      "FROM calls " +
+      "LEFT JOIN clients " +
+      "ON calls.clientid = clients.id " +
+      "ORDER BY calls.id DESC"
+
+    );
+
+    res.json(result.rows);
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+
+    res.json([]);
+
+  }
+
+});
+
+// =========================
+// COMPLETE CALL
+// =========================
+app.post('/api/complete-call', async (req, res) => {
+
+  try {
+
+    await pool.query(
+      "UPDATE calls SET status='completed' WHERE id=$1",
+      [req.body.id]
+    );
+
+    res.json({
+      success: true
+    });
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+
+    res.json({
+      success: false
+    });
+
+  }
+
+});
+
+// =========================
 // FAMILY DATA
 // =========================
-app.get('/family-data', async (req,res)=>{
+app.get('/family-data', async (req, res) => {
 
-  try{
+  try {
 
     const userResult =
       await pool.query(
@@ -555,11 +730,11 @@ app.get('/family-data', async (req,res)=>{
     const user =
       userResult.rows[0];
 
-    if(!user){
+    if (!user) {
 
       return res.json({
-        user:null,
-        checkins:[]
+        user: null,
+        checkins: []
       });
 
     }
@@ -575,9 +750,9 @@ app.get('/family-data', async (req,res)=>{
 
     res.json({
 
-      user:{
-        firstName:user.firstname,
-        lastName:user.lastname
+      user: {
+        firstName: user.firstname,
+        lastName: user.lastname
       },
 
       checkins:
@@ -587,13 +762,13 @@ app.get('/family-data', async (req,res)=>{
 
   }
 
-  catch(err){
+  catch (err) {
 
     console.log(err);
 
     res.json({
-      user:null,
-      checkins:[]
+      user: null,
+      checkins: []
     });
 
   }
@@ -606,7 +781,7 @@ app.get('/family-data', async (req,res)=>{
 const PORT =
   process.env.PORT || 3000;
 
-app.listen(PORT, ()=>{
+app.listen(PORT, () => {
 
   console.log(
     "Server running on port " + PORT

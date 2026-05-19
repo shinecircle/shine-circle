@@ -289,8 +289,48 @@ function renderAlerts(){
     alerts += `<div class="card alert">⚠ No check-in today</div>`;
   }
 
-  if(dataGlobal.some(d => d.mood === "Struggling")){
-    alerts += `<div class="card alert">⚠ Struggling mood detected</div>`;
+  // =========================
+  // STRUGGLING MOOD DATES
+  // =========================
+  const strugglingMoods = dataGlobal.filter(
+    d => d.mood === "Struggling"
+  );
+
+  if(strugglingMoods.length){
+
+    const strugglingDates = strugglingMoods
+      .map(d => {
+
+        return new Date(d.timestamp)
+          .toLocaleDateString(
+            'en-US',
+            {
+              month:'short',
+              day:'numeric',
+              year:'numeric'
+            }
+          );
+
+      })
+
+      .join(", ");
+
+    alerts += `
+
+      <div class="card alert">
+
+        ⚠ Struggling mood detected
+
+        <br><br>
+
+        <strong>Dates:</strong>
+
+        ${strugglingDates}
+
+      </div>
+
+    `;
+
   }
 
   // =========================

@@ -49,7 +49,7 @@ async function initDB() {
 
     console.log("Initializing database...");
 
-    // CLIENTS TABLE
+    // CLIENTS
     await pool.query(
       "CREATE TABLE IF NOT EXISTS clients (" +
       "id SERIAL PRIMARY KEY," +
@@ -61,7 +61,7 @@ async function initDB() {
       ");"
     );
 
-    // CHECKINS TABLE
+    // CHECKINS
     await pool.query(
       "CREATE TABLE IF NOT EXISTS checkins (" +
       "id SERIAL PRIMARY KEY," +
@@ -72,7 +72,7 @@ async function initDB() {
       ");"
     );
 
-    // ACTIVITIES TABLE
+    // ACTIVITIES
     await pool.query(
       "CREATE TABLE IF NOT EXISTS activities (" +
       "id SERIAL PRIMARY KEY," +
@@ -83,7 +83,7 @@ async function initDB() {
       ");"
     );
 
-    // CALLS TABLE
+    // CALLS
     await pool.query(
       "CREATE TABLE IF NOT EXISTS calls (" +
       "id SERIAL PRIMARY KEY," +
@@ -97,71 +97,13 @@ async function initDB() {
       ");"
     );
 
-    // FIX OLD ACTIVITIES TABLES
-    await pool.query(
-      "ALTER TABLE activities " +
-      "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
-    );
-
-    await pool.query(
-      "ALTER TABLE activities " +
-      "ADD COLUMN IF NOT EXISTS dayforcall TEXT;"
-    );
-
-    await pool.query(
-      "ALTER TABLE activities " +
-      "ADD COLUMN IF NOT EXISTS timeforcall TEXT;"
-    );
-
-    await pool.query(
-      "ALTER TABLE activities " +
-      "ADD COLUMN IF NOT EXISTS timezone TEXT;"
-    );
-
-    // FIX OLD CALL TABLES
-    await pool.query(
-      "ALTER TABLE calls " +
-      "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
-    );
-
-    await pool.query(
-      "ALTER TABLE calls " +
-      "ADD COLUMN IF NOT EXISTS callername TEXT;"
-    );
-
-    await pool.query(
-      "ALTER TABLE calls " +
-      "ADD COLUMN IF NOT EXISTS calldate TEXT;"
-    );
-
-    await pool.query(
-      "ALTER TABLE calls " +
-      "ADD COLUMN IF NOT EXISTS starttime TEXT;"
-    );
-
-    await pool.query(
-      "ALTER TABLE calls " +
-      "ADD COLUMN IF NOT EXISTS endtime TEXT;"
-    );
-
-    await pool.query(
-      "ALTER TABLE calls " +
-      "ADD COLUMN IF NOT EXISTS timezone TEXT;"
-    );
-
-    await pool.query(
-      "ALTER TABLE calls " +
-      "ADD COLUMN IF NOT EXISTS status TEXT;"
-    );
-
     // DEFAULT USERS
-    const existingUsers = await pool.query(
-      "SELECT * FROM clients"
-    );
+    const existingUsers =
+      await pool.query(
+        "SELECT * FROM clients"
+      );
 
-    if (existingUsers.rows.length === 0) {
-
-      console.log("Creating default users...");
+    if(existingUsers.rows.length === 0){
 
       await pool.query(
         "INSERT INTO clients " +
@@ -174,9 +116,10 @@ async function initDB() {
     }
 
     // SAMPLE CALL
-    const existingCalls = await pool.query(
-      "SELECT * FROM calls"
-    );
+    const existingCalls =
+      await pool.query(
+        "SELECT * FROM calls"
+      );
 
     if(existingCalls.rows.length === 0){
 
@@ -201,9 +144,8 @@ async function initDB() {
 
   }
 
-  catch (err) {
+  catch(err){
 
-    console.log("DB INIT ERROR:");
     console.log(err);
 
   }
@@ -215,37 +157,37 @@ initDB();
 // =========================
 // PAGE ROUTES
 // =========================
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'howitworks.html'));
+app.get('/', (req,res)=>{
+  res.sendFile(path.join(__dirname,'howitworks.html'));
 });
 
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'login.html'));
+app.get('/login', (req,res)=>{
+  res.sendFile(path.join(__dirname,'login.html'));
 });
 
-app.get('/home', (req, res) => {
-  res.sendFile(path.join(__dirname, 'home.html'));
+app.get('/home', (req,res)=>{
+  res.sendFile(path.join(__dirname,'home.html'));
 });
 
-app.get('/checkin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'checkin.html'));
+app.get('/checkin', (req,res)=>{
+  res.sendFile(path.join(__dirname,'checkin.html'));
 });
 
-app.get('/activities', (req, res) => {
-  res.sendFile(path.join(__dirname, 'activities.html'));
+app.get('/activities', (req,res)=>{
+  res.sendFile(path.join(__dirname,'activities.html'));
 });
 
-app.get('/family', (req, res) => {
-  res.sendFile(path.join(__dirname, 'family.html'));
+app.get('/family', (req,res)=>{
+  res.sendFile(path.join(__dirname,'family.html'));
 });
 
 // =========================
 // HEADER
 // =========================
-app.get('/header', (req, res) => {
+app.get('/header', (req,res)=>{
 
   res.sendFile(
-    path.join(__dirname, 'header.html')
+    path.join(__dirname,'header.html')
   );
 
 });
@@ -253,19 +195,25 @@ app.get('/header', (req, res) => {
 // =========================
 // AUTH
 // =========================
-app.get('/auth', (req, res) => {
-  res.json(req.session.user || null);
+app.get('/auth', (req,res)=>{
+
+  res.json(
+    req.session.user || null
+  );
+
 });
 
 // =========================
 // LOGIN
 // =========================
-app.post('/login', async (req, res) => {
+app.post('/login', async (req,res)=>{
 
-  try {
+  try{
 
     const result = await pool.query(
-      "SELECT * FROM clients WHERE LOWER(username)=LOWER($1) AND password=$2",
+      "SELECT * FROM clients " +
+      "WHERE LOWER(username)=LOWER($1) " +
+      "AND password=$2",
       [
         req.body.username,
         req.body.password
@@ -274,7 +222,7 @@ app.post('/login', async (req, res) => {
 
     const user = result.rows[0];
 
-    if (!user) {
+    if(!user){
 
       return res.json({
         success:false
@@ -284,7 +232,10 @@ app.post('/login', async (req, res) => {
 
     req.session.user = user;
 
-    console.log("LOGIN SUCCESS:", user.username);
+    console.log(
+      "LOGIN SUCCESS:",
+      user.username
+    );
 
     res.json({
       success:true,
@@ -317,24 +268,164 @@ app.get('/logout', (req,res)=>{
 });
 
 // =========================
-// SAVE ACTIVITIES
+// SAVE CHECKIN
 // =========================
-app.post('/api/activities', async (req, res) => {
+app.post('/api/checkin', async (req,res)=>{
 
-  try {
+  try{
 
     const user = req.session.user;
 
-    if (!user) {
+    if(!user){
 
       return res.status(401).json({
-        success: false
+        success:false
+      });
+
+    }
+
+    const today =
+      new Date()
+        .toISOString()
+        .split('T')[0];
+
+    const existing =
+      await pool.query(
+        "SELECT * FROM checkins " +
+        "WHERE clientid=$1 AND date=$2",
+        [user.id, today]
+      );
+
+    if(existing.rows.length === 0){
+
+      await pool.query(
+        "INSERT INTO checkins " +
+        "(clientid, date, mood, meds) " +
+        "VALUES($1,$2,$3,$4)",
+        [
+          user.id,
+          today,
+          req.body.mood || null,
+          req.body.meds || null
+        ]
+      );
+
+    }
+
+    else{
+
+      const row = existing.rows[0];
+
+      await pool.query(
+        "UPDATE checkins " +
+        "SET mood=$1, meds=$2 " +
+        "WHERE id=$3",
+        [
+          req.body.mood || row.mood,
+          req.body.meds || row.meds,
+          row.id
+        ]
+      );
+
+    }
+
+    res.json({
+      success:true
+    });
+
+  }
+
+  catch(err){
+
+    console.log(err);
+
+    res.json({
+      success:false
+    });
+
+  }
+
+});
+
+// =========================
+// LOAD TODAY CHECKIN
+// =========================
+app.get('/api/checkin-today', async (req,res)=>{
+
+  try{
+
+    const user = req.session.user;
+
+    if(!user){
+
+      return res.json({
+        checkedIn:false
+      });
+
+    }
+
+    const today =
+      new Date()
+        .toISOString()
+        .split('T')[0];
+
+    const result =
+      await pool.query(
+        "SELECT * FROM checkins " +
+        "WHERE clientid=$1 AND date=$2",
+        [user.id, today]
+      );
+
+    if(result.rows.length === 0){
+
+      return res.json({
+        checkedIn:false
+      });
+
+    }
+
+    const row = result.rows[0];
+
+    res.json({
+      checkedIn:true,
+      mood:row.mood,
+      meds:row.meds
+    });
+
+  }
+
+  catch(err){
+
+    console.log(err);
+
+    res.json({
+      checkedIn:false
+    });
+
+  }
+
+});
+
+// =========================
+// SAVE ACTIVITIES
+// =========================
+app.post('/api/activities', async (req,res)=>{
+
+  try{
+
+    const user = req.session.user;
+
+    if(!user){
+
+      return res.status(401).json({
+        success:false
       });
 
     }
 
     await pool.query(
-      "DELETE FROM activities WHERE clientid=$1",
+      "DELETE FROM activities " +
+      "WHERE clientid=$1",
       [user.id]
     );
 
@@ -371,22 +462,24 @@ app.post('/api/activities', async (req, res) => {
 // =========================
 // LOAD ACTIVITIES
 // =========================
-app.get('/api/activities', async (req, res) => {
+app.get('/api/activities', async (req,res)=>{
 
-  try {
+  try{
 
     const user = req.session.user;
 
-    if (!user) {
+    if(!user){
 
       return res.json({});
 
     }
 
-    const result = await pool.query(
-      "SELECT * FROM activities WHERE clientid=$1",
-      [user.id]
-    );
+    const result =
+      await pool.query(
+        "SELECT * FROM activities " +
+        "WHERE clientid=$1",
+        [user.id]
+      );
 
     res.json(
       result.rows[0] || {}
@@ -407,26 +500,27 @@ app.get('/api/activities', async (req, res) => {
 // =========================
 // NEXT CALL
 // =========================
-app.get('/api/next-call', async (req, res) => {
+app.get('/api/next-call', async (req,res)=>{
 
-  try {
+  try{
 
     const user = req.session.user;
 
-    if (!user) {
+    if(!user){
 
       return res.json({});
 
     }
 
-    const result = await pool.query(
-      "SELECT * FROM calls " +
-      "WHERE clientid=$1 " +
-      "AND status='scheduled' " +
-      "ORDER BY id ASC " +
-      "LIMIT 1",
-      [user.id]
-    );
+    const result =
+      await pool.query(
+        "SELECT * FROM calls " +
+        "WHERE clientid=$1 " +
+        "AND status='scheduled' " +
+        "ORDER BY id ASC " +
+        "LIMIT 1",
+        [user.id]
+      );
 
     res.json(
       result.rows[0] || {}
@@ -445,12 +539,74 @@ app.get('/api/next-call', async (req, res) => {
 });
 
 // =========================
+// FAMILY DATA
+// =========================
+app.get('/family-data', async (req,res)=>{
+
+  try{
+
+    const userResult =
+      await pool.query(
+        "SELECT * FROM clients " +
+        "WHERE role='user' " +
+        "LIMIT 1"
+      );
+
+    const user =
+      userResult.rows[0];
+
+    if(!user){
+
+      return res.json({
+        user:null,
+        checkins:[]
+      });
+
+    }
+
+    const checkins =
+      await pool.query(
+        "SELECT mood, meds, date as timestamp " +
+        "FROM checkins " +
+        "WHERE clientid=$1 " +
+        "ORDER BY date ASC",
+        [user.id]
+      );
+
+    res.json({
+
+      user:{
+        firstName:user.firstname,
+        lastName:user.lastname
+      },
+
+      checkins:
+        checkins.rows
+
+    });
+
+  }
+
+  catch(err){
+
+    console.log(err);
+
+    res.json({
+      user:null,
+      checkins:[]
+    });
+
+  }
+
+});
+
+// =========================
 // START SERVER
 // =========================
 const PORT =
   process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, ()=>{
 
   console.log(
     "Server running on port " + PORT

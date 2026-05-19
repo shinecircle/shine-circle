@@ -2,46 +2,113 @@
 <html>
 <head>
   <title>Family Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="styles.css">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet"
+        href="styles.css">
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
+
+    .page{
+
+      max-width:1000px;
+      margin:auto;
+      padding:18px;
+
+    }
+
     .card {
-      padding: 15px;
-      margin: 10px;
-      border-radius: 10px;
-      background: #f5f5f5;
+
+      padding:20px;
+      margin:14px 0;
+
+      border-radius:18px;
+
+      background:white;
+
+      box-shadow:0 4px 12px rgba(0,0,0,0.06);
+
     }
 
     .alert {
-      background: #ffe0e0;
-      color: #900;
+
+      background:#ffe8e8;
+      color:#900;
+
     }
 
     .chart-wrap {
-      width: 100%;
-      max-width: 500px;
-      margin: auto;
-      height: 250px;
+
+      width:100%;
+      max-width:600px;
+
+      margin:auto;
+
+      height:280px;
+
     }
 
-    h2 { text-align:center; }
+    h2 {
+
+      text-align:center;
+      font-size:34px;
+      margin-top:10px;
+
+    }
+
+    h3{
+
+      margin-top:0;
+      color:#16345f;
+
+    }
+
+    .activity-item{
+
+      padding:12px 0;
+      border-bottom:1px solid #eee;
+
+    }
+
+    .activity-item:last-child{
+
+      border-bottom:none;
+
+    }
+
+    @media(max-width:700px){
+
+      .page{
+
+        padding:14px;
+
+      }
+
+      h2{
+
+        font-size:28px;
+
+      }
+
+    }
+
   </style>
+
 </head>
 
 <body>
 
-<div class="header">
-  <img src="logo.jpg" class="logo">
-  <div>
-    <button class="btn" onclick="goHome()">Home</button>
-    <button class="btn" onclick="logout()">Logout</button>
-  </div>
-</div>
+<!-- =========================
+     SHARED HEADER
+========================= -->
 
-<div style="padding:15px;">
+<div id="header"></div>
+
+<div class="page">
 
   <h2 id="welcome"></h2>
 
@@ -49,8 +116,11 @@
 
   <!-- CALL SCHEDULE -->
   <div class="card">
+
     <h3>Preferred Call Schedule</h3>
+
     <p id="schedule"></p>
+
   </div>
 
   <!-- ALERTS -->
@@ -58,22 +128,33 @@
 
   <!-- MEDICATION -->
   <div class="card">
+
     <h3>Medication Compliance (Last 7 Days)</h3>
+
     <p id="medRate"></p>
+
   </div>
 
   <!-- CHART -->
   <div class="card">
+
     <h3>Mood Trend</h3>
+
     <div class="chart-wrap">
+
       <canvas id="chart"></canvas>
+
     </div>
+
   </div>
 
   <!-- RECENT ACTIVITY -->
   <div class="card">
+
     <h3>Recent Activity</h3>
+
     <div id="list"></div>
+
   </div>
 
 </div>
@@ -83,100 +164,207 @@
 let dataGlobal = [];
 
 // =========================
+// LOAD HEADER
+// =========================
+fetch('/header')
+
+.then(r=>r.text())
+
+.then(html=>{
+
+  document.getElementById('header')
+    .innerHTML = html;
+
+  document.getElementById("headerButtons")
+    .innerHTML = `
+
+      <button class="btn btn-light"
+              onclick="goHome()">
+
+        Home
+
+      </button>
+
+      <button class="btn"
+              onclick="logout()">
+
+        Logout
+
+      </button>
+
+    `;
+
+});
+
+// =========================
 // CAREGIVER NAME
 // =========================
 fetch('/auth')
+
 .then(r=>r.json())
+
 .then(u=>{
+
   if(!u) return;
 
-  const name = u.nickname && u.nickname.trim() !== ""
-    ? u.nickname
-    : u.firstName;
+  const name =
+    u.nickname &&
+    u.nickname.trim() !== ""
 
-  document.getElementById("welcome").innerText =
-    name.endsWith('s') ? name + "' Dashboard" : name + "'s Dashboard";
+      ? u.nickname
+
+      : (u.firstname || "Family");
+
+  document.getElementById("welcome")
+    .innerText =
+
+      name.endsWith('s')
+
+      ? name + "' Dashboard"
+
+      : name + "'s Dashboard";
+
 });
 
 // =========================
 // LOAD DATA
 // =========================
 fetch('/family-data')
+
 .then(r=>r.json())
+
 .then(data=>{
 
   const user = data.user;
 
   if(!user){
-    document.getElementById("schedule").innerText = "No data available";
+
+    document.getElementById("schedule")
+      .innerText = "No data available";
+
     return;
+
   }
 
-  const name = user.nickname && user.nickname.trim() !== ""
-    ? user.nickname
-    : user.firstName;
+  const name =
 
-  document.getElementById("monitorHeader").innerHTML =
-    `<div class="card"><h3>Loved One: ${name}</h3></div>`;
+    user.nickname &&
+    user.nickname.trim() !== ""
+
+      ? user.nickname
+
+      : user.firstName;
+
+  document.getElementById("monitorHeader")
+    .innerHTML =
+
+      `<div class="card">
+
+        <h3>
+          Loved One: ${name}
+        </h3>
+
+      </div>`;
 
   // =========================
   // CALL SCHEDULE
   // =========================
   const map = {
-    Mon:"Monday", Tue:"Tuesday", Wed:"Wednesday",
-    Thu:"Thursday", Fri:"Friday", Sat:"Saturday", Sun:"Sunday"
+
+    Mon:"Monday",
+    Tue:"Tuesday",
+    Wed:"Wednesday",
+    Thu:"Thursday",
+    Fri:"Friday",
+    Sat:"Saturday",
+    Sun:"Sunday"
+
   };
 
   let days = "Not set";
 
   if(user.dayForCall){
-    const cleanDays = user.dayForCall
+
+    const cleanDays =
+      user.dayForCall
+
       .split(',')
+
       .map(d => d.trim())
+
       .filter(d => d && map[d]);
 
     if(cleanDays.length){
-      days = cleanDays.map(d=>map[d]).join(', ');
+
+      days =
+        cleanDays
+          .map(d=>map[d])
+          .join(', ');
+
     }
+
   }
 
-  let time = user.timeForCall || "Not set";
-  let tz = user.timezone ? `(${user.timezone})` : "";
+  let time =
+    user.timeForCall || "Not set";
 
-  document.getElementById("schedule").innerText =
-    `${days} — ${time} ${tz}`;
+  let tz =
+    user.timezone
+      ? `(${user.timezone})`
+      : "";
+
+  document.getElementById("schedule")
+    .innerText =
+      `${days} — ${time} ${tz}`;
 
   // =========================
   // CHECKINS
   // =========================
-  dataGlobal = data.checkins || [];
+  dataGlobal =
+    data.checkins || [];
 
   // SORT OLDEST -> NEWEST
   dataGlobal.sort((a,b)=>
-    new Date(a.timestamp) - new Date(b.timestamp)
+
+    new Date(a.timestamp) -
+    new Date(b.timestamp)
+
   );
 
   if(!dataGlobal.length){
-    document.getElementById("list").innerText = "No activity yet.";
+
+    document.getElementById("list")
+      .innerText =
+        "No activity yet.";
+
     return;
+
   }
 
   renderChart();
+
   renderMedCompliance();
+
   renderList();
+
   renderAlerts();
+
 });
 
 // =========================
 // MOOD SCORE
 // =========================
 function moodScore(m){
+
   return {
+
     "Great":4,
     "Good":3,
     "Low":2,
     "Struggling":1
+
   }[m] || 0;
+
 }
 
 // =========================
@@ -184,44 +372,89 @@ function moodScore(m){
 // =========================
 function renderChart(){
 
-  // LAST 10 IN CHRONOLOGICAL ORDER
-  const last10 = dataGlobal.slice(-10);
+  const last10 =
+    dataGlobal.slice(-10);
 
-  const labels = last10.map(d =>
-    new Date(d.timestamp).toLocaleDateString('en-US',{
-      month:'short',
-      day:'numeric'
-    })
+  const labels =
+    last10.map(d =>
+
+      new Date(d.timestamp)
+        .toLocaleDateString(
+          'en-US',
+          {
+            month:'short',
+            day:'numeric'
+          }
+        )
+
+    );
+
+  const values =
+    last10.map(d =>
+      moodScore(d.mood)
+    );
+
+  new Chart(
+    document.getElementById('chart'),
+    {
+
+      type:'line',
+
+      data:{
+
+        labels,
+
+        datasets:[{
+
+          label:'Mood',
+
+          data:values,
+
+          borderWidth:3,
+
+          tension:0.3
+
+        }]
+
+      },
+
+      options:{
+
+        responsive:true,
+
+        maintainAspectRatio:false,
+
+        scales:{
+
+          y:{
+
+            min:1,
+            max:4,
+
+            ticks:{
+
+              callback: v =>
+
+                [
+                  "",
+                  "Struggling",
+                  "Low",
+                  "Good",
+                  "Great"
+                ][v]
+
+            }
+
+          }
+
+        }
+
+      }
+
+    }
+
   );
 
-  const values = last10.map(d => moodScore(d.mood));
-
-  new Chart(document.getElementById('chart'),{
-    type:'line',
-    data:{
-      labels,
-      datasets:[{
-        label:'Mood',
-        data:values,
-        borderWidth:2,
-        tension:0.3
-      }]
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      scales:{
-        y:{
-          min:1,
-          max:4,
-          ticks:{
-            callback: v =>
-              ["","Struggling","Low","Good","Great"][v]
-          }
-        }
-      }
-    }
-  });
 }
 
 // =========================
@@ -232,17 +465,35 @@ function renderMedCompliance(){
   const now = new Date();
 
   const last7 = dataGlobal.filter(d=>{
-    const diff = (now - new Date(d.timestamp)) / (1000*60*60*24);
+
+    const diff =
+
+      (now - new Date(d.timestamp))
+
+      / (1000*60*60*24);
+
     return diff <= 7;
+
   });
 
-  const total = last7.length;
-  const taken = last7.filter(d => d.meds === "Yes").length;
+  const total =
+    last7.length;
 
-  const pct = total ? Math.round((taken/total)*100) : 0;
+  const taken =
+    last7.filter(d =>
+      d.meds === "Yes"
+    ).length;
 
-  document.getElementById("medRate").innerText =
-    `${pct}% compliance (${taken}/${total} days)`;
+  const pct =
+    total
+      ? Math.round((taken/total)*100)
+      : 0;
+
+  document.getElementById("medRate")
+    .innerText =
+
+      `${pct}% compliance (${taken}/${total} days)`;
+
 }
 
 // =========================
@@ -252,24 +503,44 @@ function renderList(){
 
   let html = "";
 
-  // SHOW NEWEST FIRST IN ACTIVITY LIST
   [...dataGlobal]
+
     .reverse()
+
     .slice(0,10)
+
     .forEach(d=>{
 
-      const date = new Date(d.timestamp);
+      const date =
+        new Date(d.timestamp);
 
       html += `
-        <div style="margin-bottom:12px;">
-          <b>Mood:</b> ${d.mood}<br>
-          <b>Meds:</b> ${d.meds || "Not recorded"}<br>
-          <small>${date.toLocaleString()}</small>
+
+        <div class="activity-item">
+
+          <b>Mood:</b>
+          ${d.mood}
+
+          <br>
+
+          <b>Meds:</b>
+          ${d.meds || "Not recorded"}
+
+          <br>
+
+          <small>
+            ${date.toLocaleString()}
+          </small>
+
         </div>
+
       `;
+
     });
 
-  document.getElementById("list").innerHTML = html;
+  document.getElementById("list")
+    .innerHTML = html;
+
 }
 
 // =========================
@@ -279,29 +550,50 @@ function renderAlerts(){
 
   let alerts = "";
 
-  const today = new Date().toISOString().split('T')[0];
+  const today =
+    new Date()
+      .toISOString()
+      .split('T')[0];
 
-  const todayEntry = dataGlobal.find(d =>
-    d.timestamp.startsWith(today)
-  );
+  const todayEntry =
+    dataGlobal.find(d =>
+
+      d.timestamp.startsWith(today)
+
+    );
 
   if(!todayEntry){
-    alerts += `<div class="card alert">⚠ No check-in today</div>`;
+
+    alerts += `
+
+      <div class="card alert">
+
+        ⚠ No check-in today
+
+      </div>
+
+    `;
+
   }
 
   // =========================
   // STRUGGLING MOOD DATES
   // =========================
-  const strugglingMoods = dataGlobal.filter(
-    d => d.mood === "Struggling"
-  );
+  const strugglingMoods =
+    dataGlobal.filter(
+      d => d.mood === "Struggling"
+    );
 
   if(strugglingMoods.length){
 
-    const strugglingDates = strugglingMoods
+    const strugglingDates =
+
+      strugglingMoods
+
       .map(d => {
 
         return new Date(d.timestamp)
+
           .toLocaleDateString(
             'en-US',
             {
@@ -336,16 +628,21 @@ function renderAlerts(){
   // =========================
   // MISSED MEDICATION DATES
   // =========================
-  const missedMeds = dataGlobal.filter(
-    d => d.meds === "No"
-  );
+  const missedMeds =
+    dataGlobal.filter(
+      d => d.meds === "No"
+    );
 
   if(missedMeds.length){
 
-    const missedDates = missedMeds
+    const missedDates =
+
+      missedMeds
+
       .map(d => {
 
         return new Date(d.timestamp)
+
           .toLocaleDateString(
             'en-US',
             {
@@ -377,17 +674,30 @@ function renderAlerts(){
 
   }
 
-  document.getElementById("alerts").innerHTML = alerts;
+  document.getElementById("alerts")
+    .innerHTML = alerts;
+
 }
 
 // =========================
 // NAV
 // =========================
-function goHome(){ window.location='home.html'; }
+function goHome(){
+
+  window.location='/';
+
+}
 
 function logout(){
+
   fetch('/logout')
-    .then(()=>window.location='login.html');
+
+    .then(()=>{
+
+      window.location='/login';
+
+    });
+
 }
 
 </script>

@@ -17,7 +17,7 @@ body {
 
   max-width: 900px;
   margin: auto;
-  padding: 16px;
+  padding: 18px;
 
 }
 
@@ -31,9 +31,9 @@ HEADER
   justify-content:space-between;
   align-items:center;
 
-  padding:16px 20px;
+  padding:16px 22px;
 
-  border-bottom:1px solid #e5e5e5;
+  border-bottom:1px solid #e8e8e8;
 
   background:white;
 
@@ -45,7 +45,7 @@ HEADER
 
 }
 
-.header-left {
+.header-brand {
 
   display:flex;
   align-items:center;
@@ -53,18 +53,45 @@ HEADER
 
 }
 
+.brand-text {
+
+  display:flex;
+  flex-direction:column;
+
+}
+
+.brand-title {
+
+  font-size:28px;
+  font-weight:800;
+  color:#1E6FDB;
+  line-height:1.1;
+
+}
+
 .logo {
 
-  height:72px;
+  height:76px;
+  width:auto;
 
 }
 
 .tagline {
 
-  font-size:18px;
-  color:#1E6FDB;
-  font-weight:700;
-  letter-spacing:0.3px;
+  font-size:16px;
+  color:#5f6f85;
+  font-weight:600;
+  margin-top:4px;
+  letter-spacing:0.2px;
+
+}
+
+.header-buttons {
+
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:flex-end;
 
 }
 
@@ -74,28 +101,30 @@ BUTTONS
 
 .btn {
 
-  padding:14px 18px;
+  padding:14px 20px;
   margin:6px;
 
   border:none;
-  border-radius:12px;
+  border-radius:14px;
 
   background:#2d6cdf;
   color:white;
 
   font-size:17px;
-  font-weight:600;
+  font-weight:700;
 
   cursor:pointer;
 
   transition:0.2s ease;
+
+  box-shadow:0 2px 6px rgba(0,0,0,0.08);
 
 }
 
 .btn:hover {
 
   transform:translateY(-1px);
-  opacity:0.95;
+  opacity:0.96;
 
 }
 
@@ -119,21 +148,22 @@ HERO
 .hero {
 
   text-align:center;
-  padding:30px 16px;
+  padding:36px 18px;
 
 }
 
 .hero h1 {
 
-  font-size:40px;
-  margin-bottom:12px;
+  font-size:44px;
+  margin-bottom:14px;
   line-height:1.2;
+  color:#10213b;
 
 }
 
 .hero p {
 
-  font-size:20px;
+  font-size:21px;
   color:#555;
   line-height:1.8;
 
@@ -155,7 +185,7 @@ STEPS
 
   padding:24px;
 
-  border-radius:16px;
+  border-radius:18px;
 
   margin-bottom:18px;
 
@@ -188,7 +218,7 @@ SECTION
 .section {
 
   text-align:center;
-  margin-top:40px;
+  margin-top:42px;
 
 }
 
@@ -210,15 +240,15 @@ CTA
 
 .cta {
 
-  margin-top:36px;
+  margin-top:38px;
 
   text-align:center;
 
   background:white;
 
-  padding:30px;
+  padding:34px;
 
-  border-radius:16px;
+  border-radius:18px;
 
   box-shadow:0 6px 18px rgba(0,0,0,0.06);
 
@@ -226,8 +256,8 @@ CTA
 
 .cta h2 {
 
-  margin-bottom:18px;
-  font-size:30px;
+  margin-bottom:20px;
+  font-size:32px;
 
 }
 
@@ -257,50 +287,75 @@ FOOTER
 MOBILE
 ========================= */
 
-@media (max-width: 600px) {
+@media (max-width: 700px) {
 
   .header {
 
-    flex-direction:row;
+    flex-direction:column;
 
-    justify-content:space-between;
     align-items:center;
 
-    padding:12px 14px;
+    gap:14px;
+
+    padding:16px 14px;
+
+    text-align:center;
 
   }
 
-  .header-left {
+  .header-brand {
 
-    gap:10px;
+    flex-direction:column;
+
+    gap:8px;
+
+  }
+
+  .brand-text {
+
+    align-items:center;
+
+  }
+
+  .brand-title {
+
+    font-size:30px;
 
   }
 
   .logo {
 
-    height:52px;
+    height:72px;
 
   }
 
   .tagline {
 
-    font-size:18px;
+    font-size:16px;
 
-    max-width:140px;
+    line-height:1.4;
 
-    line-height:1.2;
+    margin-top:2px;
 
-    text-align:left;
+  }
+
+  .header-buttons {
+
+    width:100%;
+
+    justify-content:center;
+
+    gap:6px;
 
   }
 
   .btn {
 
-    width:auto;
+    padding:14px 18px;
 
-    padding:12px 16px;
+    font-size:17px;
 
-    font-size:16px;
+    min-width:110px;
 
     margin:4px;
 
@@ -308,20 +363,20 @@ MOBILE
 
   .hero {
 
-    padding:16px 14px;
+    padding:20px 14px;
 
   }
 
   .hero h1 {
 
-    font-size:30px;
+    font-size:34px;
     line-height:1.2;
 
   }
 
   .hero p {
 
-    font-size:17px;
+    font-size:18px;
 
   }
 

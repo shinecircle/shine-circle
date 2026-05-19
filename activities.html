@@ -9,374 +9,30 @@
 
   <link rel="stylesheet" href="styles.css">
 
-  <style>
-
-    body{
-      font-family:Arial, sans-serif;
-      margin:0;
-      padding:0;
-      background:#F4F7FB;
-      color:#222;
-    }
-
-    /* =========================
-       HEADER
-    ========================== */
-    .header{
-
-      display:flex;
-
-      justify-content:space-between;
-
-      align-items:center;
-
-      padding:15px 20px;
-
-      background:white;
-
-      box-shadow:0 2px 8px rgba(0,0,0,.08);
-
-    }
-
-    .logo{
-      height:60px;
-    }
-
-    .btn{
-
-      background:#1E6FDB;
-
-      color:white;
-
-      border:none;
-
-      padding:12px 18px;
-
-      border-radius:10px;
-
-      cursor:pointer;
-
-      font-size:15px;
-
-      font-weight:bold;
-
-      transition:.2s;
-
-    }
-
-    .btn:hover{
-      transform:scale(1.03);
-    }
-
-    /* =========================
-       MAIN
-    ========================== */
-    .container{
-
-      max-width:760px;
-
-      margin:auto;
-
-      padding:25px;
-
-      text-align:center;
-
-    }
-
-    h2{
-
-      font-size:34px;
-
-      color:#0B2A5B;
-
-      margin-bottom:25px;
-
-      font-weight:800;
-
-    }
-
-    .section{
-
-      background:white;
-
-      padding:28px;
-
-      border-radius:18px;
-
-      margin-bottom:25px;
-
-      box-shadow:0 4px 12px rgba(0,0,0,.08);
-
-    }
-
-    .section h3{
-
-      margin-top:0;
-
-      color:#0B2A5B;
-
-      font-size:24px;
-
-      font-weight:800;
-
-      margin-bottom:20px;
-
-    }
-
-    /* =========================
-       FEATURE BUTTONS
-    ========================== */
-    .feature-buttons{
-
-      display:flex;
-
-      flex-wrap:wrap;
-
-      gap:15px;
-
-      justify-content:center;
-
-      margin-bottom:25px;
-
-    }
-
-    .feature-btn{
-
-      background:#6C63FF;
-
-      color:white;
-
-      border:none;
-
-      padding:18px 22px;
-
-      border-radius:16px;
-
-      font-size:18px;
-
-      font-weight:800;
-
-      cursor:pointer;
-
-      min-width:220px;
-
-      box-shadow:0 4px 12px rgba(0,0,0,.12);
-
-      transition:.2s;
-
-    }
-
-    .feature-btn:hover{
-
-      transform:translateY(-2px);
-
-    }
-
-    /* =========================
-       INFO BOXES
-    ========================== */
-    .info-box{
-
-      background:white;
-
-      padding:24px;
-
-      border-radius:18px;
-
-      margin-bottom:25px;
-
-      box-shadow:0 4px 12px rgba(0,0,0,.08);
-
-      display:none;
-
-      text-align:center;
-
-    }
-
-    .info-box h3{
-
-      margin-top:0;
-
-      color:#0B2A5B;
-
-      font-size:24px;
-
-    }
-
-    .info-box p{
-
-      font-size:18px;
-
-      line-height:1.6;
-
-      color:#444;
-
-    }
-
-    /* =========================
-       BUTTON GROUPS
-    ========================== */
-    .btn-group{
-
-      display:flex;
-
-      flex-wrap:wrap;
-
-      justify-content:center;
-
-      gap:14px;
-
-    }
-
-    .day-btn,
-    .time-btn{
-
-      min-width:130px;
-
-      padding:16px 18px;
-
-      border:none;
-
-      border-radius:14px;
-
-      background:#2F80ED;
-
-      color:white;
-
-      cursor:pointer;
-
-      font-size:18px;
-
-      font-weight:800;
-
-      transition:.2s;
-
-      box-shadow:0 3px 8px rgba(0,0,0,.12);
-
-    }
-
-    .day-btn:hover,
-    .time-btn:hover{
-
-      transform:translateY(-2px);
-
-    }
-
-    /* ACTIVE SELECTION */
-    .selected{
-
-      background:#138A36 !important;
-
-      border:4px solid #A5D6A7;
-
-      transform:scale(1.08);
-
-      box-shadow:0 0 16px rgba(19,138,54,.7);
-
-    }
-
-    /* =========================
-       SELECT
-    ========================== */
-    select{
-
-      padding:14px;
-
-      border-radius:10px;
-
-      border:2px solid #1E6FDB;
-
-      font-size:18px;
-
-      font-weight:700;
-
-      width:280px;
-
-      text-align:center;
-
-    }
-
-    /* =========================
-       MESSAGE
-    ========================== */
-    #msg{
-
-      margin-top:20px;
-
-      font-size:20px;
-
-      font-weight:800;
-
-      color:#138A36;
-
-      min-height:24px;
-
-    }
-
-    .save-btn{
-
-      margin-top:20px;
-
-      padding:16px 30px;
-
-      font-size:20px;
-
-      font-weight:800;
-
-    }
-
-    @media(max-width:600px){
-
-      .header{
-
-        flex-direction:column;
-
-        gap:10px;
-
-      }
-
-      .day-btn,
-      .time-btn,
-      .feature-btn{
-
-        width:100%;
-
-      }
-
-    }
-
-  </style>
-
 </head>
 
 <body>
 
-<!-- HEADER -->
-<div class="header">
+<div id="header"></div>
 
-  <img src="logo.jpg"
-       class="logo">
-
-  <div>
-
-    <button class="btn"
-            onclick="goHome()">
-      Home
-    </button>
-
-    <button class="btn"
-            onclick="logout()">
-      Logout
-    </button>
-
-  </div>
-
-</div>
-
-<!-- MAIN -->
 <div class="container">
 
   <h2>Activities & Support</h2>
+
+  <!-- NEXT CALL -->
+  <div class="section">
+
+    <h3>Next Scheduled Call</h3>
+
+    <div id="nextCallBox">
+
+      <p>
+        Loading next scheduled call...
+      </p>
+
+    </div>
+
+  </div>
 
   <!-- FEATURE BUTTONS -->
   <div class="feature-buttons">
@@ -397,7 +53,7 @@
 
   </div>
 
-  <!-- FITNESS BOX -->
+  <!-- FITNESS -->
   <div class="info-box"
        id="fitnessBox">
 
@@ -417,8 +73,7 @@
 
     <p>
 
-      A Shine Circle Team member may contact you
-      during your preferred availability.
+      A Shine Circle Team member may contact you.
 
       <br><br>
 
@@ -441,8 +96,7 @@
 
     <h3>Preferred Days for Calls</h3>
 
-    <div class="btn-group"
-         id="days">
+    <div class="btn-group">
 
       <button class="day-btn"
               onclick="toggleDay(this)">
@@ -490,8 +144,7 @@
 
     <h3>Preferred Time for Calls</h3>
 
-    <div class="btn-group"
-         id="times">
+    <div class="btn-group">
 
       <button class="time-btn"
               onclick="selectTime(this)">
@@ -545,12 +198,13 @@
 
   </div>
 
-  <!-- SAVE -->
-  <button class="btn save-btn"
+  <button class="btn"
           id="saveBtn"
           style="display:none;"
           onclick="save()">
+
     Save Preferences
+
   </button>
 
   <p id="msg"></p>
@@ -563,7 +217,40 @@ let selectedDays = [];
 let selectedTime = "";
 
 // =========================
-// LOAD FROM DATABASE
+// LOAD HEADER
+// =========================
+fetch('/header')
+
+.then(r=>r.text())
+
+.then(html=>{
+
+  document.getElementById('header')
+    .innerHTML = html;
+
+  document.getElementById("headerButtons")
+    .innerHTML = `
+
+      <button class="btn"
+              onclick="goHome()">
+
+        Home
+
+      </button>
+
+      <button class="btn"
+              onclick="logout()">
+
+        Logout
+
+      </button>
+
+    `;
+
+});
+
+// =========================
+// LOAD ACTIVITIES
 // =========================
 loadActivities();
 
@@ -577,9 +264,6 @@ async function loadActivities(){
     const data =
       await response.json();
 
-    console.log(data);
-
-    // DAYS
     if(data.dayforcall){
 
       selectedDays =
@@ -587,11 +271,9 @@ async function loadActivities(){
 
     }
 
-    // TIME
     selectedTime =
       data.timeforcall || "";
 
-    // TIMEZONE
     if(data.timezone){
 
       document.getElementById("timezone").value =
@@ -600,6 +282,8 @@ async function loadActivities(){
     }
 
     restoreSelections();
+
+    loadNextCall();
 
   }
 
@@ -612,30 +296,87 @@ async function loadActivities(){
 }
 
 // =========================
-// SHOW FITNESS
+// LOAD NEXT CALL
 // =========================
-function showFitnessIdeas(){
+async function loadNextCall(){
 
-  const box =
-    document.getElementById("fitnessBox");
+  try{
 
-  if(box.style.display === "block"){
+    const response =
+      await fetch('/api/next-call');
 
-    box.style.display = "none";
+    const data =
+      await response.json();
+
+    if(!data.id){
+
+      document.getElementById("nextCallBox")
+        .innerHTML = `
+          <p>
+            No scheduled calls yet.
+          </p>
+        `;
+
+      return;
+
+    }
+
+    document.getElementById("nextCallBox")
+      .innerHTML = `
+
+        <div style="font-size:24px;
+                    font-weight:800;
+                    color:#1E6FDB;">
+
+          ${data.calldate}
+
+        </div>
+
+        <div style="font-size:20px;
+                    margin-top:10px;">
+
+          ${data.starttime}
+          -
+          ${data.endtime}
+
+          ${data.timezone}
+
+        </div>
+
+        <div style="margin-top:18px;">
+
+          <strong>
+            Shine Circle Team Member:
+          </strong>
+
+          ${data.callername}
+
+        </div>
+
+      `;
 
   }
 
-  else{
+  catch(err){
 
-    box.style.display = "block";
+    console.log(err);
 
   }
 
 }
 
-// =========================
-// TOGGLE CALL REQUEST
-// =========================
+function showFitnessIdeas(){
+
+  const box =
+    document.getElementById("fitnessBox");
+
+  box.style.display =
+    box.style.display === "block"
+      ? "none"
+      : "block";
+
+}
+
 function toggleCallRequest(){
 
   const ids = [
@@ -646,11 +387,8 @@ function toggleCallRequest(){
     "saveBtn"
   ];
 
-  const first =
-    document.getElementById(ids[0]);
-
   const show =
-    first.style.display !== "block";
+    document.getElementById(ids[0]).style.display !== "block";
 
   ids.forEach(id=>{
 
@@ -661,12 +399,8 @@ function toggleCallRequest(){
 
 }
 
-// =========================
-// RESTORE BUTTONS
-// =========================
 function restoreSelections(){
 
-  // DAYS
   document.querySelectorAll(".day-btn")
     .forEach(btn=>{
 
@@ -680,7 +414,6 @@ function restoreSelections(){
 
     });
 
-  // TIMES
   document.querySelectorAll(".time-btn")
     .forEach(btn=>{
 
@@ -696,9 +429,6 @@ function restoreSelections(){
 
 }
 
-// =========================
-// TOGGLE DAYS
-// =========================
 function toggleDay(btn){
 
   const day =
@@ -721,9 +451,6 @@ function toggleDay(btn){
 
 }
 
-// =========================
-// SELECT TIME
-// =========================
 function selectTime(btn){
 
   selectedTime =
@@ -733,52 +460,33 @@ function selectTime(btn){
 
 }
 
-// =========================
-// SAVE
-// =========================
 async function save(){
 
   try{
 
-    const order =
+    const response =
+      await fetch('/api/activities',{
 
-      ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+        method:'POST',
 
-    const cleanDays =
+        headers:{
+          'Content-Type':'application/json'
+        },
 
-      [...new Set(selectedDays)]
+        body:JSON.stringify({
 
-      .sort(
+          dayForCall:
+            selectedDays.join(','),
 
-        (a,b)=>
+          timeForCall:
+            selectedTime,
 
-        order.indexOf(a) -
-        order.indexOf(b)
+          timezone:
+            document.getElementById("timezone").value
 
-      );
+        })
 
-    const response = await fetch('/api/activities',{
-
-      method:'POST',
-
-      headers:{
-        'Content-Type':'application/json'
-      },
-
-      body:JSON.stringify({
-
-        dayForCall:
-          cleanDays.join(','),
-
-        timeForCall:
-          selectedTime,
-
-        timezone:
-          document.getElementById("timezone").value
-
-      })
-
-    });
+      });
 
     const data =
       await response.json();
@@ -789,8 +497,9 @@ async function save(){
 
     }
 
-    document.getElementById("msg").innerText =
-      "Preferences saved successfully";
+    document.getElementById("msg")
+      .innerText =
+        "Preferences saved successfully";
 
   }
 
@@ -798,16 +507,14 @@ async function save(){
 
     console.log(err);
 
-    document.getElementById("msg").innerText =
-      "Error saving preferences";
+    document.getElementById("msg")
+      .innerText =
+        "Error saving preferences";
 
   }
 
 }
 
-// =========================
-// NAV
-// =========================
 function goHome(){
 
   window.location='/home';

@@ -27,48 +27,59 @@ HEADER
 
 .header {
 
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+  position:sticky;
+  top:0;
+  z-index:1000;
 
-  padding:16px 22px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+
+  padding:18px 24px;
 
   border-bottom:1px solid #e8e8e8;
 
   background:white;
 
-  position:sticky;
-  top:0;
-  z-index:1000;
-
   box-shadow:0 2px 10px rgba(0,0,0,0.06);
+
+  min-height:90px;
 
 }
 
+/* CENTER BRANDING */
 .header-brand {
+
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
 
   display:flex;
   align-items:center;
-  gap:14px;
+  gap:16px;
 
 }
 
+/* TEXT STACK */
 .brand-text {
 
   display:flex;
   flex-direction:column;
+  align-items:flex-start;
 
 }
 
+/* SHINE CIRCLE */
 .brand-title {
 
-  font-size:28px;
+  font-size:30px;
   font-weight:800;
   color:#1E6FDB;
-  line-height:1.1;
+  line-height:1.05;
 
 }
 
+/* LOGO */
 .logo {
 
   height:76px;
@@ -76,6 +87,7 @@ HEADER
 
 }
 
+/* TAGLINE */
 .tagline {
 
   font-size:16px;
@@ -86,12 +98,14 @@ HEADER
 
 }
 
+/* RIGHT SIDE BUTTONS */
 .header-buttons {
 
   display:flex;
   align-items:center;
-  flex-wrap:wrap;
-  justify-content:flex-end;
+  gap:8px;
+
+  margin-left:auto;
 
 }
 
@@ -293,21 +307,27 @@ MOBILE
 
     flex-direction:column;
 
+    justify-content:center;
     align-items:center;
-
-    gap:14px;
 
     padding:16px 14px;
 
-    text-align:center;
+    gap:14px;
+
+    min-height:auto;
 
   }
 
   .header-brand {
 
+    position:static;
+    transform:none;
+
     flex-direction:column;
 
     gap:8px;
+
+    text-align:center;
 
   }
 
@@ -337,6 +357,8 @@ MOBILE
 
     margin-top:2px;
 
+    text-align:center;
+
   }
 
   .header-buttons {
@@ -345,7 +367,11 @@ MOBILE
 
     justify-content:center;
 
+    flex-wrap:wrap;
+
     gap:6px;
+
+    margin-left:0;
 
   }
 

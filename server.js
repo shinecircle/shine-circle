@@ -97,7 +97,7 @@ async function initDB() {
       ");"
     );
 
-    // FIX OLD ACTIVITIES TABLES
+    // FIX ACTIVITIES TABLE
     await pool.query(
       "ALTER TABLE activities " +
       "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
@@ -118,7 +118,7 @@ async function initDB() {
       "ADD COLUMN IF NOT EXISTS timezone TEXT;"
     );
 
-    // FIX OLD CALL TABLES
+    // FIX CALLS TABLE
     await pool.query(
       "ALTER TABLE calls " +
       "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
@@ -722,9 +722,25 @@ app.get('/family-data', async (req, res) => {
 
     const userResult =
       await pool.query(
-        "SELECT * FROM clients " +
-        "WHERE role='user' " +
+
+        "SELECT clients.*, " +
+
+        "activities.dayforcall, " +
+
+        "activities.timeforcall, " +
+
+        "activities.timezone " +
+
+        "FROM clients " +
+
+        "LEFT JOIN activities " +
+
+        "ON clients.id = activities.clientid " +
+
+        "WHERE clients.role='user' " +
+
         "LIMIT 1"
+
       );
 
     const user =
@@ -741,18 +757,38 @@ app.get('/family-data', async (req, res) => {
 
     const checkins =
       await pool.query(
+
         "SELECT mood, meds, date as timestamp " +
+
         "FROM checkins " +
+
         "WHERE clientid=$1 " +
+
         "ORDER BY date ASC",
+
         [user.id]
+
       );
 
     res.json({
 
       user: {
-        firstName: user.firstname,
-        lastName: user.lastname
+
+        firstName:
+          user.firstname,
+
+        lastName:
+          user.lastname,
+
+        dayForCall:
+          user.dayforcall,
+
+        timeForCall:
+          user.timeforcall,
+
+        timezone:
+          user.timezone
+
       },
 
       checkins:

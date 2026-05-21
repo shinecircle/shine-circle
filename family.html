@@ -14,122 +14,94 @@
   <style>
 
     .page{
-
       max-width:1000px;
       margin:auto;
       padding:18px;
-
     }
 
     .card {
-
       padding:20px;
       margin:14px 0;
-
       border-radius:18px;
-
       background:white;
-
       box-shadow:0 4px 12px rgba(0,0,0,0.06);
-
     }
 
     .alert {
-
       background:#ffe8e8;
       color:#900;
-
+      padding:16px;
+      border-radius:14px;
+      margin-top:14px;
     }
 
     .chart-wrap {
-
       width:100%;
       max-width:600px;
-
       margin:auto;
-
       height:280px;
-
     }
 
     h2 {
-
       text-align:center;
       font-size:34px;
       margin-top:10px;
-
     }
 
     h3{
-
       margin-top:0;
       color:#16345f;
-
     }
 
     .activity-item{
-
       padding:12px 0;
       border-bottom:1px solid #eee;
-
     }
 
     .activity-item:last-child{
-
       border-bottom:none;
-
     }
 
     .stats-grid{
-
       display:grid;
       grid-template-columns:1fr 1fr;
       gap:16px;
-
     }
 
     .stat-box{
-
       background:#f5f8ff;
       padding:22px;
       border-radius:16px;
       text-align:center;
-
     }
 
     .stat-number{
-
       font-size:38px;
       font-weight:800;
       color:#1E6FDB;
-
     }
 
     .stat-label{
-
       margin-top:8px;
       font-size:16px;
+    }
 
+    .section-title{
+      margin-bottom:18px;
     }
 
     @media(max-width:700px){
 
       .page{
-
         padding:14px;
-
       }
 
       h2{
-
         font-size:28px;
-
       }
 
       .stats-grid{
-
         grid-template-columns:1fr;
-
       }
 
     }
@@ -148,37 +120,33 @@
 
   <div id="monitorHeader"></div>
 
-  <!-- ALERTS -->
-  <div id="alerts"></div>
-
-  <!-- MEDICATION -->
+  <!-- MEDICATION BOX -->
   <div class="card">
 
-    <h3>Medication Compliance (Last 7 Days)</h3>
+    <h3 class="section-title">
+      Medication
+    </h3>
 
     <p id="medRate"></p>
 
+    <div id="medAlerts"></div>
+
   </div>
 
-  <!-- CHART -->
+  <!-- MOOD BOX -->
   <div class="card">
 
-    <h3>Mood Trend</h3>
+    <h3 class="section-title">
+      Mood
+    </h3>
+
+    <div id="moodAlerts"></div>
 
     <div class="chart-wrap">
 
       <canvas id="chart"></canvas>
 
     </div>
-
-  </div>
-
-  <!-- CALL SCHEDULE -->
-  <div class="card">
-
-    <h3>Preferred Call Schedule</h3>
-
-    <p id="schedule"></p>
 
   </div>
 
@@ -224,6 +192,15 @@
       </div>
 
     </div>
+
+  </div>
+
+  <!-- CALL SCHEDULE -->
+  <div class="card">
+
+    <h3>Preferred Call Schedule</h3>
+
+    <p id="schedule"></p>
 
   </div>
 
@@ -332,7 +309,6 @@ Promise.all([
   }
 
   const name =
-
     user.nickname &&
     user.nickname.trim() !== ""
 
@@ -399,9 +375,6 @@ Promise.all([
     .innerText =
       `${days} — ${time} ${tz}`;
 
-  // =========================
-  // CHECKINS
-  // =========================
   dataGlobal =
     data.checkins || [];
 
@@ -412,25 +385,12 @@ Promise.all([
 
   );
 
-  renderCallStats();
-
-  if(!dataGlobal.length){
-
-    document.getElementById("list")
-      .innerText =
-        "No activity yet.";
-
-    return;
-
-  }
-
   renderChart();
-
   renderMedCompliance();
-
+  renderMedicationAlerts();
+  renderMoodAlerts();
+  renderCallStats();
   renderList();
-
-  renderAlerts();
 
 });
 
@@ -516,12 +476,10 @@ function convertToMinutes(timeStr){
 function moodScore(m){
 
   return {
-
     "Great":4,
     "Good":3,
     "Low":2,
     "Struggling":1
-
   }[m] || 0;
 
 }
@@ -653,6 +611,144 @@ function renderMedCompliance(){
 }
 
 // =========================
+// MED ALERTS
+// =========================
+function renderMedicationAlerts(){
+
+  let html = "";
+
+  const missed =
+    dataGlobal.filter(
+      d => d.meds === "No"
+    );
+
+  if(missed.length){
+
+    html += `
+
+      <div class="alert">
+
+        ⚠ Medication missed
+
+        <br><br>
+
+        <strong>Dates:</strong>
+
+        ${missed.map(d=>
+
+          new Date(d.timestamp)
+            .toLocaleDateString(
+              'en-US',
+              {
+                weekday:'long',
+                month:'long',
+                day:'numeric',
+                year:'numeric'
+              }
+            )
+
+        ).join(", ")}
+
+      </div>
+
+    `;
+
+  }
+
+  const notRecorded =
+    dataGlobal.filter(
+      d => !d.meds || d.meds.trim() === ""
+    );
+
+  if(notRecorded.length){
+
+    html += `
+
+      <div class="alert">
+
+        ⚠ Medication not recorded
+
+        <br><br>
+
+        <strong>Dates:</strong>
+
+        ${notRecorded.map(d=>
+
+          new Date(d.timestamp)
+            .toLocaleDateString(
+              'en-US',
+              {
+                weekday:'long',
+                month:'long',
+                day:'numeric',
+                year:'numeric'
+              }
+            )
+
+        ).join(", ")}
+
+      </div>
+
+    `;
+
+  }
+
+  document.getElementById("medAlerts")
+    .innerHTML = html;
+
+}
+
+// =========================
+// MOOD ALERTS
+// =========================
+function renderMoodAlerts(){
+
+  let html = "";
+
+  const struggling =
+    dataGlobal.filter(
+      d => d.mood === "Struggling"
+    );
+
+  if(struggling.length){
+
+    html += `
+
+      <div class="alert">
+
+        ⚠ Struggling mood detected
+
+        <br><br>
+
+        <strong>Dates:</strong>
+
+        ${struggling.map(d=>
+
+          new Date(d.timestamp)
+            .toLocaleDateString(
+              'en-US',
+              {
+                weekday:'long',
+                month:'long',
+                day:'numeric',
+                year:'numeric'
+              }
+            )
+
+        ).join(", ")}
+
+      </div>
+
+    `;
+
+  }
+
+  document.getElementById("moodAlerts")
+    .innerHTML = html;
+
+}
+
+// =========================
 // RECENT ACTIVITY
 // =========================
 function renderList(){
@@ -693,206 +789,6 @@ function renderList(){
 
   document.getElementById("list")
     .innerHTML = html;
-
-}
-
-// =========================
-// ALERTS
-// =========================
-function renderAlerts(){
-
-  let alerts = "";
-
-  const today =
-    new Date()
-      .toISOString()
-      .split('T')[0];
-
-  const todayEntry =
-    dataGlobal.find(d =>
-      d.timestamp.startsWith(today)
-    );
-
-  if(!todayEntry){
-
-    alerts += `
-
-      <div class="card alert">
-
-        ⚠ No check-in today
-
-      </div>
-
-    `;
-
-  }
-
-  const strugglingMoods =
-    dataGlobal.filter(
-      d => d.mood === "Struggling"
-    );
-
-  if(strugglingMoods.length){
-
-    const dates =
-      strugglingMoods
-        .map(d =>
-          new Date(d.timestamp)
-            .toLocaleDateString(
-              'en-US',
-              {
-                weekday:'long',
-                month:'long',
-                day:'numeric',
-                year:'numeric'
-              }
-            )
-        )
-        .join(", ");
-
-    alerts += `
-
-      <div class="card alert">
-
-        ⚠ Struggling mood detected
-
-        <br><br>
-
-        <strong>Dates:</strong>
-
-        ${dates}
-
-      </div>
-
-    `;
-
-  }
-
-  const missedMeds =
-    dataGlobal.filter(
-      d => d.meds === "No"
-    );
-
-  if(missedMeds.length){
-
-    const dates =
-      missedMeds
-        .map(d =>
-          new Date(d.timestamp)
-            .toLocaleDateString(
-              'en-US',
-              {
-                weekday:'long',
-                month:'long',
-                day:'numeric',
-                year:'numeric'
-              }
-            )
-        )
-        .join(", ");
-
-    alerts += `
-
-      <div class="card alert">
-
-        ⚠ Medication missed
-
-        <br><br>
-
-        <strong>Dates:</strong>
-
-        ${dates}
-
-      </div>
-
-    `;
-
-  }
-
-  const noMood =
-    dataGlobal.filter(
-      d => !d.mood || d.mood.trim() === ""
-    );
-
-  if(noMood.length){
-
-    const dates =
-      noMood
-        .map(d =>
-          new Date(d.timestamp)
-            .toLocaleDateString(
-              'en-US',
-              {
-                weekday:'long',
-                month:'long',
-                day:'numeric',
-                year:'numeric'
-              }
-            )
-        )
-        .join(", ");
-
-    alerts += `
-
-      <div class="card alert">
-
-        ⚠ No mood reported
-
-        <br><br>
-
-        <strong>Dates:</strong>
-
-        ${dates}
-
-      </div>
-
-    `;
-
-  }
-
-  const noMeds =
-    dataGlobal.filter(
-      d => !d.meds || d.meds.trim() === ""
-    );
-
-  if(noMeds.length){
-
-    const dates =
-      noMeds
-        .map(d =>
-          new Date(d.timestamp)
-            .toLocaleDateString(
-              'en-US',
-              {
-                weekday:'long',
-                month:'long',
-                day:'numeric',
-                year:'numeric'
-              }
-            )
-        )
-        .join(", ");
-
-    alerts += `
-
-      <div class="card alert">
-
-        ⚠ No medication check-in
-
-        <br><br>
-
-        <strong>Dates:</strong>
-
-        ${dates}
-
-      </div>
-
-    `;
-
-  }
-
-  document.getElementById("alerts")
-    .innerHTML = alerts;
 
 }
 

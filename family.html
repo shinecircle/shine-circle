@@ -80,6 +80,38 @@
 
     }
 
+    .stats-grid{
+
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+
+    }
+
+    .stat-box{
+
+      background:#f5f8ff;
+      padding:22px;
+      border-radius:16px;
+      text-align:center;
+
+    }
+
+    .stat-number{
+
+      font-size:38px;
+      font-weight:800;
+      color:#1E6FDB;
+
+    }
+
+    .stat-label{
+
+      margin-top:8px;
+      font-size:16px;
+
+    }
+
     @media(max-width:700px){
 
       .page{
@@ -94,6 +126,12 @@
 
       }
 
+      .stats-grid{
+
+        grid-template-columns:1fr;
+
+      }
+
     }
 
   </style>
@@ -102,10 +140,7 @@
 
 <body>
 
-<!-- =========================
-     SHARED HEADER
-========================= -->
-
+<!-- HEADER -->
 <div id="header"></div>
 
 <div class="page">
@@ -113,15 +148,6 @@
   <h2 id="welcome"></h2>
 
   <div id="monitorHeader"></div>
-
-  <!-- CALL SCHEDULE -->
-  <div class="card">
-
-    <h3>Preferred Call Schedule</h3>
-
-    <p id="schedule"></p>
-
-  </div>
 
   <!-- ALERTS -->
   <div id="alerts"></div>
@@ -148,6 +174,60 @@
 
   </div>
 
+  <!-- CALL SCHEDULE -->
+  <div class="card">
+
+    <h3>Preferred Call Schedule</h3>
+
+    <p id="schedule"></p>
+
+  </div>
+
+  <!-- PHONE STATS -->
+  <div class="card">
+
+    <h3>Phone Call Statistics</h3>
+
+    <div class="stats-grid">
+
+      <div class="stat-box">
+
+        <div class="stat-number"
+             id="callCount">
+
+          0
+
+        </div>
+
+        <div class="stat-label">
+
+          Total Calls
+
+        </div>
+
+      </div>
+
+      <div class="stat-box">
+
+        <div class="stat-number"
+             id="callMinutes">
+
+          0
+
+        </div>
+
+        <div class="stat-label">
+
+          Total Minutes
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
   <!-- RECENT ACTIVITY -->
   <div class="card">
 
@@ -162,6 +242,7 @@
 <script>
 
 let dataGlobal = [];
+let callsGlobal = [];
 
 // =========================
 // LOAD HEADER
@@ -229,13 +310,18 @@ fetch('/auth')
 // =========================
 // LOAD DATA
 // =========================
-fetch('/family-data')
+Promise.all([
 
-.then(r=>r.json())
+  fetch('/family-data').then(r=>r.json()),
+  fetch('/api/calls').then(r=>r.json())
 
-.then(data=>{
+])
+
+.then(([data, calls])=>{
 
   const user = data.user;
+
+  callsGlobal = calls || [];
 
   if(!user){
 
@@ -323,13 +409,14 @@ fetch('/family-data')
   dataGlobal =
     data.checkins || [];
 
-  // SORT OLDEST -> NEWEST
   dataGlobal.sort((a,b)=>
 
     new Date(a.timestamp) -
     new Date(b.timestamp)
 
   );
+
+  renderCallStats();
 
   if(!dataGlobal.length){
 
@@ -350,6 +437,82 @@ fetch('/family-data')
   renderAlerts();
 
 });
+
+// =========================
+// CALL STATS
+// =========================
+function renderCallStats(){
+
+  const totalCalls =
+    callsGlobal.length;
+
+  let totalMinutes = 0;
+
+  callsGlobal.forEach(call=>{
+
+    if(call.starttime && call.endtime){
+
+      const start =
+        convertToMinutes(call.starttime);
+
+      const end =
+        convertToMinutes(call.endtime);
+
+      if(end > start){
+
+        totalMinutes +=
+          (end - start);
+
+      }
+
+    }
+
+  });
+
+  document.getElementById("callCount")
+    .innerText =
+      totalCalls;
+
+  document.getElementById("callMinutes")
+    .innerText =
+      totalMinutes;
+
+}
+
+// =========================
+// TIME TO MINUTES
+// =========================
+function convertToMinutes(timeStr){
+
+  const parts =
+    timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+
+  if(!parts) return 0;
+
+  let hour =
+    parseInt(parts[1]);
+
+  const minute =
+    parseInt(parts[2]);
+
+  const ampm =
+    parts[3].toUpperCase();
+
+  if(ampm === 'PM' && hour !== 12){
+
+    hour += 12;
+
+  }
+
+  if(ampm === 'AM' && hour === 12){
+
+    hour = 0;
+
+  }
+
+  return hour * 60 + minute;
+
+}
 
 // =========================
 // MOOD SCORE
@@ -569,104 +732,6 @@ function renderAlerts(){
       <div class="card alert">
 
         ⚠ No check-in today
-
-      </div>
-
-    `;
-
-  }
-
-  // =========================
-  // STRUGGLING MOOD DATES
-  // =========================
-  const strugglingMoods =
-    dataGlobal.filter(
-      d => d.mood === "Struggling"
-    );
-
-  if(strugglingMoods.length){
-
-    const strugglingDates =
-
-      strugglingMoods
-
-      .map(d => {
-
-        return new Date(d.timestamp)
-
-          .toLocaleDateString(
-            'en-US',
-            {
-              month:'short',
-              day:'numeric',
-              year:'numeric'
-            }
-          );
-
-      })
-
-      .join(", ");
-
-    alerts += `
-
-      <div class="card alert">
-
-        ⚠ Struggling mood detected
-
-        <br><br>
-
-        <strong>Dates:</strong>
-
-        ${strugglingDates}
-
-      </div>
-
-    `;
-
-  }
-
-  // =========================
-  // MISSED MEDICATION DATES
-  // =========================
-  const missedMeds =
-    dataGlobal.filter(
-      d => d.meds === "No"
-    );
-
-  if(missedMeds.length){
-
-    const missedDates =
-
-      missedMeds
-
-      .map(d => {
-
-        return new Date(d.timestamp)
-
-          .toLocaleDateString(
-            'en-US',
-            {
-              month:'short',
-              day:'numeric',
-              year:'numeric'
-            }
-          );
-
-      })
-
-      .join(", ");
-
-    alerts += `
-
-      <div class="card alert">
-
-        ⚠ Medication missed
-
-        <br><br>
-
-        <strong>Dates:</strong>
-
-        ${missedDates}
 
       </div>
 

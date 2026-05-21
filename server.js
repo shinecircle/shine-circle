@@ -397,7 +397,9 @@ app.get('/api/checkin-today', async (req, res) => {
     if (!user) {
 
       return res.json({
-        checkedIn: false
+        checkedIn: false,
+        mood: null,
+        meds: null
       });
 
     }
@@ -417,15 +419,25 @@ app.get('/api/checkin-today', async (req, res) => {
     if (result.rows.length === 0) {
 
       return res.json({
-        checkedIn: false
+        checkedIn: false,
+        mood: null,
+        meds: null
       });
 
     }
 
     const row = result.rows[0];
 
+    const moodDone =
+      row.mood !== null &&
+      row.mood !== "";
+
+    const medsDone =
+      row.meds !== null &&
+      row.meds !== "";
+
     res.json({
-      checkedIn: true,
+      checkedIn: moodDone && medsDone,
       mood: row.mood,
       meds: row.meds
     });
@@ -437,7 +449,9 @@ app.get('/api/checkin-today', async (req, res) => {
     console.log(err);
 
     res.json({
-      checkedIn: false
+      checkedIn: false,
+      mood: null,
+      meds: null
     });
 
   }

@@ -43,16 +43,6 @@
 
     }
 
-    .good {
-      color:green;
-      font-weight:bold;
-    }
-
-    .missing {
-      color:#cc8800;
-      font-weight:bold;
-    }
-
   </style>
 
 </head>
@@ -301,16 +291,24 @@ function loadTodayStatus(){
       .innerText =
         "Welcome back " + name;
 
-    const moodDone = !!data.mood;
-    const medsDone = !!data.meds;
+    // STRICT CHECKS
+    const moodDone =
+      data.mood !== null &&
+      data.mood !== undefined &&
+      data.mood !== "";
+
+    const medsDone =
+      data.meds !== null &&
+      data.meds !== undefined &&
+      data.meds !== "";
 
     let message = "";
 
-    // NOTHING COMPLETED
+    // NEITHER
     if(!moodDone && !medsDone){
 
       message =
-        "We care about you! Please share how you are doing.";
+        "Please check in today";
 
     }
 
@@ -318,7 +316,7 @@ function loadTodayStatus(){
     else if(moodDone && !medsDone){
 
       message =
-        "It's important to take your medications as prescribed.";
+        "It is important to take your medication";
 
     }
 
@@ -326,15 +324,15 @@ function loadTodayStatus(){
     else if(!moodDone && medsDone){
 
       message =
-        "Please log your mood today.";
+        "We care about how you feel";
 
     }
 
-    // BOTH COMPLETE
+    // BOTH
     else {
 
       message =
-        "We are glad you have completed your daily check in.";
+        "Thanks for checking in today";
 
     }
 

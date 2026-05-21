@@ -140,7 +140,6 @@
 
 <body>
 
-<!-- HEADER -->
 <div id="header"></div>
 
 <div class="page">
@@ -373,11 +372,8 @@ Promise.all([
 
     const cleanDays =
       user.dayForCall
-
       .split(',')
-
       .map(d => d.trim())
-
       .filter(d => d && map[d]);
 
     if(cleanDays.length){
@@ -630,9 +626,7 @@ function renderMedCompliance(){
   const last7 = dataGlobal.filter(d=>{
 
     const diff =
-
       (now - new Date(d.timestamp))
-
       / (1000*60*60*24);
 
     return diff <= 7;
@@ -654,7 +648,6 @@ function renderMedCompliance(){
 
   document.getElementById("medRate")
     .innerText =
-
       `${pct}% compliance (${taken}/${total} days)`;
 
 }
@@ -667,11 +660,8 @@ function renderList(){
   let html = "";
 
   [...dataGlobal]
-
     .reverse()
-
     .slice(0,10)
-
     .forEach(d=>{
 
       const date =
@@ -682,7 +672,7 @@ function renderList(){
         <div class="activity-item">
 
           <b>Mood:</b>
-          ${d.mood}
+          ${d.mood || "Not reported"}
 
           <br>
 
@@ -720,9 +710,7 @@ function renderAlerts(){
 
   const todayEntry =
     dataGlobal.find(d =>
-
       d.timestamp.startsWith(today)
-
     );
 
   if(!todayEntry){
@@ -732,6 +720,170 @@ function renderAlerts(){
       <div class="card alert">
 
         ⚠ No check-in today
+
+      </div>
+
+    `;
+
+  }
+
+  const strugglingMoods =
+    dataGlobal.filter(
+      d => d.mood === "Struggling"
+    );
+
+  if(strugglingMoods.length){
+
+    const dates =
+      strugglingMoods
+        .map(d =>
+          new Date(d.timestamp)
+            .toLocaleDateString(
+              'en-US',
+              {
+                weekday:'long',
+                month:'long',
+                day:'numeric',
+                year:'numeric'
+              }
+            )
+        )
+        .join(", ");
+
+    alerts += `
+
+      <div class="card alert">
+
+        ⚠ Struggling mood detected
+
+        <br><br>
+
+        <strong>Dates:</strong>
+
+        ${dates}
+
+      </div>
+
+    `;
+
+  }
+
+  const missedMeds =
+    dataGlobal.filter(
+      d => d.meds === "No"
+    );
+
+  if(missedMeds.length){
+
+    const dates =
+      missedMeds
+        .map(d =>
+          new Date(d.timestamp)
+            .toLocaleDateString(
+              'en-US',
+              {
+                weekday:'long',
+                month:'long',
+                day:'numeric',
+                year:'numeric'
+              }
+            )
+        )
+        .join(", ");
+
+    alerts += `
+
+      <div class="card alert">
+
+        ⚠ Medication missed
+
+        <br><br>
+
+        <strong>Dates:</strong>
+
+        ${dates}
+
+      </div>
+
+    `;
+
+  }
+
+  const noMood =
+    dataGlobal.filter(
+      d => !d.mood || d.mood.trim() === ""
+    );
+
+  if(noMood.length){
+
+    const dates =
+      noMood
+        .map(d =>
+          new Date(d.timestamp)
+            .toLocaleDateString(
+              'en-US',
+              {
+                weekday:'long',
+                month:'long',
+                day:'numeric',
+                year:'numeric'
+              }
+            )
+        )
+        .join(", ");
+
+    alerts += `
+
+      <div class="card alert">
+
+        ⚠ No mood reported
+
+        <br><br>
+
+        <strong>Dates:</strong>
+
+        ${dates}
+
+      </div>
+
+    `;
+
+  }
+
+  const noMeds =
+    dataGlobal.filter(
+      d => !d.meds || d.meds.trim() === ""
+    );
+
+  if(noMeds.length){
+
+    const dates =
+      noMeds
+        .map(d =>
+          new Date(d.timestamp)
+            .toLocaleDateString(
+              'en-US',
+              {
+                weekday:'long',
+                month:'long',
+                day:'numeric',
+                year:'numeric'
+              }
+            )
+        )
+        .join(", ");
+
+    alerts += `
+
+      <div class="card alert">
+
+        ⚠ No medication check-in
+
+        <br><br>
+
+        <strong>Dates:</strong>
+
+        ${dates}
 
       </div>
 
@@ -756,11 +908,8 @@ function goHome(){
 function logout(){
 
   fetch('/logout')
-
     .then(()=>{
-
       window.location='/login';
-
     });
 
 }

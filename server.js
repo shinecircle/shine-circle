@@ -1,5 +1,3 @@
-
-```javascript
 const express = require('express');
 const session = require('express-session');
 const { Pool } = require('pg');
@@ -51,7 +49,9 @@ async function initDB() {
 
     console.log("Initializing database...");
 
+    // =========================
     // CLIENTS TABLE
+    // =========================
     await pool.query(
       "CREATE TABLE IF NOT EXISTS clients (" +
       "id SERIAL PRIMARY KEY," +
@@ -63,7 +63,9 @@ async function initDB() {
       ");"
     );
 
+    // =========================
     // CHECKINS TABLE
+    // =========================
     await pool.query(
       "CREATE TABLE IF NOT EXISTS checkins (" +
       "id SERIAL PRIMARY KEY," +
@@ -74,7 +76,9 @@ async function initDB() {
       ");"
     );
 
+    // =========================
     // ACTIVITIES TABLE
+    // =========================
     await pool.query(
       "CREATE TABLE IF NOT EXISTS activities (" +
       "id SERIAL PRIMARY KEY," +
@@ -85,7 +89,9 @@ async function initDB() {
       ");"
     );
 
+    // =========================
     // CALLS TABLE
+    // =========================
     await pool.query(
       "CREATE TABLE IF NOT EXISTS calls (" +
       "id SERIAL PRIMARY KEY," +
@@ -99,7 +105,9 @@ async function initDB() {
       ");"
     );
 
+    // =========================
     // DEFAULT USER ACCOUNT
+    // =========================
     const userExists = await pool.query(
       "SELECT * FROM clients WHERE LOWER(username)=LOWER($1)",
       ['user']
@@ -122,7 +130,9 @@ async function initDB() {
 
     }
 
+    // =========================
     // DEFAULT FAMILY ACCOUNT
+    // =========================
     const familyExists = await pool.query(
       "SELECT * FROM clients WHERE LOWER(username)=LOWER($1)",
       ['family']
@@ -145,7 +155,9 @@ async function initDB() {
 
     }
 
+    // =========================
     // DEFAULT ADMIN ACCOUNT
+    // =========================
     const adminExists = await pool.query(
       "SELECT * FROM clients WHERE LOWER(username)=LOWER($1)",
       ['admin']
@@ -264,6 +276,11 @@ app.post('/login', async (req, res) => {
     }
 
     req.session.user = user;
+
+    console.log(
+      "LOGIN SUCCESS:",
+      user.username
+    );
 
     res.json({
       success: true,
@@ -441,6 +458,137 @@ app.get('/api/checkin-today', async (req, res) => {
 });
 
 // =========================
+// SAVE ACTIVITIES
+// =========================
+app.post('/api/activities', async (req, res) => {
+
+  try {
+
+    const user = req.session.user;
+
+    if (!user) {
+
+      return res.status(401).json({
+        success: false
+      });
+
+    }
+
+    await pool.query(
+      "DELETE FROM activities WHERE clientid=$1",
+      [user.id]
+    );
+
+    await pool.query(
+      "INSERT INTO activities " +
+      "(clientid, dayforcall, timeforcall, timezone) " +
+      "VALUES($1,$2,$3,$4)",
+      [
+        user.id,
+        req.body.dayForCall,
+        req.body.timeForCall,
+        req.body.timezone
+      ]
+    );
+
+    res.json({
+      success: true
+    });
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+
+    res.json({
+      success: false
+    });
+
+  }
+
+});
+
+// =========================
+// LOAD ACTIVITIES
+// =========================
+app.get('/api/activities', async (req, res) => {
+
+  try {
+
+    const user = req.session.user;
+
+    if (!user) {
+
+      return res.json({});
+
+    }
+
+    const result =
+      await pool.query(
+        "SELECT * FROM activities " +
+        "WHERE clientid=$1",
+        [user.id]
+      );
+
+    res.json(
+      result.rows[0] || {}
+    );
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+
+    res.json({});
+
+  }
+
+});
+
+// =========================
+// NEXT CALL
+// =========================
+app.get('/api/next-call', async (req, res) => {
+
+  try {
+
+    const user = req.session.user;
+
+    if (!user) {
+
+      return res.json({});
+
+    }
+
+    const result =
+      await pool.query(
+        "SELECT * FROM calls " +
+        "WHERE clientid=$1 " +
+        "AND status='scheduled' " +
+        "ORDER BY id ASC " +
+        "LIMIT 1",
+        [user.id]
+      );
+
+    res.json(
+      result.rows[0] || {}
+    );
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+
+    res.json({});
+
+  }
+
+});
+
+// =========================
 // GET USERS
 // =========================
 app.get('/api/users', async (req, res) => {
@@ -577,6 +725,104 @@ app.post('/api/complete-call', async (req, res) => {
 });
 
 // =========================
+// FAMILY DATA
+// =========================
+app.get('/family-data', async (req, res) => {
+
+  try {
+
+    const userResult =
+      await pool.query(
+
+        "SELECT clients.*, " +
+
+        "activities.dayforcall, " +
+
+        "activities.timeforcall, " +
+
+        "activities.timezone " +
+
+        "FROM clients " +
+
+        "LEFT JOIN activities " +
+
+        "ON clients.id = activities.clientid " +
+
+        "WHERE clients.role='user' " +
+
+        "LIMIT 1"
+
+      );
+
+    const user =
+      userResult.rows[0];
+
+    if (!user) {
+
+      return res.json({
+        user: null,
+        checkins: []
+      });
+
+    }
+
+    const checkins =
+      await pool.query(
+
+        "SELECT mood, meds, date as timestamp " +
+
+        "FROM checkins " +
+
+        "WHERE clientid=$1 " +
+
+        "ORDER BY date ASC",
+
+        [user.id]
+
+      );
+
+    res.json({
+
+      user: {
+
+        firstName:
+          user.firstname,
+
+        lastName:
+          user.lastname,
+
+        dayForCall:
+          user.dayforcall,
+
+        timeForCall:
+          user.timeforcall,
+
+        timezone:
+          user.timezone
+
+      },
+
+      checkins:
+        checkins.rows
+
+    });
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+
+    res.json({
+      user: null,
+      checkins: []
+    });
+
+  }
+
+});
+
+// =========================
 // START SERVER
 // =========================
 const PORT =
@@ -589,4 +835,3 @@ app.listen(PORT, () => {
   );
 
 });
-```

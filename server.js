@@ -1,3 +1,5 @@
+
+```javascript
 const express = require('express');
 const session = require('express-session');
 const { Pool } = require('pg');
@@ -49,9 +51,7 @@ async function initDB() {
 
     console.log("Initializing database...");
 
-    // =========================
     // CLIENTS TABLE
-    // =========================
     await pool.query(
       "CREATE TABLE IF NOT EXISTS clients (" +
       "id SERIAL PRIMARY KEY," +
@@ -63,9 +63,7 @@ async function initDB() {
       ");"
     );
 
-    // =========================
     // CHECKINS TABLE
-    // =========================
     await pool.query(
       "CREATE TABLE IF NOT EXISTS checkins (" +
       "id SERIAL PRIMARY KEY," +
@@ -76,9 +74,7 @@ async function initDB() {
       ");"
     );
 
-    // =========================
     // ACTIVITIES TABLE
-    // =========================
     await pool.query(
       "CREATE TABLE IF NOT EXISTS activities (" +
       "id SERIAL PRIMARY KEY," +
@@ -89,9 +85,7 @@ async function initDB() {
       ");"
     );
 
-    // =========================
     // CALLS TABLE
-    // =========================
     await pool.query(
       "CREATE TABLE IF NOT EXISTS calls (" +
       "id SERIAL PRIMARY KEY," +
@@ -105,72 +99,7 @@ async function initDB() {
       ");"
     );
 
-    // =========================
-    // FIX ACTIVITIES TABLE
-    // =========================
-    await pool.query(
-      "ALTER TABLE activities " +
-      "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
-    );
-
-    await pool.query(
-      "ALTER TABLE activities " +
-      "ADD COLUMN IF NOT EXISTS dayforcall TEXT;"
-    );
-
-    await pool.query(
-      "ALTER TABLE activities " +
-      "ADD COLUMN IF NOT EXISTS timeforcall TEXT;"
-    );
-
-    await pool.query(
-      "ALTER TABLE activities " +
-      "ADD COLUMN IF NOT EXISTS timezone TEXT;"
-    );
-
-    // =========================
-    // FIX CALLS TABLE
-    // =========================
-    await pool.query(
-      "ALTER TABLE calls " +
-      "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
-    );
-
-    await pool.query(
-      "ALTER TABLE calls " +
-      "ADD COLUMN IF NOT EXISTS callername TEXT;"
-    );
-
-    await pool.query(
-      "ALTER TABLE calls " +
-      "ADD COLUMN IF NOT EXISTS calldate TEXT;"
-    );
-
-    await pool.query(
-      "ALTER TABLE calls " +
-      "ADD COLUMN IF NOT EXISTS starttime TEXT;"
-    );
-
-    await pool.query(
-      "ALTER TABLE calls " +
-      "ADD COLUMN IF NOT EXISTS endtime TEXT;"
-    );
-
-    await pool.query(
-      "ALTER TABLE calls " +
-      "ADD COLUMN IF NOT EXISTS timezone TEXT;"
-    );
-
-    await pool.query(
-      "ALTER TABLE calls " +
-      "ADD COLUMN IF NOT EXISTS status TEXT;"
-    );
-
-    // =========================
-    // DEFAULT USERS
-    // =========================
-
-    // USER ACCOUNT
+    // DEFAULT USER ACCOUNT
     const userExists = await pool.query(
       "SELECT * FROM clients WHERE LOWER(username)=LOWER($1)",
       ['user']
@@ -191,11 +120,9 @@ async function initDB() {
         ]
       );
 
-      console.log("Created USER account");
-
     }
 
-    // FAMILY ACCOUNT
+    // DEFAULT FAMILY ACCOUNT
     const familyExists = await pool.query(
       "SELECT * FROM clients WHERE LOWER(username)=LOWER($1)",
       ['family']
@@ -216,11 +143,9 @@ async function initDB() {
         ]
       );
 
-      console.log("Created FAMILY account");
-
     }
 
-    // ADMIN ACCOUNT
+    // DEFAULT ADMIN ACCOUNT
     const adminExists = await pool.query(
       "SELECT * FROM clients WHERE LOWER(username)=LOWER($1)",
       ['admin']
@@ -240,8 +165,6 @@ async function initDB() {
           '1234'
         ]
       );
-
-      console.log("Created ADMIN account");
 
     }
 
@@ -342,11 +265,6 @@ app.post('/login', async (req, res) => {
 
     req.session.user = user;
 
-    console.log(
-      "LOGIN SUCCESS:",
-      user.username
-    );
-
     res.json({
       success: true,
       role: user.role
@@ -378,6 +296,287 @@ app.get('/logout', (req, res) => {
 });
 
 // =========================
+// SAVE CHECKIN
+// =========================
+app.post('/api/checkin', async (req, res) => {
+
+  try {
+
+    const user = req.session.user;
+
+    if (!user) {
+
+      return res.status(401).json({
+        success: false
+      });
+
+    }
+
+    const today =
+      new Date()
+        .toISOString()
+        .split('T')[0];
+
+    const existing =
+      await pool.query(
+        "SELECT * FROM checkins " +
+        "WHERE clientid=$1 AND date=$2",
+        [user.id, today]
+      );
+
+    if (existing.rows.length === 0) {
+
+      await pool.query(
+        "INSERT INTO checkins " +
+        "(clientid, date, mood, meds) " +
+        "VALUES($1,$2,$3,$4)",
+        [
+          user.id,
+          today,
+          req.body.mood || null,
+          req.body.meds || null
+        ]
+      );
+
+    }
+
+    else {
+
+      const row = existing.rows[0];
+
+      await pool.query(
+        "UPDATE checkins " +
+        "SET mood=$1, meds=$2 " +
+        "WHERE id=$3",
+        [
+          req.body.mood || row.mood,
+          req.body.meds || row.meds,
+          row.id
+        ]
+      );
+
+    }
+
+    res.json({
+      success: true
+    });
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+
+    res.json({
+      success: false
+    });
+
+  }
+
+});
+
+// =========================
+// LOAD TODAY CHECKIN
+// =========================
+app.get('/api/checkin-today', async (req, res) => {
+
+  try {
+
+    const user = req.session.user;
+
+    if (!user) {
+
+      return res.json({
+        checkedIn: false,
+        mood: null,
+        meds: null
+      });
+
+    }
+
+    const today =
+      new Date()
+        .toISOString()
+        .split('T')[0];
+
+    const result =
+      await pool.query(
+        "SELECT * FROM checkins " +
+        "WHERE clientid=$1 AND date=$2",
+        [user.id, today]
+      );
+
+    if (result.rows.length === 0) {
+
+      return res.json({
+        checkedIn: false,
+        mood: null,
+        meds: null
+      });
+
+    }
+
+    const row = result.rows[0];
+
+    res.json({
+      checkedIn: true,
+      mood: row.mood,
+      meds: row.meds
+    });
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+
+    res.json({
+      checkedIn: false,
+      mood: null,
+      meds: null
+    });
+
+  }
+
+});
+
+// =========================
+// GET USERS
+// =========================
+app.get('/api/users', async (req, res) => {
+
+  try {
+
+    const result = await pool.query(
+      "SELECT id, firstname, lastname " +
+      "FROM clients " +
+      "WHERE role='user' " +
+      "ORDER BY firstname ASC"
+    );
+
+    res.json(result.rows);
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+    res.json([]);
+
+  }
+
+});
+
+// =========================
+// SCHEDULE CALL
+// =========================
+app.post('/api/schedule-call', async (req, res) => {
+
+  try {
+
+    const {
+      clientid,
+      callername,
+      calldate,
+      starttime,
+      endtime,
+      timezone
+    } = req.body;
+
+    await pool.query(
+      "INSERT INTO calls " +
+      "(clientid, callername, calldate, starttime, endtime, timezone, status) " +
+      "VALUES($1,$2,$3,$4,$5,$6,$7)",
+      [
+        clientid,
+        callername,
+        calldate,
+        starttime,
+        endtime,
+        timezone,
+        'scheduled'
+      ]
+    );
+
+    res.json({
+      success: true
+    });
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+
+    res.json({
+      success: false
+    });
+
+  }
+
+});
+
+// =========================
+// GET CALLS
+// =========================
+app.get('/api/calls', async (req, res) => {
+
+  try {
+
+    const result = await pool.query(
+
+      "SELECT calls.*, clients.firstname, clients.lastname " +
+      "FROM calls " +
+      "LEFT JOIN clients " +
+      "ON calls.clientid = clients.id " +
+      "ORDER BY calls.id DESC"
+
+    );
+
+    res.json(result.rows);
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+    res.json([]);
+
+  }
+
+});
+
+// =========================
+// COMPLETE CALL
+// =========================
+app.post('/api/complete-call', async (req, res) => {
+
+  try {
+
+    await pool.query(
+      "UPDATE calls SET status='completed' WHERE id=$1",
+      [req.body.id]
+    );
+
+    res.json({
+      success: true
+    });
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+
+    res.json({
+      success: false
+    });
+
+  }
+
+});
+
+// =========================
 // START SERVER
 // =========================
 const PORT =
@@ -390,3 +589,4 @@ app.listen(PORT, () => {
   );
 
 });
+```

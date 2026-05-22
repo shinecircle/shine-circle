@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+
   <title>Family Dashboard</title>
 
   <meta name="viewport"
@@ -19,7 +20,7 @@
       padding:18px;
     }
 
-    .card {
+    .card{
       padding:20px;
       margin:14px 0;
       border-radius:18px;
@@ -27,7 +28,7 @@
       box-shadow:0 4px 12px rgba(0,0,0,0.06);
     }
 
-    .alert {
+    .alert{
       background:#ffe8e8;
       color:#900;
       padding:16px;
@@ -35,14 +36,14 @@
       margin-top:14px;
     }
 
-    .chart-wrap {
+    .chart-wrap{
       width:100%;
       max-width:600px;
       margin:auto;
       height:280px;
     }
 
-    h2 {
+    h2{
       text-align:center;
       font-size:34px;
       margin-top:10px;
@@ -265,12 +266,7 @@ fetch('/auth')
   if(!u) return;
 
   const name =
-    u.nickname &&
-    u.nickname.trim() !== ""
-
-      ? u.nickname
-
-      : (u.firstname || "Family");
+    u.firstname || "Family";
 
   document.getElementById("welcome")
     .innerText =
@@ -309,12 +305,7 @@ Promise.all([
   }
 
   const name =
-    user.nickname &&
-    user.nickname.trim() !== ""
-
-      ? user.nickname
-
-      : user.firstName;
+    user.firstName || "Loved One";
 
   document.getElementById("monitorHeader")
     .innerHTML =

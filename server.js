@@ -1,78 +1,392 @@
+const express = require('express');
+const session = require('express-session');
+const { Pool } = require('pg');
+const path = require('path');
+
+const app = express();
+
 // =========================
-// DEFAULT USERS
+// TRUST PROXY
 // =========================
+app.set('trust proxy', 1);
 
-// CREATE DEFAULT USER ACCOUNT
-const userExists = await pool.query(
-  "SELECT * FROM clients WHERE LOWER(username)=LOWER($1)",
-  ['user']
-);
+// =========================
+// DATABASE
+// =========================
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
-if (userExists.rows.length === 0) {
+// =========================
+// MIDDLEWARE
+// =========================
+app.use(express.json());
 
-  await pool.query(
-    "INSERT INTO clients " +
-    "(username, firstname, lastname, role, password) " +
-    "VALUES($1,$2,$3,$4,$5)",
-    [
-      'user',
-      'John',
-      'Doe',
-      'user',
-      '1234'
-    ]
-  );
+app.use(express.urlencoded({
+  extended: true
+}));
 
-  console.log("Created default USER account");
+app.use(express.static(__dirname));
+
+app.use(session({
+  secret: 'shine-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false
+  }
+}));
+
+// =========================
+// DATABASE INIT
+// =========================
+async function initDB() {
+
+  try {
+
+    console.log("Initializing database...");
+
+    // =========================
+    // CLIENTS TABLE
+    // =========================
+    await pool.query(
+      "CREATE TABLE IF NOT EXISTS clients (" +
+      "id SERIAL PRIMARY KEY," +
+      "username TEXT," +
+      "firstname TEXT," +
+      "lastname TEXT," +
+      "role TEXT," +
+      "password TEXT" +
+      ");"
+    );
+
+    // =========================
+    // CHECKINS TABLE
+    // =========================
+    await pool.query(
+      "CREATE TABLE IF NOT EXISTS checkins (" +
+      "id SERIAL PRIMARY KEY," +
+      "clientid INTEGER," +
+      "date TEXT," +
+      "mood TEXT," +
+      "meds TEXT" +
+      ");"
+    );
+
+    // =========================
+    // ACTIVITIES TABLE
+    // =========================
+    await pool.query(
+      "CREATE TABLE IF NOT EXISTS activities (" +
+      "id SERIAL PRIMARY KEY," +
+      "clientid INTEGER," +
+      "dayforcall TEXT," +
+      "timeforcall TEXT," +
+      "timezone TEXT" +
+      ");"
+    );
+
+    // =========================
+    // CALLS TABLE
+    // =========================
+    await pool.query(
+      "CREATE TABLE IF NOT EXISTS calls (" +
+      "id SERIAL PRIMARY KEY," +
+      "clientid INTEGER," +
+      "callername TEXT," +
+      "calldate TEXT," +
+      "starttime TEXT," +
+      "endtime TEXT," +
+      "timezone TEXT," +
+      "status TEXT" +
+      ");"
+    );
+
+    // =========================
+    // FIX ACTIVITIES TABLE
+    // =========================
+    await pool.query(
+      "ALTER TABLE activities " +
+      "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
+    );
+
+    await pool.query(
+      "ALTER TABLE activities " +
+      "ADD COLUMN IF NOT EXISTS dayforcall TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE activities " +
+      "ADD COLUMN IF NOT EXISTS timeforcall TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE activities " +
+      "ADD COLUMN IF NOT EXISTS timezone TEXT;"
+    );
+
+    // =========================
+    // FIX CALLS TABLE
+    // =========================
+    await pool.query(
+      "ALTER TABLE calls " +
+      "ADD COLUMN IF NOT EXISTS clientid INTEGER;"
+    );
+
+    await pool.query(
+      "ALTER TABLE calls " +
+      "ADD COLUMN IF NOT EXISTS callername TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE calls " +
+      "ADD COLUMN IF NOT EXISTS calldate TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE calls " +
+      "ADD COLUMN IF NOT EXISTS starttime TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE calls " +
+      "ADD COLUMN IF NOT EXISTS endtime TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE calls " +
+      "ADD COLUMN IF NOT EXISTS timezone TEXT;"
+    );
+
+    await pool.query(
+      "ALTER TABLE calls " +
+      "ADD COLUMN IF NOT EXISTS status TEXT;"
+    );
+
+    // =========================
+    // DEFAULT USERS
+    // =========================
+
+    // USER ACCOUNT
+    const userExists = await pool.query(
+      "SELECT * FROM clients WHERE LOWER(username)=LOWER($1)",
+      ['user']
+    );
+
+    if (userExists.rows.length === 0) {
+
+      await pool.query(
+        "INSERT INTO clients " +
+        "(username, firstname, lastname, role, password) " +
+        "VALUES($1,$2,$3,$4,$5)",
+        [
+          'user',
+          'John',
+          'Doe',
+          'user',
+          '1234'
+        ]
+      );
+
+      console.log("Created USER account");
+
+    }
+
+    // FAMILY ACCOUNT
+    const familyExists = await pool.query(
+      "SELECT * FROM clients WHERE LOWER(username)=LOWER($1)",
+      ['family']
+    );
+
+    if (familyExists.rows.length === 0) {
+
+      await pool.query(
+        "INSERT INTO clients " +
+        "(username, firstname, lastname, role, password) " +
+        "VALUES($1,$2,$3,$4,$5)",
+        [
+          'family',
+          'Sarah',
+          'Doe',
+          'family',
+          '1234'
+        ]
+      );
+
+      console.log("Created FAMILY account");
+
+    }
+
+    // ADMIN ACCOUNT
+    const adminExists = await pool.query(
+      "SELECT * FROM clients WHERE LOWER(username)=LOWER($1)",
+      ['admin']
+    );
+
+    if (adminExists.rows.length === 0) {
+
+      await pool.query(
+        "INSERT INTO clients " +
+        "(username, firstname, lastname, role, password) " +
+        "VALUES($1,$2,$3,$4,$5)",
+        [
+          'admin',
+          'System',
+          'Administrator',
+          'admin',
+          '1234'
+        ]
+      );
+
+      console.log("Created ADMIN account");
+
+    }
+
+    console.log("Database ready.");
+
+  }
+
+  catch (err) {
+
+    console.log("DB INIT ERROR:");
+    console.log(err);
+
+  }
 
 }
 
-// CREATE DEFAULT FAMILY ACCOUNT
-const familyExists = await pool.query(
-  "SELECT * FROM clients WHERE LOWER(username)=LOWER($1)",
-  ['family']
-);
+initDB();
 
-if (familyExists.rows.length === 0) {
+// =========================
+// PAGE ROUTES
+// =========================
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'howitworks.html'));
+});
 
-  await pool.query(
-    "INSERT INTO clients " +
-    "(username, firstname, lastname, role, password) " +
-    "VALUES($1,$2,$3,$4,$5)",
-    [
-      'family',
-      'Sarah',
-      'Doe',
-      'family',
-      '1234'
-    ]
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+app.get('/home', (req, res) => {
+  res.sendFile(path.join(__dirname, 'home.html'));
+});
+
+app.get('/checkin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'checkin.html'));
+});
+
+app.get('/activities', (req, res) => {
+  res.sendFile(path.join(__dirname, 'activities.html'));
+});
+
+app.get('/family', (req, res) => {
+  res.sendFile(path.join(__dirname, 'family.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// =========================
+// HEADER
+// =========================
+app.get('/header', (req, res) => {
+
+  res.sendFile(
+    path.join(__dirname, 'header.html')
   );
 
-  console.log("Created default FAMILY account");
+});
 
-}
+// =========================
+// AUTH
+// =========================
+app.get('/auth', (req, res) => {
 
-// CREATE DEFAULT ADMIN ACCOUNT
-const adminExists = await pool.query(
-  "SELECT * FROM clients WHERE LOWER(username)=LOWER($1)",
-  ['admin']
-);
-
-if (adminExists.rows.length === 0) {
-
-  await pool.query(
-    "INSERT INTO clients " +
-    "(username, firstname, lastname, role, password) " +
-    "VALUES($1,$2,$3,$4,$5)",
-    [
-      'admin',
-      'System',
-      'Administrator',
-      'admin',
-      '1234'
-    ]
+  res.json(
+    req.session.user || null
   );
 
-  console.log("Created default ADMIN account");
+});
 
-}
+// =========================
+// LOGIN
+// =========================
+app.post('/login', async (req, res) => {
+
+  try {
+
+    const result = await pool.query(
+      "SELECT * FROM clients " +
+      "WHERE LOWER(username)=LOWER($1) " +
+      "AND password=$2",
+      [
+        req.body.username,
+        req.body.password
+      ]
+    );
+
+    const user = result.rows[0];
+
+    if (!user) {
+
+      return res.json({
+        success: false
+      });
+
+    }
+
+    req.session.user = user;
+
+    console.log(
+      "LOGIN SUCCESS:",
+      user.username
+    );
+
+    res.json({
+      success: true,
+      role: user.role
+    });
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+
+    res.json({
+      success: false
+    });
+
+  }
+
+});
+
+// =========================
+// LOGOUT
+// =========================
+app.get('/logout', (req, res) => {
+
+  req.session.destroy(() => {
+    res.send("Logged out");
+  });
+
+});
+
+// =========================
+// START SERVER
+// =========================
+const PORT =
+  process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+
+  console.log(
+    "Server running on port " + PORT
+  );
+
+});

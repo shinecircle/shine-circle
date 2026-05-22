@@ -2,25 +2,30 @@
 
 <html>
 <head>
+
   <title>SHINE Circle</title>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
   <link rel="stylesheet" href="styles.css">
 
   <style>
 
-    body {
+    body{
       text-align:center;
       padding:20px;
     }
 
-    .hero {
+    .hero{
+
       max-width:600px;
       margin:auto;
+
     }
 
-    .big-btn {
+    .big-btn{
+
       font-size:20px;
       padding:18px;
       width:90%;
@@ -30,21 +35,40 @@
       background:#1E6FDB;
       color:white;
       cursor:pointer;
+
     }
 
-    .card {
+    .card{
+
       margin-top:20px;
-      padding:15px;
+      padding:20px;
       background:#f5f5f5;
-      border-radius:10px;
+      border-radius:12px;
+
     }
 
-    input {
+    input{
+
       width:90%;
       padding:12px;
-      margin:5px 0;
+      margin:8px 0;
       border-radius:6px;
       border:1px solid #ccc;
+      font-size:16px;
+
+    }
+
+    .login-title{
+
+      margin-bottom:18px;
+
+    }
+
+    #error{
+
+      margin-top:14px;
+      font-weight:bold;
+
     }
 
   </style>
@@ -54,7 +78,6 @@
 <body>
 
 <!-- REUSABLE HEADER -->
-
 <div id="header"></div>
 
 <div class="hero">
@@ -66,27 +89,49 @@
     and peace of mind for families.
   </p>
 
-  <button class="big-btn" onclick="showLogin()">
+  <button class="big-btn"
+          onclick="showLogin()">
+
     Login to Continue
+
   </button>
 
-  <div id="loginBox" class="card" style="display:none;">
+  <!-- LOGIN BOX -->
+  <div id="loginBox"
+       class="card"
+       style="display:none;">
 
+    <h3 class="login-title">
+      Login
+    </h3>
 
-<input id="username" placeholder="Username"><br>
+    <input
+      id="username"
+      placeholder="Username"
+      autocomplete="username"
+    >
 
-<input
-  id="password"
-  type="password"
-  placeholder="Password"
-><br>
+    <br>
 
-<button class="btn" onclick="login()">
-  Login
-</button>
+    <input
+      id="password"
+      type="password"
+      placeholder="Password"
+      autocomplete="current-password"
+      onkeypress="handleEnter(event)"
+    >
 
-<p id="error" style="color:red;"></p>
+    <br><br>
 
+    <button class="btn"
+            onclick="login()">
+
+      Login
+
+    </button>
+
+    <p id="error"
+       style="color:red;"></p>
 
   </div>
 
@@ -98,16 +143,26 @@
 // LOAD HEADER
 // =========================
 fetch('/header')
+
 .then(r=>r.text())
+
 .then(html=>{
 
-  document.getElementById('header').innerHTML = html;
+  document.getElementById('header')
+    .innerHTML = html;
 
-  document.getElementById("headerButtons").innerHTML = `
-    <button class="btn btn-light" onclick="goHome()">
-      Home
-    </button>
-  `;
+  document.getElementById("headerButtons")
+    .innerHTML = `
+
+      <button class="btn btn-light"
+              onclick="goHome()">
+
+        Home
+
+      </button>
+
+    `;
+
 });
 
 // =========================
@@ -118,12 +173,35 @@ function showLogin(){
   document.getElementById("loginBox")
     .style.display = "block";
 
+  document.getElementById("username")
+    .focus();
+
+}
+
+// =========================
+// ENTER KEY SUPPORT
+// =========================
+function handleEnter(event){
+
+  if(event.key === 'Enter'){
+    login();
+  }
+
 }
 
 // =========================
 // LOGIN
 // =========================
 function login(){
+
+  const username =
+    document.getElementById("username")
+      .value
+      .trim();
+
+  const password =
+    document.getElementById("password")
+      .value;
 
   fetch('/login',{
 
@@ -135,11 +213,8 @@ function login(){
 
     body: JSON.stringify({
 
-      username:
-        document.getElementById("username").value,
-
-      password:
-        document.getElementById("password").value
+      username,
+      password
 
     })
 
@@ -149,31 +224,61 @@ function login(){
 
   .then(data=>{
 
+    // LOGIN FAILED
     if(!data.success){
 
       document.getElementById("error")
-        .innerText = "Login failed";
+        .innerText =
+          "Invalid username or password";
 
       return;
 
     }
 
+    // CLEAR ERROR
+    document.getElementById("error")
+      .innerText = "";
+
+    // LOGIN FLAG
     sessionStorage.setItem(
       "justLoggedIn",
       "true"
     );
 
-    if(data.role === 'user'){
+    // =========================
+    // REDIRECT BY ROLE
+    // =========================
+
+    // ADMIN
+    if(data.role === 'admin'){
+
+      window.location = '/admin';
+
+    }
+
+    // FAMILY
+    else if(data.role === 'family'){
+
+      window.location = '/family';
+
+    }
+
+    // USER
+    else{
 
       window.location = '/home';
 
     }
 
-    else{
+  })
 
-      window.location = '/family';
+  .catch(err=>{
 
-    }
+    console.log(err);
+
+    document.getElementById("error")
+      .innerText =
+        "Server error. Please try again.";
 
   });
 

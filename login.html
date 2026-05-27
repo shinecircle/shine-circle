@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 
@@ -18,14 +17,11 @@
     }
 
     .hero{
-
       max-width:600px;
       margin:auto;
-
     }
 
     .big-btn{
-
       font-size:20px;
       padding:18px;
       width:90%;
@@ -35,40 +31,31 @@
       background:#1E6FDB;
       color:white;
       cursor:pointer;
-
     }
 
     .card{
-
       margin-top:20px;
       padding:20px;
       background:#f5f5f5;
       border-radius:12px;
-
     }
 
     input{
-
       width:90%;
       padding:12px;
       margin:8px 0;
       border-radius:6px;
       border:1px solid #ccc;
       font-size:16px;
-
     }
 
     .login-title{
-
       margin-bottom:18px;
-
     }
 
     #error{
-
       margin-top:14px;
       font-weight:bold;
-
     }
 
   </style>
@@ -77,7 +64,7 @@
 
 <body>
 
-<!-- REUSABLE HEADER -->
+<!-- HEADER -->
 <div id="header"></div>
 
 <div class="hero">
@@ -144,9 +131,9 @@
 // =========================
 fetch('/header')
 
-.then(r=>r.text())
+.then(r => r.text())
 
-.then(html=>{
+.then(html => {
 
   document.getElementById('header')
     .innerHTML = html;
@@ -203,7 +190,7 @@ function login(){
     document.getElementById("password")
       .value;
 
-  fetch('/login',{
+  fetch('/login', {
 
     method:'POST',
 
@@ -212,19 +199,21 @@ function login(){
     },
 
     body: JSON.stringify({
-
       username,
       password
-
     })
 
   })
 
-  .then(r=>r.json())
+  .then(r => r.json())
 
-  .then(data=>{
+  .then(data => {
 
+    console.log("LOGIN RESPONSE:", data);
+
+    // =========================
     // LOGIN FAILED
+    // =========================
     if(!data.success){
 
       document.getElementById("error")
@@ -239,11 +228,14 @@ function login(){
     document.getElementById("error")
       .innerText = "";
 
-    // LOGIN FLAG
+    // SAVE LOGIN FLAG
     sessionStorage.setItem(
       "justLoggedIn",
       "true"
     );
+
+    // DEBUG ROLE
+    console.log("ROLE:", data.role);
 
     // =========================
     // REDIRECT BY ROLE
@@ -252,27 +244,33 @@ function login(){
     // ADMIN
     if(data.role === 'admin'){
 
-      window.location = '/admin';
+      console.log("Redirecting to admin");
+
+      window.location.href = '/admin';
 
     }
 
     // FAMILY
     else if(data.role === 'family'){
 
-      window.location = '/family';
+      console.log("Redirecting to family");
+
+      window.location.href = '/family';
 
     }
 
     // USER
     else{
 
-      window.location = '/home';
+      console.log("Redirecting to home");
+
+      window.location.href = '/home';
 
     }
 
   })
 
-  .catch(err=>{
+  .catch(err => {
 
     console.log(err);
 
@@ -285,11 +283,11 @@ function login(){
 }
 
 // =========================
-// NAV
+// NAVIGATION
 // =========================
 function goHome(){
 
-  window.location = '/';
+  window.location.href = '/';
 
 }
 

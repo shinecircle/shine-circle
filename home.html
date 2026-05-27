@@ -57,7 +57,7 @@
   <h1 class="welcome-title"
       id="welcomeTitle">
 
-    Welcome Back
+    Loading...
 
   </h1>
 
@@ -252,17 +252,20 @@ function loadHeader(){
 // =========================
 function loadTodayDate(){
 
+  const formattedDate =
+    new Date().toLocaleDateString(
+      'en-US',
+      {
+        weekday:'long',
+        year:'numeric',
+        month:'long',
+        day:'numeric'
+      }
+    );
+
   document.getElementById("todayDate")
     .innerText =
-      new Date().toLocaleDateString(
-        'en-US',
-        {
-          weekday:'long',
-          year:'numeric',
-          month:'long',
-          day:'numeric'
-        }
-      );
+      "Today is " + formattedDate;
 
 }
 
@@ -289,9 +292,11 @@ function loadTodayStatus(){
 
     document.getElementById("welcomeTitle")
       .innerText =
-        "Welcome back " + name;
+        "We are glad you are here, " + name;
 
+    // =========================
     // STRICT CHECKS
+    // =========================
     const moodDone =
       data.mood !== null &&
       data.mood !== undefined &&
@@ -304,23 +309,29 @@ function loadTodayStatus(){
 
     let message = "";
 
-    // NEITHER
+    // =========================
+    // BOTH MISSING
+    // =========================
     if(!moodDone && !medsDone){
 
       message =
-        "Please check in today";
+        "Today will be a good day!";
 
     }
 
+    // =========================
     // MOOD ONLY
+    // =========================
     else if(moodDone && !medsDone){
 
       message =
-        "It is important to take your medication";
+        "Please make sure you are taking your medication";
 
     }
 
+    // =========================
     // MEDS ONLY
+    // =========================
     else if(!moodDone && medsDone){
 
       message =
@@ -328,7 +339,9 @@ function loadTodayStatus(){
 
     }
 
-    // BOTH
+    // =========================
+    // BOTH COMPLETE
+    // =========================
     else {
 
       message =
@@ -354,7 +367,7 @@ function loadTodayStatus(){
 }
 
 // =========================
-// NAV
+// NAVIGATION
 // =========================
 function goCheckin(){
 
@@ -371,8 +384,11 @@ function goActivities(){
 function logout(){
 
   fetch('/logout')
+
   .then(()=>{
+
     window.location='/login';
+
   });
 
 }

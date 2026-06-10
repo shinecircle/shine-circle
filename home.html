@@ -50,8 +50,7 @@ margin-bottom:20px;
 
 .row{
 display:grid;
-grid-template-columns:
-1fr 1fr;
+grid-template-columns:1fr 1fr;
 gap:20px;
 align-items:center;
 }
@@ -76,11 +75,20 @@ line-height:2;
 
 .call-title{
 font-size:20px;
-margin-bottom:12px;
+margin-bottom:10px;
 }
 
 .call-date{
 font-size:28px;
+}
+
+.call-time{
+font-size:24px;
+}
+
+.call-zone{
+font-size:18px;
+color:#555;
 }
 
 .call-link{
@@ -90,8 +98,7 @@ cursor:pointer;
 @media(max-width:800px){
 
 .row{
-grid-template-columns:
-1fr;
+grid-template-columns:1fr;
 }
 
 .big-button{
@@ -181,9 +188,7 @@ Activities
 </div>
 
 <div
-class="right-panel
-call-link"
-
+class="right-panel call-link"
 onclick="goCall()">
 
 <div class="call-title">
@@ -223,41 +228,8 @@ document
 .getElementById(
 'header'
 )
-
 .innerHTML=
-
 html;
-
-const buttons=
-
-document
-.getElementById(
-'headerButtons'
-);
-
-if(buttons){
-
-buttons.innerHTML=`
-
-<button
-class="btn btn-light"
-onclick="window.location='/settings'">
-
-Settings
-
-</button>
-
-<button
-class="btn"
-onclick="logout()">
-
-Log out
-
-</button>
-
-`;
-
-}
 
 });
 
@@ -281,37 +253,32 @@ new Date()
 {
 
 weekday:'long',
-
 month:'long',
-
 day:'numeric',
-
 year:'numeric'
 
 }
 
 );
 
-// CHECKIN
-fetch(
-'/api/checkin-today'
-)
+// STATUS
+
+fetch('/api/checkin-today')
 
 .then(r=>r.json())
 
 .then(data=>{
 
 const mood=
-
 !!data.mood;
 
 const meds=
-
 data.meds==="Yes";
 
 let text="";
 
 // NONE
+
 if(
 !mood &&
 !meds
@@ -322,12 +289,13 @@ text=
 `
 Mood not reported today
 <br>
-Medicine not recorded
+Medicine not recorded today
 `;
 
 }
 
 // MOOD ONLY
+
 else if(
 mood &&
 !meds
@@ -336,7 +304,7 @@ mood &&
 text=
 
 `
-Mood reported today
+✓ Mood reported today
 <br>
 Medicine consumption not reported today
 `;
@@ -344,6 +312,7 @@ Medicine consumption not reported today
 }
 
 // MEDS ONLY
+
 else if(
 !mood &&
 meds
@@ -352,20 +321,23 @@ meds
 text=
 
 `
-Medicine recorded
+✓ Medicine recorded today
 <br>
-Please report your mood
+Mood not reported today
 `;
 
 }
 
 // BOTH
+
 else{
 
 text=
 
 `
-Thanks for checking in today
+✓ Mood reported today
+<br>
+✓ Medicine recorded today
 `;
 
 }
@@ -382,9 +354,8 @@ text;
 });
 
 // CALL
-fetch(
-'/api/next-call'
-)
+
+fetch('/api/next-call')
 
 .then(r=>r.json())
 
@@ -401,6 +372,72 @@ return;
 
 }
 
+const callDate=
+
+new Date(
+data.calldate
+);
+
+const formattedDate=
+
+callDate
+.toLocaleDateString(
+
+'en-US',
+
+{
+
+month:'long',
+day:'numeric',
+year:'numeric'
+
+}
+
+);
+
+let formattedTime="";
+
+if(
+data.starttime
+){
+
+const parts=
+
+data.starttime
+.split(":");
+
+const t=
+
+new Date();
+
+t.setHours(parts[0]);
+
+t.setMinutes(parts[1]);
+
+formattedTime=
+
+t.toLocaleTimeString(
+
+'en-US',
+
+{
+
+hour:'numeric',
+minute:'2-digit',
+hour12:true
+
+}
+
+);
+
+}
+
+const zone=
+
+data.timezone ||
+
+"Local Time";
+
 document
 .getElementById(
 'callDate'
@@ -410,11 +447,25 @@ document
 
 `
 
-${data.calldate}
+<div>
 
-<br>
+${formattedDate}
 
-${data.starttime}
+</div>
+
+<div
+class="call-time">
+
+${formattedTime}
+
+</div>
+
+<div
+class="call-zone">
+
+${zone}
+
+</div>
 
 `;
 
@@ -438,12 +489,8 @@ window.location=
 
 function goCall(){
 
-if(nextCall){
-
 window.location=
 '/activities';
-
-}
 
 }
 

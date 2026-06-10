@@ -1,4 +1,6 @@
-<header class="shine-header">
+<!DOCTYPE html>
+
+<div class="header">
 
   <!-- LEFT -->
   <div class="header-left">
@@ -7,8 +9,8 @@
 
       <img
         src="/logo.png"
-        alt="Shine Circle"
-        class="logo">
+        class="logo"
+        alt="Shine Circle">
 
     </a>
 
@@ -37,11 +39,11 @@
 
   </div>
 
-</header>
+</div>
 
 <style>
 
-.shine-header{
+.header{
 
 display:flex;
 
@@ -49,7 +51,7 @@ justify-content:space-between;
 
 align-items:center;
 
-padding:14px 24px;
+padding:14px 22px;
 
 background:white;
 
@@ -59,7 +61,7 @@ position:sticky;
 
 top:0;
 
-z-index:1000;
+z-index:999;
 
 }
 
@@ -74,8 +76,6 @@ align-items:center;
 .logo{
 
 height:64px;
-
-width:auto;
 
 display:block;
 
@@ -93,21 +93,15 @@ align-items:center;
 
 @media(max-width:700px){
 
-.shine-header{
-
-padding:12px;
-
-}
-
 .logo{
 
-height:52px;
+height:50px;
 
 }
 
-.header-right{
+.header{
 
-gap:8px;
+padding:10px;
 
 }
 

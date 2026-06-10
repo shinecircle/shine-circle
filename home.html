@@ -16,139 +16,86 @@ href="styles.css">
 <style>
 
 body{
-
 margin:0;
-
 background:#f4f4f4;
-
 font-family:Arial;
-
 }
 
 .page{
-
 max-width:1100px;
-
 margin:auto;
-
 padding:20px;
-
 }
 
 .today{
-
 text-align:center;
-
 font-size:22px;
-
 margin-top:30px;
-
 margin-bottom:35px;
-
 }
 
 .section{
-
 background:#cfe6f0;
-
 border-radius:32px;
-
 padding:26px;
-
 margin-bottom:30px;
-
 border:2px solid #b7bcc1;
-
 }
 
 .section-title{
-
 font-size:24px;
-
 font-weight:bold;
-
 margin-bottom:20px;
-
 }
 
 .row{
-
 display:grid;
-
 grid-template-columns:
-
 1fr 1fr;
-
 gap:20px;
-
 align-items:center;
-
 }
 
 .action{
-
 display:flex;
-
 justify-content:center;
-
 }
 
 .big-button{
-
 width:320px;
-
 height:95px;
-
 font-size:22px;
-
 border-radius:20px;
-
 }
 
 .right-panel{
-
 text-align:center;
-
 font-size:22px;
-
 line-height:2;
-
 }
 
 .call-title{
-
 font-size:20px;
-
 margin-bottom:12px;
-
 }
 
 .call-date{
-
 font-size:28px;
-
 }
 
 .call-link{
-
 cursor:pointer;
-
 }
 
 @media(max-width:800px){
 
 .row{
-
 grid-template-columns:
-
 1fr;
-
 }
 
 .big-button{
-
 width:100%;
-
 }
 
 }
@@ -189,9 +136,9 @@ Your well-being matters
 class="btn big-button"
 onclick="goCheckin()">
 
-Please log your
+Daily check-in
 <br>
-Daily Check-in
+is not complete
 
 </button>
 
@@ -364,6 +311,7 @@ data.meds==="Yes";
 
 let text="";
 
+// NONE
 if(
 !mood &&
 !meds
@@ -379,6 +327,7 @@ Medicine not recorded
 
 }
 
+// MOOD ONLY
 else if(
 mood &&
 !meds
@@ -387,13 +336,14 @@ mood &&
 text=
 
 `
-Mood reported
+Mood reported today
 <br>
-Please make sure you are taking your medication
+Medicine consumption not reported today
 `;
 
 }
 
+// MEDS ONLY
 else if(
 !mood &&
 meds
@@ -409,6 +359,7 @@ Please report your mood
 
 }
 
+// BOTH
 else{
 
 text=

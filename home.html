@@ -5,74 +5,127 @@
 
 <title>Home | Shine Circle</title>
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1">
 
-<link rel="stylesheet"
+<link
+rel="stylesheet"
 href="styles.css">
 
 <style>
 
+body{
+
+margin:0;
+
+background:#f4f4f4;
+
+font-family:Arial;
+
+}
+
 .page{
-max-width:900px;
+
+max-width:1100px;
+
 margin:auto;
+
 padding:20px;
+
+}
+
+.today{
+
 text-align:center;
+
+font-size:22px;
+
+margin-top:30px;
+
+margin-bottom:35px;
+
 }
 
-.welcome{
-font-size:34px;
-margin-top:10px;
+.section{
+
+background:#cfe6f0;
+
+border-radius:32px;
+
+padding:26px;
+
+margin-bottom:30px;
+
+border:2px solid #b7bcc1;
+
 }
 
-.date{
-font-size:18px;
-margin-bottom:25px;
-color:#555;
+.section-title{
+
+font-size:24px;
+
+font-weight:bold;
+
+margin-bottom:20px;
+
 }
 
-.grid{
+.row{
 
 display:grid;
 
 grid-template-columns:
+
 1fr 1fr;
 
-gap:18px;
+gap:20px;
 
-margin-top:20px;
+align-items:center;
 
 }
 
-.card{
-
-background:white;
-
-border-radius:18px;
-
-padding:28px;
-
-min-height:150px;
+.action{
 
 display:flex;
 
-flex-direction:column;
-
 justify-content:center;
-
-box-shadow:
-0 4px 12px
-rgba(0,0,0,.08);
 
 }
 
-.big-btn{
+.big-button{
 
-padding:18px;
+width:320px;
+
+height:95px;
 
 font-size:22px;
 
-cursor:pointer;
+border-radius:20px;
+
+}
+
+.right-panel{
+
+text-align:center;
+
+font-size:22px;
+
+line-height:2;
+
+}
+
+.call-title{
+
+font-size:20px;
+
+margin-bottom:12px;
+
+}
+
+.call-date{
+
+font-size:28px;
 
 }
 
@@ -80,42 +133,21 @@ cursor:pointer;
 
 cursor:pointer;
 
-text-decoration:none;
-
-color:inherit;
-
 }
 
-.call-title{
+@media(max-width:800px){
 
-font-size:18px;
-
-font-weight:bold;
-
-margin-bottom:10px;
-
-}
-
-.call-date{
-
-font-size:22px;
-
-}
-
-.call-sub{
-
-margin-top:12px;
-
-color:#666;
-
-}
-
-@media(max-width:700px){
-
-.grid{
+.row{
 
 grid-template-columns:
+
 1fr;
+
+}
+
+.big-button{
+
+width:100%;
 
 }
 
@@ -131,46 +163,43 @@ grid-template-columns:
 
 <div class="page">
 
-<h1
-class="welcome"
-id="welcome">
+<div
+class="today"
+id="todayDate">
 
 Loading...
 
-</h1>
+</div>
 
-<div
-class="date"
-id="todayDate">
+<!-- CHECK IN -->
+
+<div class="section">
+
+<div class="section-title">
+
+Your well-being matters
 
 </div>
 
-<div class="grid">
+<div class="row">
 
-<!-- TOP LEFT -->
-
-<div class="card">
+<div class="action">
 
 <button
-class="btn big-btn"
+class="btn big-button"
 onclick="goCheckin()">
 
-Check In
+Please log your
+<br>
+Daily Check-in
 
 </button>
 
 </div>
 
-<!-- TOP RIGHT -->
-
-<div class="card">
-
 <div
-id="statusMessage"
-style="
-font-size:24px;
-line-height:1.5;
-">
+class="right-panel"
+id="statusPanel">
 
 Loading...
 
@@ -178,12 +207,24 @@ Loading...
 
 </div>
 
-<!-- BOTTOM LEFT -->
+</div>
 
-<div class="card">
+<!-- ACTIVITIES -->
+
+<div class="section">
+
+<div class="section-title">
+
+Moments of activity make a difference
+
+</div>
+
+<div class="row">
+
+<div class="action">
 
 <button
-class="btn btn-light big-btn"
+class="btn big-button"
 onclick="goActivities()">
 
 Activities
@@ -192,29 +233,25 @@ Activities
 
 </div>
 
-<!-- BOTTOM RIGHT -->
-
 <div
-class="card call-link"
+class="right-panel
+call-link"
+
 onclick="goCall()">
 
 <div class="call-title">
 
-Upcoming Call
+Your next upcoming call
 
 </div>
 
 <div
-class="call-date"
-id="nextCall">
+id="callDate"
+class="call-date">
 
 No upcoming call
 
 </div>
-
-<div class="call-sub">
-
-Click for details
 
 </div>
 
@@ -226,9 +263,7 @@ Click for details
 
 <script>
 
-let currentUser=null;
-
-let nextCallData=null;
+let nextCall=null;
 
 // HEADER
 fetch('/header')
@@ -238,12 +273,19 @@ fetch('/header')
 .then(html=>{
 
 document
-.getElementById("header")
-.innerHTML=html;
+.getElementById(
+'header'
+)
+
+.innerHTML=
+
+html;
 
 const buttons=
-document.getElementById(
-"headerButtons"
+
+document
+.getElementById(
+'headerButtons'
 );
 
 if(buttons){
@@ -251,10 +293,18 @@ if(buttons){
 buttons.innerHTML=`
 
 <button
+class="btn btn-light"
+onclick="window.location='/settings'">
+
+Settings
+
+</button>
+
+<button
 class="btn"
 onclick="logout()">
 
-Logout
+Log out
 
 </button>
 
@@ -264,50 +314,16 @@ Logout
 
 });
 
-// AUTH
-fetch('/auth')
-
-.then(r=>r.json())
-
-.then(user=>{
-
-if(!user){
-
-window.location=
-'/login';
-
-return;
-
-}
-
-currentUser=user;
+// DATE
 
 document
 .getElementById(
-'welcome'
+'todayDate'
 )
 
 .innerText=
 
-"We are glad you are here, " +
-
-(
-user.firstname ||
-user.username
-);
-
-loadDate();
-
-loadStatus();
-
-loadNextCall();
-
-});
-
-// DATE
-function loadDate(){
-
-const date=
+"Today is " +
 
 new Date()
 
@@ -329,21 +345,7 @@ year:'numeric'
 
 );
 
-document
-.getElementById(
-'todayDate'
-)
-
-.innerText=
-
-"Today is " +
-date;
-
-}
-
-// STATUS
-function loadStatus(){
-
+// CHECKIN
 fetch(
 '/api/checkin-today'
 )
@@ -360,16 +362,20 @@ const meds=
 
 data.meds==="Yes";
 
-let msg="";
+let text="";
 
 if(
 !mood &&
 !meds
 ){
 
-msg=
+text=
 
-"Today will be a good day!";
+`
+Mood not reported today
+<br>
+Medicine not recorded
+`;
 
 }
 
@@ -378,9 +384,13 @@ mood &&
 !meds
 ){
 
-msg=
+text=
 
-"Please make sure you are taking your medication";
+`
+Mood reported
+<br>
+Please make sure you are taking your medication
+`;
 
 }
 
@@ -389,50 +399,51 @@ else if(
 meds
 ){
 
-msg=
+text=
 
-"We care about how you feel";
+`
+Medicine recorded
+<br>
+Please report your mood
+`;
 
 }
 
 else{
 
-msg=
+text=
 
-"Thanks for checking in today";
+`
+Thanks for checking in today
+`;
 
 }
 
 document
 .getElementById(
-'statusMessage'
+'statusPanel'
 )
 
-.innerText=
+.innerHTML=
 
-msg;
+text;
 
 });
 
-}
-
 // CALL
-function loadNextCall(){
-
 fetch(
 '/api/next-call'
 )
 
 .then(r=>r.json())
 
-.then(call=>{
+.then(data=>{
 
-nextCallData=
-call;
+nextCall=data;
 
 if(
-!call ||
-!call.calldate
+!data ||
+!data.calldate
 ){
 
 return;
@@ -441,49 +452,28 @@ return;
 
 document
 .getElementById(
-'nextCall'
+'callDate'
 )
 
 .innerHTML=
 
 `
 
-<div>
+${data.calldate}
 
-${call.calldate}
+<br>
 
-</div>
-
-<div>
-
-${call.starttime}
-
-</div>
+${data.starttime}
 
 `;
 
 });
 
-}
-
-function goCall(){
-
-if(
-nextCallData
-){
-
-window.location=
-
-'/activities';
-
-}
-
-}
+// NAV
 
 function goCheckin(){
 
 window.location=
-
 '/checkin';
 
 }
@@ -491,16 +481,24 @@ window.location=
 function goActivities(){
 
 window.location=
-
 '/activities';
+
+}
+
+function goCall(){
+
+if(nextCall){
+
+window.location=
+'/activities';
+
+}
 
 }
 
 function logout(){
 
-fetch(
-'/logout'
-)
+fetch('/logout')
 
 .then(()=>{
 

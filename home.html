@@ -3,397 +3,516 @@
 
 <head>
 
-  <title>Home | Shine Circle</title>
+<title>Home | Shine Circle</title>
 
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet"
+href="styles.css">
 
-  <style>
+<style>
 
-    .page {
-      max-width:800px;
-      margin:auto;
-      padding:20px;
-      text-align:center;
-    }
+.page{
+max-width:900px;
+margin:auto;
+padding:20px;
+text-align:center;
+}
 
-    .status-card {
+.welcome{
+font-size:34px;
+margin-top:10px;
+}
 
-      background:white;
-      padding:30px 25px;
-      border-radius:18px;
-      margin-top:25px;
-      box-shadow:0 4px 12px rgba(0,0,0,0.08);
+.date{
+font-size:18px;
+margin-bottom:25px;
+color:#555;
+}
 
-    }
+.grid{
 
-    .welcome-title{
-      font-size:32px;
-      margin-bottom:10px;
-    }
+display:grid;
 
-    .encouragement {
+grid-template-columns:
+1fr 1fr;
 
-      font-size:22px;
-      line-height:1.5;
-      margin-top:15px;
-      color:#444;
+gap:18px;
 
-    }
+margin-top:20px;
 
-  </style>
+}
+
+.card{
+
+background:white;
+
+border-radius:18px;
+
+padding:28px;
+
+min-height:150px;
+
+display:flex;
+
+flex-direction:column;
+
+justify-content:center;
+
+box-shadow:
+0 4px 12px
+rgba(0,0,0,.08);
+
+}
+
+.big-btn{
+
+padding:18px;
+
+font-size:22px;
+
+cursor:pointer;
+
+}
+
+.call-link{
+
+cursor:pointer;
+
+text-decoration:none;
+
+color:inherit;
+
+}
+
+.call-title{
+
+font-size:18px;
+
+font-weight:bold;
+
+margin-bottom:10px;
+
+}
+
+.call-date{
+
+font-size:22px;
+
+}
+
+.call-sub{
+
+margin-top:12px;
+
+color:#666;
+
+}
+
+@media(max-width:700px){
+
+.grid{
+
+grid-template-columns:
+1fr;
+
+}
+
+}
+
+</style>
 
 </head>
 
 <body>
 
-<!-- HEADER -->
 <div id="header"></div>
 
 <div class="page">
 
-  <h1 class="welcome-title"
-      id="welcomeTitle">
+<h1
+class="welcome"
+id="welcome">
 
-    Loading...
+Loading...
 
-  </h1>
+</h1>
 
-  <p id="todayDate"></p>
+<div
+class="date"
+id="todayDate">
 
-  <div class="status-card">
+</div>
 
-    <div class="encouragement"
-         id="encouragementMessage">
+<div class="grid">
 
-      Loading today's update...
+<!-- TOP LEFT -->
 
-    </div>
+<div class="card">
 
-  </div>
+<button
+class="btn big-btn"
+onclick="goCheckin()">
 
-  <div style="margin-top:35px;">
+Check In
 
-    <button class="btn"
-            onclick="goCheckin()">
+</button>
 
-      Daily Check-In
+</div>
 
-    </button>
+<!-- TOP RIGHT -->
 
-    <button class="btn btn-light"
-            onclick="goActivities()">
+<div class="card">
 
-      Activities
+<div
+id="statusMessage"
+style="
+font-size:24px;
+line-height:1.5;
+">
 
-    </button>
+Loading...
 
-  </div>
+</div>
+
+</div>
+
+<!-- BOTTOM LEFT -->
+
+<div class="card">
+
+<button
+class="btn btn-light big-btn"
+onclick="goActivities()">
+
+Activities
+
+</button>
+
+</div>
+
+<!-- BOTTOM RIGHT -->
+
+<div
+class="card call-link"
+onclick="goCall()">
+
+<div class="call-title">
+
+Upcoming Call
+
+</div>
+
+<div
+class="call-date"
+id="nextCall">
+
+No upcoming call
+
+</div>
+
+<div class="call-sub">
+
+Click for details
+
+</div>
+
+</div>
+
+</div>
 
 </div>
 
 <script>
 
-let currentUser = null;
+let currentUser=null;
 
-// =========================
-// CHECK USER ROLE
-// =========================
-async function checkUserRole() {
+let nextCallData=null;
 
-  try {
+// HEADER
+fetch('/header')
 
-    const response = await fetch('/auth');
-    const user = await response.json();
+.then(r=>r.text())
 
-    currentUser = user;
+.then(html=>{
 
-    // NOT LOGGED IN
-    if (!user) {
+document
+.getElementById("header")
+.innerHTML=html;
 
-      document.body.innerHTML = `
+const buttons=
+document.getElementById(
+"headerButtons"
+);
 
-        <div style="
-          text-align:center;
-          margin-top:100px;
-          font-family:Arial;
-        ">
+if(buttons){
 
-          <h2>Please log in</h2>
+buttons.innerHTML=`
 
-        </div>
+<button
+class="btn"
+onclick="logout()">
 
-      `;
+Logout
 
-      return false;
+</button>
 
-    }
-
-    // WRONG ROLE
-    if (user.role !== 'user') {
-
-      document.body.innerHTML = `
-
-        <div style="
-          text-align:center;
-          margin-top:100px;
-          font-family:Arial;
-          padding:20px;
-        ">
-
-          <h2>
-            This page is only available for Users.
-          </h2>
-
-          <p>
-            You are currently logged in as a Caregiver.
-          </p>
-
-          <div style="margin-top:30px;">
-
-            <button class="btn"
-                    onclick="window.location='/family'">
-
-              Go To Family Dashboard
-
-            </button>
-
-            <button class="btn btn-light"
-                    onclick="logout()">
-
-              Logout
-
-            </button>
-
-          </div>
-
-        </div>
-
-      `;
-
-      return false;
-
-    }
-
-    return true;
-
-  }
-
-  catch (err) {
-
-    console.log(err);
-
-    return false;
-
-  }
+`;
 
 }
 
-// =========================
-// LOAD PAGE
-// =========================
-window.onload = async function () {
+});
 
-  const allowed =
-    await checkUserRole();
+// AUTH
+fetch('/auth')
 
-  if (!allowed) {
-    return;
-  }
+.then(r=>r.json())
 
-  loadHeader();
+.then(user=>{
 
-  loadTodayDate();
+if(!user){
 
-  loadTodayStatus();
+window.location=
+'/login';
 
-};
-
-// =========================
-// LOAD HEADER
-// =========================
-function loadHeader(){
-
-  fetch('/header')
-
-  .then(r=>r.text())
-
-  .then(html=>{
-
-    document.getElementById('header')
-      .innerHTML = html;
-
-    const buttons =
-      document.getElementById("headerButtons");
-
-    if(buttons){
-
-      buttons.innerHTML = `
-
-        <button class="btn"
-                onclick="logout()">
-
-          Logout
-
-        </button>
-
-      `;
-
-    }
-
-  });
+return;
 
 }
 
-// =========================
+currentUser=user;
+
+document
+.getElementById(
+'welcome'
+)
+
+.innerText=
+
+"We are glad you are here, " +
+
+(
+user.firstname ||
+user.username
+);
+
+loadDate();
+
+loadStatus();
+
+loadNextCall();
+
+});
+
 // DATE
-// =========================
-function loadTodayDate(){
+function loadDate(){
 
-  const formattedDate =
-    new Date().toLocaleDateString(
-      'en-US',
-      {
-        weekday:'long',
-        year:'numeric',
-        month:'long',
-        day:'numeric'
-      }
-    );
+const date=
 
-  document.getElementById("todayDate")
-    .innerText =
-      "Today is " + formattedDate;
+new Date()
 
-}
+.toLocaleDateString(
 
-// =========================
-// LOAD TODAY STATUS
-// =========================
-function loadTodayStatus(){
+'en-US',
 
-  fetch('/api/checkin-today')
+{
 
-  .then(r=>r.json())
+weekday:'long',
 
-  .then(data=>{
+month:'long',
 
-    console.log("HOME CHECKIN:", data);
+day:'numeric',
 
-    // =========================
-    // WELCOME MESSAGE
-    // =========================
-    const name =
-      currentUser.firstname ||
-      currentUser.username ||
-      "User";
-
-    document.getElementById("welcomeTitle")
-      .innerText =
-        "We are glad you are here, " + name;
-
-    // =========================
-    // STRICT CHECKS
-    // =========================
-    const moodDone =
-      data.mood !== null &&
-      data.mood !== undefined &&
-      data.mood !== "";
-
-    const medsDone =
-      data.meds !== null &&
-      data.meds !== undefined &&
-      data.meds !== "";
-
-    let message = "";
-
-    // =========================
-    // BOTH MISSING
-    // =========================
-    if(!moodDone && !medsDone){
-
-      message =
-        "Today will be a good day!";
-
-    }
-
-    // =========================
-    // MOOD ONLY
-    // =========================
-    else if(moodDone && !medsDone){
-
-      message =
-        "Please make sure you are taking your medication";
-
-    }
-
-    // =========================
-    // MEDS ONLY
-    // =========================
-    else if(!moodDone && medsDone){
-
-      message =
-        "We care about how you feel";
-
-    }
-
-    // =========================
-    // BOTH COMPLETE
-    // =========================
-    else {
-
-      message =
-        "Thanks for checking in today";
-
-    }
-
-    document.getElementById("encouragementMessage")
-      .innerHTML = message;
-
-  })
-
-  .catch(err=>{
-
-    console.log(err);
-
-    document.getElementById("encouragementMessage")
-      .innerText =
-        "Unable to load today's update.";
-
-  });
+year:'numeric'
 
 }
 
-// =========================
-// NAVIGATION
-// =========================
+);
+
+document
+.getElementById(
+'todayDate'
+)
+
+.innerText=
+
+"Today is " +
+date;
+
+}
+
+// STATUS
+function loadStatus(){
+
+fetch(
+'/api/checkin-today'
+)
+
+.then(r=>r.json())
+
+.then(data=>{
+
+const mood=
+
+!!data.mood;
+
+const meds=
+
+data.meds==="Yes";
+
+let msg="";
+
+if(
+!mood &&
+!meds
+){
+
+msg=
+
+"Today will be a good day!";
+
+}
+
+else if(
+mood &&
+!meds
+){
+
+msg=
+
+"Please make sure you are taking your medication";
+
+}
+
+else if(
+!mood &&
+meds
+){
+
+msg=
+
+"We care about how you feel";
+
+}
+
+else{
+
+msg=
+
+"Thanks for checking in today";
+
+}
+
+document
+.getElementById(
+'statusMessage'
+)
+
+.innerText=
+
+msg;
+
+});
+
+}
+
+// CALL
+function loadNextCall(){
+
+fetch(
+'/api/next-call'
+)
+
+.then(r=>r.json())
+
+.then(call=>{
+
+nextCallData=
+call;
+
+if(
+!call ||
+!call.calldate
+){
+
+return;
+
+}
+
+document
+.getElementById(
+'nextCall'
+)
+
+.innerHTML=
+
+`
+
+<div>
+
+${call.calldate}
+
+</div>
+
+<div>
+
+${call.starttime}
+
+</div>
+
+`;
+
+});
+
+}
+
+function goCall(){
+
+if(
+nextCallData
+){
+
+window.location=
+
+'/activities';
+
+}
+
+}
+
 function goCheckin(){
 
-  window.location='/checkin';
+window.location=
+
+'/checkin';
 
 }
 
 function goActivities(){
 
-  window.location='/activities';
+window.location=
+
+'/activities';
 
 }
 
 function logout(){
 
-  fetch('/logout')
+fetch(
+'/logout'
+)
 
-  .then(()=>{
+.then(()=>{
 
-    window.location='/login';
+window.location=
+'/login';
 
-  });
+});
 
 }
 
 </script>
 
 </body>
+
 </html>

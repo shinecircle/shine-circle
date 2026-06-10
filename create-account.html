@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Create Account | Shine Circle</title>
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<link
+rel="stylesheet"
+href="styles.css">
+
+<style>
+
+body{
+
+text-align:center;
+
+padding:20px;
+
+}
+
+.container{
+
+max-width:650px;
+
+margin:auto;
+
+}
+
+.card{
+
+background:#f7f7f7;
+
+padding:30px;
+
+border-radius:16px;
+
+margin-top:20px;
+
+}
+
+input,
+select{
+
+width:90%;
+
+padding:14px;
+
+margin:10px 0;
+
+font-size:16px;
+
+border-radius:8px;
+
+border:1px solid #ccc;
+
+}
+
+.submit-btn{
+
+width:90%;
+
+padding:16px;
+
+font-size:18px;
+
+}
+
+.success{
+
+color:green;
+
+margin-top:15px;
+
+}
+
+.error{
+
+color:red;
+
+margin-top:15px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="header"></div>
+
+<div class="container">
+
+<h1>
+
+Create Account
+
+</h1>
+
+<p>
+
+Join Shine Circle
+
+</p>
+
+<div class="card">
+
+<input
+id="firstName"
+placeholder="First Name">
+
+<input
+id="lastName"
+placeholder="Last Name">
+
+<input
+id="username"
+placeholder="Username">
+
+<input
+id="password"
+type="password"
+placeholder="Password">
+
+<select id="role">
+
+<option value="user">
+
+User
+
+</option>
+
+<option value="family">
+
+Family / Caregiver
+
+</option>
+
+</select>
+
+<br>
+
+<button
+class="btn submit-btn"
+onclick="createAccount()">
+
+Create Account
+
+</button>
+
+<div
+id="message">
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+// HEADER
+fetch('/header')
+
+.then(r=>r.text())
+
+.then(html=>{
+
+document
+.getElementById(
+'header'
+)
+
+.innerHTML=
+
+html;
+
+const buttons=
+
+document
+.getElementById(
+'headerButtons'
+);
+
+if(buttons){
+
+buttons.innerHTML=`
+
+<button
+class="btn"
+onclick="window.location='/login'">
+
+Login
+
+</button>
+
+`;
+
+}
+
+});
+
+// CREATE ACCOUNT
+function createAccount(){
+
+const firstname=
+
+document
+.getElementById(
+'firstName'
+)
+.value
+.trim();
+
+const lastname=
+
+document
+.getElementById(
+'lastName'
+)
+.value
+.trim();
+
+const username=
+
+document
+.getElementById(
+'username'
+)
+.value
+.trim();
+
+const password=
+
+document
+.getElementById(
+'password'
+)
+.value;
+
+const role=
+
+document
+.getElementById(
+'role'
+)
+.value;
+
+if(
+!firstname ||
+!lastname ||
+!username ||
+!password
+){
+
+showError(
+"Please complete all fields."
+);
+
+return;
+
+}
+
+fetch(
+
+'/api/create-account',
+
+{
+
+method:'POST',
+
+headers:{
+'Content-Type':
+'application/json'
+},
+
+body:
+
+JSON.stringify({
+
+firstname,
+
+lastname,
+
+username,
+
+password,
+
+role
+
+})
+
+}
+
+)
+
+.then(r=>r.json())
+
+.then(data=>{
+
+if(
+!data.success
+){
+
+showError(
+data.message ||
+"Unable to create account"
+);
+
+return;
+
+}
+
+showSuccess(
+
+"Account created successfully"
+
+);
+
+setTimeout(()=>{
+
+window.location=
+
+'/login';
+
+},1200);
+
+})
+
+.catch(()=>{
+
+showError(
+"Server error"
+);
+
+});
+
+}
+
+function showSuccess(text){
+
+document
+.getElementById(
+'message'
+)
+
+.innerHTML=
+
+`
+
+<div class="success">
+
+${text}
+
+</div>
+
+`;
+
+}
+
+function showError(text){
+
+document
+.getElementById(
+'message'
+)
+
+.innerHTML=
+
+`
+
+<div class="error">
+
+${text}
+
+</div>
+
+`;
+
+}
+
+</script>
+
+</body>
+
+</html>

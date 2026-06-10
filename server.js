@@ -206,9 +206,25 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'login.html'));
 });
 
+// =========================
+// CREATE ACCOUNT
+// =========================
+app.get('/create-account', (req, res) => {
+
+  res.sendFile(
+    path.join(
+      __dirname,
+      'create-account.html'
+    )
+  );
+
+});
+
 app.get('/home', (req, res) => {
   res.sendFile(path.join(__dirname, 'home.html'));
 });
+
+
 
 app.get('/checkin', (req, res) => {
   res.sendFile(path.join(__dirname, 'checkin.html'));
@@ -300,6 +316,101 @@ app.post('/login', async (req, res) => {
   }
 
 });
+
+
+
+// =========================
+// CREATE ACCOUNT API
+// =========================
+app.post(
+'/api/create-account',
+
+async (req, res) => {
+
+try {
+
+const {
+firstname,
+lastname,
+username,
+password,
+role
+}
+
+=
+
+req.body;
+
+// CHECK EXISTING
+const existing =
+
+await pool.query(
+
+"SELECT id FROM clients WHERE LOWER(username)=LOWER($1)",
+
+[
+username
+]
+
+);
+
+if (
+existing.rows.length
+) {
+
+return res.json({
+
+success:false,
+
+message:
+"Username already exists"
+
+});
+
+}
+
+// CREATE USER
+await pool.query(
+
+"INSERT INTO clients (firstname, lastname, username, role, password) VALUES ($1,$2,$3,$4,$5)",
+
+[
+firstname,
+lastname,
+username,
+role,
+password
+]
+
+);
+
+res.json({
+
+success:true
+
+});
+
+}
+
+catch(err){
+
+console.log(err);
+
+res.json({
+
+success:false,
+
+message:
+"Unable to create account"
+
+});
+
+}
+
+});
+
+
+
 
 // =========================
 // LOGOUT

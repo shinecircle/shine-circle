@@ -1,28 +1,116 @@
-<!-- header.html -->
+<header class="shine-header">
 
-<div class="header">
+  <!-- LEFT -->
+  <div class="header-left">
 
-  <div class="header-brand">
+    <a href="/">
 
-    <img src="logo.jpg"
-         class="logo">
+      <img
+        src="/logo.png"
+        alt="Shine Circle"
+        class="logo">
 
-    <div class="brand-text">
-
-      <div class="brand-title">
-        Shine Circle
-      </div>
-
-      <div class="tagline">
-        Connection you can count on
-      </div>
-
-    </div>
+    </a>
 
   </div>
 
-  <div id="headerButtons"
-       class="header-buttons">
+  <!-- RIGHT -->
+  <div
+    class="header-right"
+    id="headerButtons">
+
+    <button
+      class="btn btn-light"
+      onclick="window.location='/login'">
+
+      Login
+
+    </button>
+
+    <button
+      class="btn"
+      onclick="window.location='/create-account'">
+
+      Create Account
+
+    </button>
+
   </div>
 
-</div>
+</header>
+
+<style>
+
+.shine-header{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+padding:14px 24px;
+
+background:white;
+
+border-bottom:1px solid #eee;
+
+position:sticky;
+
+top:0;
+
+z-index:1000;
+
+}
+
+.header-left{
+
+display:flex;
+
+align-items:center;
+
+}
+
+.logo{
+
+height:64px;
+
+width:auto;
+
+display:block;
+
+}
+
+.header-right{
+
+display:flex;
+
+gap:12px;
+
+align-items:center;
+
+}
+
+@media(max-width:700px){
+
+.shine-header{
+
+padding:12px;
+
+}
+
+.logo{
+
+height:52px;
+
+}
+
+.header-right{
+
+gap:8px;
+
+}
+
+}
+
+</style>

@@ -244,13 +244,11 @@ app.get('/admin', (req, res) => {
 
 
 
+
+// =========================
 // SETTINGS
-
-app.get(
-
-'/settings',
-
-(req,res)=>{
+// =========================
+app.get('/settings', (req, res) => {
 
 res.sendFile(
 
@@ -266,6 +264,7 @@ __dirname,
 
 });
 ```
+
 
 
 

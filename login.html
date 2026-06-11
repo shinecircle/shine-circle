@@ -1,297 +1,369 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
 
-  <title>SHINE Circle</title>
+<title>SHINE Circle</title>
 
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="styles.css">
+<link
+rel="stylesheet"
+href="styles.css">
 
-  <style>
+<style>
 
-    body{
-      text-align:center;
-      padding:20px;
-    }
+body{
+text-align:center;
+padding:20px;
+}
 
-    .hero{
-      max-width:600px;
-      margin:auto;
-    }
+.hero{
+max-width:600px;
+margin:auto;
+}
 
-    .big-btn{
-      font-size:20px;
-      padding:18px;
-      width:90%;
-      margin:15px 0;
-      border-radius:10px;
-      border:none;
-      background:#1E6FDB;
-      color:white;
-      cursor:pointer;
-    }
+.big-btn{
+font-size:20px;
+padding:18px;
+width:90%;
+margin:15px 0;
+border-radius:10px;
+border:none;
+background:#1E6FDB;
+color:white;
+cursor:pointer;
+}
 
-    .card{
-      margin-top:20px;
-      padding:20px;
-      background:#f5f5f5;
-      border-radius:12px;
-    }
+.card{
+margin-top:20px;
+padding:20px;
+background:#f5f5f5;
+border-radius:12px;
+}
 
-    input{
-      width:90%;
-      padding:12px;
-      margin:8px 0;
-      border-radius:6px;
-      border:1px solid #ccc;
-      font-size:16px;
-    }
+input{
+width:90%;
+padding:12px;
+margin:8px 0;
+border-radius:6px;
+border:1px solid #ccc;
+font-size:16px;
+}
 
-    .login-title{
-      margin-bottom:18px;
-    }
+.login-title{
+margin-bottom:18px;
+}
 
-    #error{
-      margin-top:14px;
-      font-weight:bold;
-    }
+#error{
+margin-top:14px;
+font-weight:bold;
+}
 
-  </style>
+</style>
 
 </head>
 
 <body>
 
-<!-- HEADER -->
 <div id="header"></div>
 
 <div class="hero">
 
-  <h2>Brighter days start here</h2>
+<h2>
+Brighter days start here
+</h2>
 
-  <p>
-    Daily check-ins, real human connection,
-    and peace of mind for families.
-  </p>
+<p>
+Daily check-ins,
+real human connection,
+and peace of mind for families.
+</p>
 
-  <button class="big-btn"
-          onclick="showLogin()">
+<button
+class="big-btn"
+onclick="showLogin()">
 
-    Login to Continue
+Login to Continue
 
-  </button>
+</button>
 
-  <!-- LOGIN BOX -->
-  <div id="loginBox"
-       class="card"
-       style="display:none;">
+<div
+id="loginBox"
+class="card"
+style="display:none;">
 
-    <h3 class="login-title">
-      Login
-    </h3>
+<h3 class="login-title">
 
-    <input
-      id="username"
-      placeholder="Username"
-      autocomplete="username"
-    >
+Login
 
-    <br>
+</h3>
 
-    <input
-      id="password"
-      type="password"
-      placeholder="Password"
-      autocomplete="current-password"
-      onkeypress="handleEnter(event)"
-    >
+<input
+id="username"
+placeholder="Username">
 
-    <br><br>
+<input
+id="password"
+type="password"
+placeholder="Password"
+onkeypress="handleEnter(event)">
 
-    <button class="btn"
-            onclick="login()">
+<br><br>
 
-      Login
+<button
+class="btn"
+onclick="login()">
 
-    </button>
+Login
 
-    <p id="error"
-       style="color:red;"></p>
+</button>
 
-  </div>
+<p
+id="error"
+style="color:red;">
+
+</p>
+
+</div>
 
 </div>
 
 <script>
 
-// =========================
-// LOAD HEADER
-// =========================
+// HEADER
 fetch('/header')
 
-.then(r => r.text())
+.then(r=>r.text())
 
-.then(html => {
+.then(html=>{
 
-  document.getElementById('header')
-    .innerHTML = html;
+document
+.getElementById(
+'header'
+)
 
-  document.getElementById("headerButtons")
-    .innerHTML = `
+.innerHTML=
 
-      <button class="btn btn-light"
-              onclick="goHome()">
+html;
 
-        Home
+const buttons=
 
-      </button>
+document
+.getElementById(
+'headerButtons'
+);
 
-    `;
+if(buttons){
+
+buttons.innerHTML=`
+
+<button
+class="btn btn-light"
+onclick="goHome()">
+
+Home
+
+</button>
+
+`;
+
+}
 
 });
 
-// =========================
 // SHOW LOGIN
-// =========================
 function showLogin(){
 
-  document.getElementById("loginBox")
-    .style.display = "block";
+document
+.getElementById(
+'loginBox'
+)
 
-  document.getElementById("username")
-    .focus();
+.style.display=
+
+'block';
+
+document
+.getElementById(
+'username'
+)
+
+.focus();
 
 }
 
-// =========================
-// ENTER KEY SUPPORT
-// =========================
+// ENTER
 function handleEnter(event){
 
-  if(event.key === 'Enter'){
-    login();
-  }
+if(
+event.key==="Enter"
+){
+
+login();
 
 }
 
-// =========================
+}
+
 // LOGIN
-// =========================
 function login(){
 
-  const username =
-    document.getElementById("username")
-      .value
-      .trim();
+const username=
 
-  const password =
-    document.getElementById("password")
-      .value;
+document
+.getElementById(
+'username'
+)
 
-  fetch('/login', {
+.value
+.trim();
 
-    method:'POST',
+const password=
 
-    headers:{
-      'Content-Type':'application/json'
-    },
+document
+.getElementById(
+'password'
+)
 
-    body: JSON.stringify({
-      username,
-      password
-    })
+.value;
 
-  })
+fetch(
 
-  .then(r => r.json())
+'/login',
 
-  .then(data => {
+{
 
-    console.log("LOGIN RESPONSE:", data);
+method:'POST',
 
-    // =========================
-    // LOGIN FAILED
-    // =========================
-    if(!data.success){
+headers:{
+'Content-Type':
+'application/json'
+},
 
-      document.getElementById("error")
-        .innerText =
-          "Invalid username or password";
+body:
 
-      return;
+JSON.stringify({
 
-    }
+username,
+password
 
-    // CLEAR ERROR
-    document.getElementById("error")
-      .innerText = "";
-
-    // SAVE LOGIN FLAG
-    sessionStorage.setItem(
-      "justLoggedIn",
-      "true"
-    );
-
-    // DEBUG ROLE
-    console.log("ROLE:", data.role);
-
-    // =========================
-    // REDIRECT BY ROLE
-    // =========================
-
-    // ADMIN
-    if(data.role === 'admin'){
-
-      console.log("Redirecting to admin");
-
-      window.location.href = '/admin';
-
-    }
-
-    // FAMILY
-    else if(data.role === 'family'){
-
-      console.log("Redirecting to family");
-
-      window.location.href = '/family';
-
-    }
-
-    // USER
-    else{
-
-      console.log("Redirecting to home");
-
-      window.location.href = '/home';
-
-    }
-
-  })
-
-  .catch(err => {
-
-    console.log(err);
-
-    document.getElementById("error")
-      .innerText =
-        "Server error. Please try again.";
-
-  });
+})
 
 }
 
-// =========================
-// NAVIGATION
-// =========================
+)
+
+.then(
+r=>r.json()
+)
+
+.then(data=>{
+
+console.log(
+data
+);
+
+if(
+!data.success
+){
+
+document
+.getElementById(
+'error'
+)
+
+.innerText=
+
+"Invalid username or password";
+
+return;
+
+}
+
+sessionStorage.setItem(
+'justLoggedIn',
+'true'
+);
+
+// FIXED ROLE CHECK
+const role=
+
+(
+data.role ||
+''
+)
+
+.toLowerCase()
+
+.trim();
+
+console.log(
+'ROLE:',
+role
+);
+
+// ADMIN
+if(
+role==='admin'
+){
+
+window.location.href=
+'/admin';
+
+}
+
+// FAMILY
+else if(
+
+role==='family' ||
+
+role==='caregiver'
+
+){
+
+window.location.href=
+'/family';
+
+}
+
+// USER
+else{
+
+window.location.href=
+'/home';
+
+}
+
+})
+
+.catch(()=>{
+
+document
+.getElementById(
+'error'
+)
+
+.innerText=
+
+"Server error. Please try again.";
+
+});
+
+}
+
 function goHome(){
 
-  window.location.href = '/';
+window.location.href=
+'/';
 
 }
 
 </script>
 
 </body>
+
 </html>
+```

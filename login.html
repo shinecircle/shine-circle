@@ -1,6 +1,7 @@
-```html
+
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <title>SHINE Circle</title>
@@ -73,13 +74,17 @@ font-weight:bold;
 <div class="hero">
 
 <h2>
+
 Brighter days start here
+
 </h2>
 
 <p>
+
 Daily check-ins,
 real human connection,
 and peace of mind for families.
+
 </p>
 
 <button
@@ -134,6 +139,7 @@ style="color:red;">
 <script>
 
 // HEADER
+
 fetch('/header')
 
 .then(r=>r.text())
@@ -158,13 +164,23 @@ document
 
 if(buttons){
 
-buttons.innerHTML=`
+buttons.innerHTML=
+
+`
 
 <button
 class="btn btn-light"
 onclick="goHome()">
 
 Home
+
+</button>
+
+<button
+class="btn"
+onclick="window.location='/create-account'">
+
+Create Account
 
 </button>
 
@@ -175,6 +191,7 @@ Home
 });
 
 // SHOW LOGIN
+
 function showLogin(){
 
 document
@@ -196,6 +213,7 @@ document
 }
 
 // ENTER
+
 function handleEnter(event){
 
 if(
@@ -209,6 +227,7 @@ login();
 }
 
 // LOGIN
+
 function login(){
 
 const username=
@@ -262,10 +281,6 @@ r=>r.json()
 
 .then(data=>{
 
-console.log(
-data
-);
-
 if(
 !data.success
 ){
@@ -288,7 +303,6 @@ sessionStorage.setItem(
 'true'
 );
 
-// FIXED ROLE CHECK
 const role=
 
 (
@@ -300,12 +314,8 @@ data.role ||
 
 .trim();
 
-console.log(
-'ROLE:',
-role
-);
-
 // ADMIN
+
 if(
 role==='admin'
 ){
@@ -316,9 +326,12 @@ window.location.href=
 }
 
 // FAMILY
+
 else if(
 
-role==='family' ||
+role==='family'
+
+||
 
 role==='caregiver'
 
@@ -330,6 +343,7 @@ window.location.href=
 }
 
 // USER
+
 else{
 
 window.location.href=
@@ -366,4 +380,3 @@ window.location.href=
 </body>
 
 </html>
-```

@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html>
 
@@ -76,8 +76,6 @@ margin-top:14px;
 
 <div id="monitorHeader"></div>
 
-<!-- PHONE -->
-
 <div class="card">
 
 <h3>
@@ -126,8 +124,7 @@ Total Calls
 
 </div>
 
-<div
-style="margin-top:20px">
+<div style="margin-top:20px">
 
 <h4>
 
@@ -145,15 +142,13 @@ No calls
 
 </div>
 
-<!-- MOOD -->
-
 <div class="card">
 
 <h3>
 
 Mood
 
-</h3>
+h3>
 
 <div id="moodAlerts"></div>
 
@@ -164,8 +159,6 @@ Mood
 </div>
 
 </div>
-
-<!-- MED -->
 
 <div class="card">
 
@@ -180,8 +173,6 @@ Medication
 <div id="medAlerts"></div>
 
 </div>
-
-<!-- SCHEDULE -->
 
 <div class="card">
 
@@ -204,7 +195,10 @@ Loading...
 <script>
 
 let dataGlobal=[];
+
 let callsGlobal=[];
+
+// HEADER
 
 fetch('/header')
 
@@ -221,7 +215,34 @@ document
 
 html;
 
+const buttons=
+
+document
+.getElementById(
+'headerButtons'
+);
+
+if(buttons){
+
+buttons.innerHTML=
+
+`
+
+<button
+class="btn"
+onclick="logout()">
+
+Logout
+
+</button>
+
+`;
+
+}
+
 });
+
+// DATA
 
 Promise.all([
 
@@ -237,11 +258,11 @@ fetch('/api/calls')
 
 dataGlobal=
 
-data.checkins||[];
+data.checkins || [];
 
 callsGlobal=
 
-calls||[];
+calls || [];
 
 renderCalls();
 
@@ -252,6 +273,8 @@ renderMedication();
 renderChart();
 
 });
+
+// CALLS
 
 function renderCalls(){
 
@@ -311,6 +334,8 @@ c.calldate
 
 }
 
+// MOOD
+
 function renderMood(){
 
 const struggling=
@@ -318,9 +343,11 @@ const struggling=
 dataGlobal
 
 .filter(
+
 d=>
 
 d.mood==="Struggling"
+
 )
 
 .reverse();
@@ -362,6 +389,8 @@ d.timestamp
 
 }
 
+// MED
+
 function renderMedication(){
 
 const taken=
@@ -369,16 +398,14 @@ const taken=
 dataGlobal
 
 .filter(
+
 d=>
 
 d.meds==="Yes"
+
 )
 
 .length;
-
-const total=
-
-dataGlobal.length;
 
 document
 .getElementById(
@@ -387,9 +414,11 @@ document
 
 .innerText=
 
-`${taken}/${total}`;
+`${taken}/${dataGlobal.length}`;
 
 }
+
+// CHART
 
 function renderChart(){
 
@@ -406,12 +435,12 @@ type:'line',
 
 data:{
 
-labels:
-[],
+labels:[],
 
 datasets:[{
 
 data:[]
+
 }]
 
 }
@@ -422,9 +451,24 @@ data:[]
 
 }
 
+// LOGOUT
+
+function logout(){
+
+fetch('/logout')
+
+.then(()=>{
+
+window.location=
+'/login';
+
+});
+
+}
+
 </script>
 
 </body>
 
 </html>
-
+```

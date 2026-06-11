@@ -264,6 +264,39 @@ document
 
 html;
 
+const buttons=
+
+document
+.getElementById(
+'headerButtons'
+);
+
+if(buttons){
+
+buttons.innerHTML=
+
+`
+
+<button
+class="btn"
+onclick="goSettings()">
+
+Settings
+
+</button>
+
+<button
+class="btn"
+onclick="logout()">
+
+Logout
+
+</button>
+
+`;
+
+}
+
 });
 
 // LOAD USER
@@ -317,35 +350,25 @@ user.dayForCall
 
 .map(
 d=>
-
 d.trim()
-
 );
 
 document
 
 .querySelectorAll(
-
 ".day-btn"
-
 )
 
 .forEach(btn=>{
 
 if(
-
 selected.includes(
-
 btn.innerText
-
 )
-
 ){
 
 btn.classList.add(
-
 "selected"
-
 );
 
 }
@@ -363,27 +386,20 @@ user.timeForCall
 document
 
 .querySelectorAll(
-
 ".time-btn"
-
 )
 
 .forEach(btn=>{
 
 if(
-
 btn.innerText
-
 ===
 
 user.timeForCall
-
 ){
 
 btn.classList.add(
-
 "selected"
-
 );
 
 }
@@ -392,7 +408,7 @@ btn.classList.add(
 
 }
 
-// TIMEZONE
+// ZONE
 
 if(
 user.timezone
@@ -416,6 +432,28 @@ user.timezone;
 console.log(err);
 
 });
+
+// NAV
+
+function goSettings(){
+
+window.location=
+'/settings';
+
+}
+
+function logout(){
+
+fetch('/logout')
+
+.then(()=>{
+
+window.location=
+'/login';
+
+});
+
+}
 
 </script>
 

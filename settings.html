@@ -23,59 +23,35 @@ padding:20px;
 }
 
 .card{
-
 background:white;
-
 padding:26px;
-
 border-radius:18px;
-
 margin-bottom:24px;
-
-box-shadow:
-0 4px 12px
-rgba(0,0,0,.06);
-
+box-shadow:0 4px 12px rgba(0,0,0,.06);
 }
 
 h2{
-
 text-align:center;
-
 margin-bottom:30px;
-
 }
 
 .label{
-
 font-weight:700;
-
 margin-top:16px;
-
 }
 
 .value{
-
 margin-top:8px;
-
 padding:14px;
-
 background:#f5f7fb;
-
 border-radius:12px;
-
 }
 
 .btn-group{
-
 display:flex;
-
 gap:12px;
-
 flex-wrap:wrap;
-
 margin-top:18px;
-
 }
 
 .day-btn,
@@ -95,7 +71,7 @@ background:#eef3ff;
 
 .selected{
 
-background:#2d6cdf;
+background:#1E6FDB;
 
 color:white;
 
@@ -108,6 +84,8 @@ padding:14px;
 border-radius:12px;
 
 margin-top:14px;
+
+width:220px;
 
 }
 
@@ -167,7 +145,7 @@ Phone Number
 class="value"
 id="phone">
 
-Not available
+Loading...
 
 </div>
 
@@ -193,7 +171,8 @@ Preferred Days for Calls
 
 </div>
 
-<h3 style="margin-top:30px;">
+<h3
+style="margin-top:30px;">
 
 Preferred Time
 
@@ -221,7 +200,8 @@ Evening
 
 </div>
 
-<h3 style="margin-top:30px;">
+<h3
+style="margin-top:30px;">
 
 Time Zone
 
@@ -230,27 +210,19 @@ Time Zone
 <select id="timezone">
 
 <option value="EST">
-
 Eastern
-
 </option>
 
 <option value="CST">
-
 Central
-
 </option>
 
 <option value="MST">
-
 Mountain
-
 </option>
 
 <option value="PST">
-
 Pacific
-
 </option>
 
 </select>
@@ -267,6 +239,8 @@ Save Settings
 
 </div>
 
+<div id="msg"></div>
+
 </div>
 
 </div>
@@ -274,6 +248,7 @@ Save Settings
 <script>
 
 // HEADER
+
 fetch('/header')
 
 .then(r=>r.text())
@@ -291,7 +266,8 @@ html;
 
 });
 
-// USER
+// LOAD USER
+
 fetch('/auth')
 
 .then(
@@ -302,6 +278,8 @@ r=>r.json()
 
 if(!user)
 return;
+
+// INFO
 
 document
 .getElementById(
@@ -324,6 +302,118 @@ document
 user.phone ||
 
 "Not available";
+
+// DAYS
+
+if(
+user.dayForCall
+){
+
+const selected=
+
+user.dayForCall
+
+.split(",")
+
+.map(
+d=>
+
+d.trim()
+
+);
+
+document
+
+.querySelectorAll(
+
+".day-btn"
+
+)
+
+.forEach(btn=>{
+
+if(
+
+selected.includes(
+
+btn.innerText
+
+)
+
+){
+
+btn.classList.add(
+
+"selected"
+
+);
+
+}
+
+});
+
+}
+
+// TIME
+
+if(
+user.timeForCall
+){
+
+document
+
+.querySelectorAll(
+
+".time-btn"
+
+)
+
+.forEach(btn=>{
+
+if(
+
+btn.innerText
+
+===
+
+user.timeForCall
+
+){
+
+btn.classList.add(
+
+"selected"
+
+);
+
+}
+
+});
+
+}
+
+// TIMEZONE
+
+if(
+user.timezone
+){
+
+document
+.getElementById(
+'timezone'
+)
+
+.value=
+
+user.timezone;
+
+}
+
+})
+
+.catch(err=>{
+
+console.log(err);
 
 });
 

@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html>
 
@@ -16,35 +17,23 @@ href="styles.css">
 <style>
 
 body{
-
 text-align:center;
-
 padding:20px;
-
 }
 
 .container{
-
-max-width:650px;
-
+max-width:700px;
 margin:auto;
-
 }
 
 .card{
-
 background:#f7f7f7;
-
 padding:30px;
-
 border-radius:16px;
-
 margin-top:20px;
-
 }
 
-input,
-select{
+input{
 
 width:90%;
 
@@ -71,18 +60,30 @@ font-size:18px;
 }
 
 .success{
-
 color:green;
-
 margin-top:15px;
-
 }
 
 .error{
-
 color:red;
-
 margin-top:15px;
+}
+
+.section-title{
+
+margin-top:10px;
+
+margin-bottom:15px;
+
+}
+
+hr{
+
+margin:30px 0;
+
+border:none;
+
+border-top:1px solid #ddd;
 
 }
 
@@ -104,59 +105,71 @@ Create Account
 
 <p>
 
-Join Shine Circle
+Create both accounts to get started
 
 </p>
 
 <div class="card">
 
+<h2 class="section-title">
+
+User Information
+
+</h2>
+
 <input
-id="firstName"
+id="userFirstName"
 placeholder="First Name">
 
 <input
-id="lastName"
+id="userLastName"
 placeholder="Last Name">
 
 <input
-id="username"
+id="userUsername"
 placeholder="Username">
 
 <input
-id="password"
+id="userPassword"
 type="password"
 placeholder="Password">
 
-<select id="role">
+<hr>
 
-<option value="user">
+<h2 class="section-title">
 
-User
+Caregiver Information
 
-</option>
+</h2>
 
-<option value="family">
+<input
+id="familyFirstName"
+placeholder="First Name">
 
-Family / Caregiver
+<input
+id="familyLastName"
+placeholder="Last Name">
 
-</option>
+<input
+id="familyUsername"
+placeholder="Username">
 
-</select>
+<input
+id="familyPassword"
+type="password"
+placeholder="Password">
 
 <br>
 
 <button
 class="btn submit-btn"
-onclick="createAccount()">
+onclick="createAccounts()">
 
-Create Account
+Create Accounts
 
 </button>
 
-<div
-id="message">
-
-</div>
+<div id="message"></div>
 
 </div>
 
@@ -165,6 +178,7 @@ id="message">
 <script>
 
 // HEADER
+
 fetch('/header')
 
 .then(r=>r.text())
@@ -189,7 +203,9 @@ document
 
 if(buttons){
 
-buttons.innerHTML=`
+buttons.innerHTML=
+
+`
 
 <button
 class="btn"
@@ -205,68 +221,115 @@ Login
 
 });
 
-// CREATE ACCOUNT
-function createAccount(){
+// CREATE
 
-const firstname=
+async function createAccounts(){
 
+const user={
+
+firstname:
 document
 .getElementById(
-'firstName'
+'userFirstName'
 )
 .value
-.trim();
+.trim(),
 
-const lastname=
-
+lastname:
 document
 .getElementById(
-'lastName'
+'userLastName'
 )
 .value
-.trim();
+.trim(),
 
-const username=
-
+username:
 document
 .getElementById(
-'username'
+'userUsername'
 )
 .value
-.trim();
+.trim(),
 
-const password=
-
+password:
 document
 .getElementById(
-'password'
+'userPassword'
 )
-.value;
+.value,
 
-const role=
+role:
+'user'
 
+};
+
+const family={
+
+firstname:
 document
 .getElementById(
-'role'
+'familyFirstName'
 )
-.value;
+.value
+.trim(),
+
+lastname:
+document
+.getElementById(
+'familyLastName'
+)
+.value
+.trim(),
+
+username:
+document
+.getElementById(
+'familyUsername'
+)
+.value
+.trim(),
+
+password:
+document
+.getElementById(
+'familyPassword'
+)
+.value,
+
+role:
+'family'
+
+};
 
 if(
-!firstname ||
-!lastname ||
-!username ||
-!password
+
+Object
+.values(user)
+.some(v=>!v)
+
+||
+
+Object
+.values(family)
+.some(v=>!v)
+
 ){
 
 showError(
+
 "Please complete all fields."
+
 );
 
 return;
 
 }
 
-fetch(
+try{
+
+const userResult=
+
+await fetch(
 
 '/api/create-account',
 
@@ -280,36 +343,59 @@ headers:{
 },
 
 body:
-
-JSON.stringify({
-
-firstname,
-
-lastname,
-
-username,
-
-password,
-
-role
-
-})
+JSON.stringify(
+user
+)
 
 }
 
+);
+
+const familyResult=
+
+await fetch(
+
+'/api/create-account',
+
+{
+
+method:'POST',
+
+headers:{
+'Content-Type':
+'application/json'
+},
+
+body:
+JSON.stringify(
+family
 )
 
-.then(r=>r.json())
+}
 
-.then(data=>{
+);
+
+const userData=
+await userResult.json();
+
+const familyData=
+await familyResult.json();
 
 if(
-!data.success
+!userData.success
+||
+
+!familyData.success
 ){
 
 showError(
-data.message ||
-"Unable to create account"
+
+userData.message ||
+
+familyData.message ||
+
+"Unable to create accounts"
+
 );
 
 return;
@@ -318,27 +404,28 @@ return;
 
 showSuccess(
 
-"Account created successfully"
+"Accounts created successfully"
 
 );
 
 setTimeout(()=>{
 
 window.location=
-
 '/login';
 
-},1200);
+},1500);
 
-})
+}
 
-.catch(()=>{
+catch{
 
 showError(
+
 "Server error"
+
 );
 
-});
+}
 
 }
 
@@ -389,3 +476,4 @@ ${text}
 </body>
 
 </html>
+```

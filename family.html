@@ -744,45 +744,204 @@ function renderMoodAlerts(){
 // =========================
 function renderList(){
 
-  let html = "";
+ let html = "";
 
-  [...dataGlobal]
-    .reverse()
-    .slice(0,10)
-    .forEach(d=>{
+// NEWEST FIRST
+const sorted =
 
-      const date =
-        new Date(d.timestamp);
+[...dataGlobal]
 
-      html += `
+.sort(
 
-        <div class="activity-item">
+(a,b)=>
 
-          <b>Mood:</b>
-          ${d.mood || "Not reported"}
+new Date(b.timestamp)
 
-          <br>
+-
 
-          <b>Meds:</b>
-          ${d.meds || "Not recorded"}
+new Date(a.timestamp)
 
-          <br>
+)
 
-          <small>
-            ${date.toLocaleString()}
-          </small>
+.slice(0,10);
 
-        </div>
+sorted.forEach(d=>{
 
-      `;
+const date =
 
-    });
+new Date(
+d.timestamp
+);
 
-  document.getElementById("list")
-    .innerHTML = html;
+let minutes = 0;
+
+let callDates = [];
+
+// MATCH CALLS
+callsGlobal.forEach(call=>{
+
+if(
+!call.calldate
+)return;
+
+const callDay =
+
+new Date(
+call.calldate
+);
+
+if(
+callDay.toDateString()
+===
+
+date.toDateString()
+){
+
+callDates.push(
+
+callDay
+.toLocaleDateString(
+
+'en-US',
+
+{
+
+weekday:'long',
+
+month:'long',
+
+day:'numeric',
+
+year:'numeric'
 
 }
 
+)
+
+);
+
+if(
+call.starttime &&
+call.endtime
+){
+
+const start =
+
+convertToMinutes(
+call.starttime
+);
+
+const end =
+
+convertToMinutes(
+call.endtime
+);
+
+if(
+end > start
+){
+
+minutes +=
+
+(
+end-start
+);
+
+}
+
+}
+
+}
+
+});
+
+html += `
+
+<div class="activity-item">
+
+<b>
+
+${date.toLocaleDateString(
+
+'en-US',
+
+{
+
+weekday:'long',
+
+month:'long',
+
+day:'numeric',
+
+year:'numeric'
+
+}
+
+)}
+
+</b>
+
+<br><br>
+
+<b>
+Phone Call Minutes:
+</b>
+
+${minutes}
+
+<br><br>
+
+<b>
+Phone Call Dates:
+</b>
+
+<br>
+
+${
+callDates.length
+
+?
+
+callDates.join("<br>")
+
+:
+
+"No calls"
+
+}
+
+<br><br>
+
+<b>
+Mood:
+</b>
+
+${d.mood || "Not reported"}
+
+<br><br>
+
+<b>
+Medication:
+</b>
+
+${d.meds || "Not recorded"}
+
+</div>
+
+`;
+
+});
+
+document
+.getElementById(
+"list"
+)
+
+.innerHTML =
+
+html;
+
+}
 // =========================
 // NAV
 // =========================

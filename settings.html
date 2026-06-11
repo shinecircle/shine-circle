@@ -1,0 +1,335 @@
+```html
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Settings | Shine Circle</title>
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1">
+
+<link
+rel="stylesheet"
+href="styles.css">
+
+<style>
+
+.container{
+max-width:900px;
+margin:auto;
+padding:20px;
+}
+
+.card{
+
+background:white;
+
+padding:26px;
+
+border-radius:18px;
+
+margin-bottom:24px;
+
+box-shadow:
+0 4px 12px
+rgba(0,0,0,.06);
+
+}
+
+h2{
+
+text-align:center;
+
+margin-bottom:30px;
+
+}
+
+.label{
+
+font-weight:700;
+
+margin-top:16px;
+
+}
+
+.value{
+
+margin-top:8px;
+
+padding:14px;
+
+background:#f5f7fb;
+
+border-radius:12px;
+
+}
+
+.btn-group{
+
+display:flex;
+
+gap:12px;
+
+flex-wrap:wrap;
+
+margin-top:18px;
+
+}
+
+.day-btn,
+.time-btn{
+
+padding:14px;
+
+border:none;
+
+border-radius:14px;
+
+cursor:pointer;
+
+background:#eef3ff;
+
+}
+
+.selected{
+
+background:#2d6cdf;
+
+color:white;
+
+}
+
+select{
+
+padding:14px;
+
+border-radius:12px;
+
+margin-top:14px;
+
+}
+
+#msg{
+
+margin-top:20px;
+
+font-weight:bold;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="header"></div>
+
+<div class="container">
+
+<h2>
+
+Settings
+
+</h2>
+
+<div class="card">
+
+<h3>
+
+User Information
+
+</h3>
+
+<div class="label">
+
+First Name
+
+</div>
+
+<div
+class="value"
+id="firstName">
+
+Loading...
+
+</div>
+
+<div class="label">
+
+Phone Number
+
+</div>
+
+<div
+class="value"
+id="phone">
+
+Not available
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>
+
+Preferred Days for Calls
+
+</h3>
+
+<div class="btn-group">
+
+<button class="day-btn">Mon</button>
+<button class="day-btn">Tue</button>
+<button class="day-btn">Wed</button>
+<button class="day-btn">Thu</button>
+<button class="day-btn">Fri</button>
+<button class="day-btn">Sat</button>
+<button class="day-btn">Sun</button>
+
+</div>
+
+<h3 style="margin-top:30px;">
+
+Preferred Time
+
+</h3>
+
+<div class="btn-group">
+
+<button class="time-btn">
+
+Morning
+
+</button>
+
+<button class="time-btn">
+
+Midday
+
+</button>
+
+<button class="time-btn">
+
+Evening
+
+</button>
+
+</div>
+
+<h3 style="margin-top:30px;">
+
+Time Zone
+
+</h3>
+
+<select id="timezone">
+
+<option value="EST">
+
+Eastern
+
+</option>
+
+<option value="CST">
+
+Central
+
+</option>
+
+<option value="MST">
+
+Mountain
+
+</option>
+
+<option value="PST">
+
+Pacific
+
+</option>
+
+</select>
+
+<div
+style="margin-top:30px;">
+
+<button
+class="btn">
+
+Save Settings
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+// HEADER
+fetch('/header')
+
+.then(r=>r.text())
+
+.then(html=>{
+
+document
+.getElementById(
+'header'
+)
+
+.innerHTML=
+
+html;
+
+});
+
+// USER
+fetch('/auth')
+
+.then(
+r=>r.json()
+)
+
+.then(user=>{
+
+if(!user)
+return;
+
+document
+.getElementById(
+'firstName'
+)
+
+.innerText=
+
+user.firstname ||
+
+"Not set";
+
+document
+.getElementById(
+'phone'
+)
+
+.innerText=
+
+user.phone ||
+
+"Not available";
+
+});
+
+</script>
+
+</body>
+
+</html>
+```

@@ -1,727 +1,404 @@
+```html
 <!DOCTYPE html>
 <html>
+
 <head>
 
-  <title>Activities Preferences</title>
+<title>Activities</title>
 
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="styles.css">
+<link
+rel="stylesheet"
+href="styles.css">
 
-  <style>
+<style>
 
-    .container{
+.container{
+max-width:900px;
+margin:auto;
+padding:20px;
+}
 
-      max-width:900px;
-      margin:auto;
-      padding:20px;
+h2{
+text-align:center;
+margin-bottom:30px;
+}
 
-    }
+.section{
 
-    h2{
+margin-top:28px;
 
-      text-align:center;
-      margin-bottom:30px;
+background:white;
 
-    }
+padding:24px;
 
-    .section{
+border-radius:18px;
 
-      margin-top:28px;
+box-shadow:
+0 4px 12px
+rgba(0,0,0,.06);
 
-      background:white;
+}
 
-      padding:22px;
+.btn-group{
 
-      border-radius:18px;
+display:flex;
 
-      box-shadow:0 4px 12px rgba(0,0,0,0.06);
+justify-content:center;
 
-    }
+gap:14px;
 
-    .btn-group{
+flex-wrap:wrap;
 
-      display:flex;
+}
 
-      flex-wrap:wrap;
+.feature-btn{
 
-      gap:12px;
+padding:16px 22px;
 
-      justify-content:center;
+border:none;
 
-      margin-top:18px;
+border-radius:14px;
 
-    }
+background:#eef3ff;
 
-    .day-btn,
-    .time-btn,
-    .feature-btn{
+font-size:18px;
 
-      padding:14px 18px;
+font-weight:700;
 
-      border:none;
+cursor:pointer;
 
-      border-radius:14px;
+}
 
-      background:#eef3ff;
+.info-box{
 
-      color:#1a1a1a;
+display:none;
 
-      font-size:17px;
+margin-top:20px;
 
-      font-weight:700;
+background:white;
 
-      cursor:pointer;
+padding:24px;
 
-      transition:0.2s ease;
+border-radius:18px;
 
-    }
+text-align:center;
 
-    .day-btn:hover,
-    .time-btn:hover,
-    .feature-btn:hover{
+box-shadow:
+0 4px 12px
+rgba(0,0,0,.06);
 
-      transform:translateY(-1px);
+}
 
-    }
+#nextCallBox{
 
-    .selected{
+margin-top:18px;
 
-      background:#2d6cdf !important;
+text-align:center;
 
-      color:white !important;
+}
 
-    }
-
-    .info-box{
-
-      display:none;
-
-      margin-top:24px;
-
-      background:white;
-
-      padding:24px;
-
-      border-radius:18px;
-
-      box-shadow:0 4px 12px rgba(0,0,0,0.06);
-
-      text-align:center;
-
-    }
-
-    #nextCallBox{
-
-      margin-top:16px;
-
-    }
-
-    select{
-
-      padding:14px;
-
-      border-radius:12px;
-
-      border:1px solid #ddd;
-
-      font-size:16px;
-
-      margin-top:14px;
-
-    }
-
-    #msg{
-
-      text-align:center;
-
-      margin-top:20px;
-
-      font-weight:700;
-
-    }
-
-  </style>
+</style>
 
 </head>
 
 <body>
 
-<!-- HEADER -->
 <div id="header"></div>
 
 <div class="container">
 
-  <h2>Activities & Support</h2>
+<h2>
 
-  <!-- NEXT CALL -->
-  <div class="section">
+Activities & Support
 
-    <h3>Your Next Scheduled Conversation:</h3>
+</h2>
 
-    <div id="nextCallBox">
+<!-- NEXT CALL -->
 
-      <p>
-        Loading next scheduled call...
-      </p>
+<div class="section">
 
-    </div>
+<h3>
 
-  </div>
+We look forward to speaking with you
 
-  <!-- FEATURE BUTTONS -->
-  <div class="section">
+</h3>
 
-    <div class="btn-group">
+<div id="nextCallBox">
 
-      <button class="feature-btn"
-              onclick="showFitnessIdeas()">
+Loading next scheduled call...
 
-        Fitness Ideas
+</div>
 
-      </button>
+</div>
 
-      <button class="feature-btn"
-              onclick="toggleCallRequest()">
+<!-- BUTTONS -->
 
-        Call Timing
+<div class="section">
 
-      </button>
+<div class="btn-group">
 
-    </div>
+<button
+class="feature-btn"
+onclick="showFitnessIdeas()">
 
-  </div>
+Fitness Ideas
 
-  <!-- FITNESS -->
-  <div class="info-box"
-       id="fitnessBox">
+</button>
 
-    <h3>Fitness Ideas</h3>
+<button
+class="feature-btn"
+onclick="goSettings()">
 
-    <p>
-      Coming soon 🌿
-    </p>
+Settings
 
-  </div>
+</button>
 
-  <!-- CALL INFO -->
-  <div class="info-box"
-       id="callInfoBox">
+</div>
 
-    <h3>Request A Call</h3>
+</div>
 
-    <p>
+<!-- FITNESS -->
 
-      A Shine Circle Team member may contact you.
+<div
+class="info-box"
+id="fitnessBox">
 
-      <br><br>
+<h3>
 
-      We will always identify ourselves as a
-      Shine Circle Team member.
+Fitness Ideas
 
-      <br><br>
+</h3>
 
-      We will never ask for money or request
-      an in-person meeting.
+<p>
 
-    </p>
+Coming soon 🌿
 
-  </div>
+</p>
 
-  <!-- DAYS -->
-  <div class="section"
-       id="callPreferencesSection"
-       style="display:none;">
-
-    <h3>Preferred Days for Calls</h3>
-
-    <div class="btn-group">
-
-      <button class="day-btn"
-              onclick="toggleDay(this)">
-        Mon
-      </button>
-
-      <button class="day-btn"
-              onclick="toggleDay(this)">
-        Tue
-      </button>
-
-      <button class="day-btn"
-              onclick="toggleDay(this)">
-        Wed
-      </button>
-
-      <button class="day-btn"
-              onclick="toggleDay(this)">
-        Thu
-      </button>
-
-      <button class="day-btn"
-              onclick="toggleDay(this)">
-        Fri
-      </button>
-
-      <button class="day-btn"
-              onclick="toggleDay(this)">
-        Sat
-      </button>
-
-      <button class="day-btn"
-              onclick="toggleDay(this)">
-        Sun
-      </button>
-
-    </div>
-
-  </div>
-
-  <!-- TIMES -->
-  <div class="section"
-       id="timeSection"
-       style="display:none;">
-
-    <h3>Preferred Time for Calls</h3>
-
-    <div class="btn-group">
-
-      <button class="time-btn"
-              onclick="selectTime(this)">
-        Morning
-      </button>
-
-      <button class="time-btn"
-              onclick="selectTime(this)">
-        Midday
-      </button>
-
-      <button class="time-btn"
-              onclick="selectTime(this)">
-        Evening
-      </button>
-
-    </div>
-
-  </div>
-
-  <!-- TIMEZONE -->
-  <div class="section"
-       id="timezoneSection"
-       style="display:none;">
-
-    <h3>Time Zone</h3>
-
-    <select id="timezone">
-
-      <option value="">
-        Select Time Zone
-      </option>
-
-      <option value="EST">
-        Eastern
-      </option>
-
-      <option value="CST">
-        Central
-      </option>
-
-      <option value="MST">
-        Mountain
-      </option>
-
-      <option value="PST">
-        Pacific
-      </option>
-
-    </select>
-
-  </div>
-
-  <div style="text-align:center;margin-top:30px;">
-
-    <button class="btn"
-            id="saveBtn"
-            style="display:none;"
-            onclick="save()">
-
-      Save Preferences
-
-    </button>
-
-  </div>
-
-  <p id="msg"></p>
+</div>
 
 </div>
 
 <script>
 
-let selectedDays = [];
-let selectedTime = "";
-
-// =========================
-// LOAD HEADER
-// =========================
+// HEADER
 fetch('/header')
 
 .then(r=>r.text())
 
 .then(html=>{
 
-  document.getElementById('header')
-    .innerHTML = html;
+document
+.getElementById(
+'header'
+)
 
-  document.getElementById("headerButtons")
-    .innerHTML = `
+.innerHTML=
 
-      <button class="btn"
-              onclick="goHome()">
+html;
 
-        Home
+document
+.getElementById(
+'headerButtons'
+)
 
-      </button>
+.innerHTML=
 
-      <button class="btn"
-              onclick="logout()">
+`
 
-        Logout
+<button
+class="btn"
+onclick="goHome()">
 
-      </button>
+Home
 
-    `;
+</button>
+
+<button
+class="btn"
+onclick="logout()">
+
+Logout
+
+</button>
+
+`;
 
 });
 
-// =========================
-// LOAD ACTIVITIES
-// =========================
-loadActivities();
+// LOAD CALL
+loadNextCall();
 
-async function loadActivities(){
-
-  try{
-
-    const response =
-      await fetch('/api/activities');
-
-    const data =
-      await response.json();
-
-    console.log(data);
-
-    if(data.dayforcall){
-
-      selectedDays =
-        data.dayforcall.split(',');
-
-    }
-
-    selectedTime =
-      data.timeforcall || "";
-
-    if(data.timezone){
-
-      document.getElementById("timezone").value =
-        data.timezone;
-
-    }
-
-    restoreSelections();
-
-    loadNextCall();
-
-  }
-
-  catch(err){
-
-    console.log(err);
-
-  }
-
-}
-
-// =========================
-// LOAD NEXT CALL
-// =========================
 async function loadNextCall(){
 
-  try{
+try{
 
-    const response =
-      await fetch('/api/next-call');
+const response=
 
-    const data =
-      await response.json();
+await fetch(
+'/api/next-call'
+);
 
-    console.log("NEXT CALL:", data);
+const data=
 
-    if(!data.id){
+await response.json();
 
-      document.getElementById("nextCallBox")
-        .innerHTML = `
+if(
+!data.id
+){
 
-          <p>
-            No scheduled calls yet.
-          </p>
+document
+.getElementById(
+'nextCallBox'
+)
 
-        `;
+.innerHTML=
 
-      return;
+`
 
-    }
+No scheduled calls yet.
 
-    // FORMAT DATE
-    const formattedDate =
-      new Date(data.calldate)
-        .toLocaleDateString(
-          'en-US',
-          {
-            weekday:'long',
-            year:'numeric',
-            month:'long',
-            day:'numeric'
-          }
-        );
+`;
 
-    document.getElementById("nextCallBox")
-      .innerHTML = `
-
-        <div style="
-          font-size:24px;
-          font-weight:800;
-          color:#1E6FDB;
-          margin-bottom:10px;
-        ">
-
-          ${formattedDate}
-
-        </div>
-
-        <div style="
-          font-size:20px;
-          margin-bottom:14px;
-        ">
-
-          ${data.starttime}
-          -
-          ${data.endtime}
-
-          ${data.timezone}
-
-        </div>
-
-        <div style="font-size:18px;">
-
-          <strong>
-            Shine Circle Team Member:
-          </strong>
-
-          ${data.callername}
-
-        </div>
-
-      `;
-
-  }
-
-  catch(err){
-
-    console.log(err);
-
-  }
+return;
 
 }
 
-// =========================
+const date=
+
+new Date(
+data.calldate
+)
+
+.toLocaleDateString(
+
+'en-US',
+
+{
+
+weekday:'long',
+
+month:'long',
+
+day:'numeric',
+
+year:'numeric'
+
+}
+
+);
+
+document
+.getElementById(
+'nextCallBox'
+)
+
+.innerHTML=
+
+`
+
+<div style="
+font-size:26px;
+font-weight:800;
+color:#1E6FDB;
+">
+
+${date}
+
+</div>
+
+<div style="
+font-size:20px;
+margin-top:10px;
+">
+
+${data.starttime}
+
+—
+
+${data.endtime}
+
+${data.timezone}
+
+</div>
+
+`;
+
+}
+
+catch(err){
+
+console.log(err);
+
+}
+
+}
+
 // FITNESS
-// =========================
+
 function showFitnessIdeas(){
 
-  const box =
-    document.getElementById("fitnessBox");
+const box=
 
-  box.style.display =
-    box.style.display === "block"
-      ? "none"
-      : "block";
+document
+.getElementById(
+'fitnessBox'
+);
 
-}
+box.style.display=
 
-// =========================
-// CALL REQUEST
-// =========================
-function toggleCallRequest(){
+box.style.display
 
-  const ids = [
-    "callInfoBox",
-    "callPreferencesSection",
-    "timeSection",
-    "timezoneSection",
-    "saveBtn"
-  ];
+===
 
-  const show =
-    document.getElementById(ids[0]).style.display !== "block";
+'block'
 
-  ids.forEach(id=>{
+?
 
-    document.getElementById(id).style.display =
-      show ? "block" : "none";
+'none'
 
-  });
+:
+
+'block';
 
 }
 
-// =========================
-// RESTORE BUTTON STATES
-// =========================
-function restoreSelections(){
-
-  document.querySelectorAll(".day-btn")
-    .forEach(btn=>{
-
-      btn.classList.remove("selected");
-
-      if(selectedDays.includes(btn.innerText.trim())){
-
-        btn.classList.add("selected");
-
-      }
-
-    });
-
-  document.querySelectorAll(".time-btn")
-    .forEach(btn=>{
-
-      btn.classList.remove("selected");
-
-      if(btn.innerText.trim() === selectedTime){
-
-        btn.classList.add("selected");
-
-      }
-
-    });
-
-}
-
-// =========================
-// TOGGLE DAY
-// =========================
-function toggleDay(btn){
-
-  const day =
-    btn.innerText.trim();
-
-  if(selectedDays.includes(day)){
-
-    selectedDays =
-      selectedDays.filter(d=>d !== day);
-
-  }
-
-  else{
-
-    selectedDays.push(day);
-
-  }
-
-  restoreSelections();
-
-}
-
-// =========================
-// SELECT TIME
-// =========================
-function selectTime(btn){
-
-  selectedTime =
-    btn.innerText.trim();
-
-  restoreSelections();
-
-}
-
-// =========================
-// SAVE
-// =========================
-async function save(){
-
-  try{
-
-    const response =
-      await fetch('/api/activities',{
-
-        method:'POST',
-
-        headers:{
-          'Content-Type':'application/json'
-        },
-
-        body:JSON.stringify({
-
-          dayForCall:
-            selectedDays.join(','),
-
-          timeForCall:
-            selectedTime,
-
-          timezone:
-            document.getElementById("timezone").value
-
-        })
-
-      });
-
-    const data =
-      await response.json();
-
-    if(!data.success){
-
-      throw new Error();
-
-    }
-
-    document.getElementById("msg")
-      .innerText =
-        "Preferences saved successfully";
-
-  }
-
-  catch(err){
-
-    console.log(err);
-
-    document.getElementById("msg")
-      .innerText =
-        "Error saving preferences";
-
-  }
-
-}
-
-// =========================
 // NAV
-// =========================
+
+function goSettings(){
+
+window.location=
+'/settings';
+
+}
+
 function goHome(){
 
-  window.location='/home';
+window.location=
+'/home';
 
 }
 
 function logout(){
 
-  fetch('/logout')
-    .then(()=>{
+fetch('/logout')
 
-      window.location='/login';
+.then(()=>{
 
-    });
+window.location=
+'/login';
+
+});
 
 }
 
 </script>
 
 </body>
+
 </html>
+```

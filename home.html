@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html>
 
@@ -76,19 +77,6 @@ line-height:2;
 .call-title{
 font-size:20px;
 margin-bottom:10px;
-}
-
-.call-date{
-font-size:28px;
-}
-
-.call-time{
-font-size:24px;
-}
-
-.call-zone{
-font-size:18px;
-color:#555;
 }
 
 .call-link{
@@ -198,8 +186,7 @@ Your next upcoming call
 </div>
 
 <div
-id="callDate"
-class="call-date">
+id="callDate">
 
 No upcoming call
 
@@ -218,6 +205,7 @@ No upcoming call
 let nextCall=null;
 
 // HEADER
+
 fetch('/header')
 
 .then(r=>r.text())
@@ -228,8 +216,43 @@ document
 .getElementById(
 'header'
 )
+
 .innerHTML=
+
 html;
+
+const buttons=
+
+document
+.getElementById(
+'headerButtons'
+);
+
+if(buttons){
+
+buttons.innerHTML=
+
+`
+
+<button
+class="btn"
+onclick="goSettings()">
+
+Settings
+
+</button>
+
+<button
+class="btn"
+onclick="logout()">
+
+Logout
+
+</button>
+
+`;
+
+}
 
 });
 
@@ -277,8 +300,6 @@ data.meds==="Yes";
 
 let text="";
 
-// NONE
-
 if(
 !mood &&
 !meds
@@ -293,8 +314,6 @@ Medicine not recorded today
 `;
 
 }
-
-// MOOD ONLY
 
 else if(
 mood &&
@@ -311,8 +330,6 @@ Medicine consumption not reported today
 
 }
 
-// MEDS ONLY
-
 else if(
 !mood &&
 meds
@@ -327,8 +344,6 @@ Mood not reported today
 `;
 
 }
-
-// BOTH
 
 else{
 
@@ -372,15 +387,12 @@ return;
 
 }
 
-const callDate=
+const formattedDate=
 
 new Date(
 data.calldate
-);
+)
 
-const formattedDate=
-
-callDate
 .toLocaleDateString(
 
 'en-US',
@@ -432,12 +444,6 @@ hour12:true
 
 }
 
-const zone=
-
-data.timezone ||
-
-"Local Time";
-
 document
 .getElementById(
 'callDate'
@@ -453,17 +459,9 @@ ${formattedDate}
 
 </div>
 
-<div
-class="call-time">
+<div>
 
 ${formattedTime}
-
-</div>
-
-<div
-class="call-zone">
-
-${zone}
 
 </div>
 
@@ -494,6 +492,13 @@ window.location=
 
 }
 
+function goSettings(){
+
+window.location=
+'/settings';
+
+}
+
 function logout(){
 
 fetch('/logout')
@@ -512,3 +517,4 @@ window.location=
 </body>
 
 </html>
+```

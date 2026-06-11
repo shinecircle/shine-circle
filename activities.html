@@ -43,61 +43,35 @@ rgba(0,0,0,.06);
 
 }
 
-.btn-group{
-
-display:flex;
-
-justify-content:center;
-
-gap:14px;
-
-flex-wrap:wrap;
-
-}
-
-.feature-btn{
-
-padding:16px 22px;
-
-border:none;
-
-border-radius:14px;
-
-background:#eef3ff;
-
-font-size:18px;
-
-font-weight:700;
-
-cursor:pointer;
-
-}
-
-.info-box{
-
-display:none;
-
-margin-top:20px;
-
-background:white;
-
-padding:24px;
-
-border-radius:18px;
-
-text-align:center;
-
-box-shadow:
-0 4px 12px
-rgba(0,0,0,.06);
-
-}
-
 #nextCallBox{
 
 margin-top:18px;
 
 text-align:center;
+
+}
+
+.activities{
+
+text-align:center;
+
+font-size:22px;
+
+padding:20px;
+
+}
+
+.notice{
+
+margin-top:20px;
+
+background:#f7fbff;
+
+padding:20px;
+
+border-radius:14px;
+
+line-height:1.8;
 
 }
 
@@ -133,51 +107,35 @@ Loading next scheduled call...
 
 </div>
 
+<div class="notice">
+
+We will identify ourselves as
+<b>Shine Circle</b>.
+
+<br><br>
+
+We will never request money
+or ask to meet in person.
+
 </div>
 
-<!-- BUTTONS -->
+</div>
+
+<!-- ACTIVITIES -->
 
 <div class="section">
 
-<div class="btn-group">
-
-<button
-class="feature-btn"
-onclick="showFitnessIdeas()">
-
-Fitness Ideas
-
-</button>
-
-<button
-class="feature-btn"
-onclick="goSettings()">
-
-Settings
-
-</button>
-
-</div>
-
-</div>
-
-<!-- FITNESS -->
-
-<div
-class="info-box"
-id="fitnessBox">
-
 <h3>
 
-Fitness Ideas
+Activities
 
 </h3>
 
-<p>
+<div class="activities">
 
 Coming soon 🌿
 
-</p>
+</div>
 
 </div>
 
@@ -186,6 +144,7 @@ Coming soon 🌿
 <script>
 
 // HEADER
+
 fetch('/header')
 
 .then(r=>r.text())
@@ -220,6 +179,14 @@ Home
 
 <button
 class="btn"
+onclick="goSettings()">
+
+Settings
+
+</button>
+
+<button
+class="btn"
 onclick="logout()">
 
 Logout
@@ -231,6 +198,7 @@ Logout
 });
 
 // LOAD CALL
+
 loadNextCall();
 
 async function loadNextCall(){
@@ -259,9 +227,7 @@ document
 .innerHTML=
 
 `
-
 No scheduled calls yet.
-
 `;
 
 return;
@@ -313,7 +279,7 @@ ${date}
 
 <div style="
 font-size:20px;
-margin-top:10px;
+margin-top:12px;
 ">
 
 ${data.starttime}
@@ -338,48 +304,17 @@ console.log(err);
 
 }
 
-// FITNESS
+function goHome(){
 
-function showFitnessIdeas(){
-
-const box=
-
-document
-.getElementById(
-'fitnessBox'
-);
-
-box.style.display=
-
-box.style.display
-
-===
-
-'block'
-
-?
-
-'none'
-
-:
-
-'block';
+window.location=
+'/home';
 
 }
-
-// NAV
 
 function goSettings(){
 
 window.location=
 '/settings';
-
-}
-
-function goHome(){
-
-window.location=
-'/home';
 
 }
 

@@ -243,7 +243,7 @@ app.get('/admin', (req, res) => {
 });
 
 
-```js
+
 // SETTINGS
 
 app.get(

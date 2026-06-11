@@ -251,22 +251,12 @@ app.get('/admin', (req, res) => {
 app.get('/settings', (req, res) => {
 
 res.sendFile(
-
 path.join(
-
 __dirname,
-
 'settings.html'
-
 )
-
 );
-
 });
-```
-
-
-
 
 // =========================
 // HEADER

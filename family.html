@@ -152,49 +152,78 @@
   </div>
 
   <!-- PHONE STATS -->
-  <div class="card">
+  
+<!-- PHONE STATS -->
 
-    <h3>Phone Call Statistics</h3>
+<div class="card">
 
-    <div class="stats-grid">
+<h3>
 
-      <div class="stat-box">
+Phone Call Statistics
 
-        <div class="stat-number"
-             id="callCount">
+</h3>
 
-          0
+<div class="stats-grid">
 
-        </div>
+<div class="stat-box">
 
-        <div class="stat-label">
+<div
+class="stat-number"
+id="callMinutes">
 
-          Total Calls
+0
 
-        </div>
+</div>
 
-      </div>
+<div class="stat-label">
 
-      <div class="stat-box">
+Total Minutes
 
-        <div class="stat-number"
-             id="callMinutes">
+</div>
 
-          0
+</div>
 
-        </div>
+<div class="stat-box">
 
-        <div class="stat-label">
+<div
+class="stat-number"
+id="callCount">
 
-          Total Minutes
+0
 
-        </div>
+</div>
 
-      </div>
+<div class="stat-label">
 
-    </div>
+Total Calls
 
-  </div>
+</div>
+
+</div>
+
+</div>
+
+<div
+style="margin-top:25px;">
+
+<h4>
+
+Most Recent Calls
+
+</h4>
+
+<div
+id="callDates">
+
+No calls
+
+</div>
+
+</div>
+
+</div>
+
+
 
   <!-- CALL SCHEDULE -->
   <div class="card">
@@ -205,15 +234,7 @@
 
   </div>
 
-  <!-- RECENT ACTIVITY -->
-  <div class="card">
-
-    <h3>Recent Activity</h3>
-
-    <div id="list"></div>
-
-  </div>
-
+ 
 </div>
 
 <script>
@@ -390,42 +411,128 @@ Promise.all([
 // =========================
 function renderCallStats(){
 
-  const totalCalls =
-    callsGlobal.length;
+const sortedCalls=
 
-  let totalMinutes = 0;
+[...callsGlobal]
 
-  callsGlobal.forEach(call=>{
+.sort(
 
-    if(call.starttime && call.endtime){
+(a,b)=>
 
-      const start =
-        convertToMinutes(call.starttime);
+new Date(b.calldate)
 
-      const end =
-        convertToMinutes(call.endtime);
+-
 
-      if(end > start){
+new Date(a.calldate)
 
-        totalMinutes +=
-          (end - start);
+);
 
-      }
+document
+.getElementById(
+'callCount'
+)
 
-    }
+.innerText=
 
-  });
+sortedCalls.length;
 
-  document.getElementById("callCount")
-    .innerText =
-      totalCalls;
+let totalMinutes=0;
 
-  document.getElementById("callMinutes")
-    .innerText =
-      totalMinutes;
+sortedCalls.forEach(call=>{
+
+if(
+call.starttime &&
+call.endtime
+){
+
+const start=
+
+convertToMinutes(
+call.starttime
+);
+
+const end=
+
+convertToMinutes(
+call.endtime
+);
+
+if(
+end>start
+){
+
+totalMinutes+=
+
+(
+end-start
+);
 
 }
 
+}
+
+});
+
+document
+.getElementById(
+'callMinutes'
+)
+
+.innerText=
+
+totalMinutes;
+
+const recent=
+
+sortedCalls
+.slice(0,7)
+
+.map(c=>
+
+new Date(
+c.calldate
+)
+
+.toLocaleDateString(
+
+'en-US',
+
+{
+
+weekday:'long',
+
+month:'long',
+
+day:'numeric',
+
+year:'numeric'
+
+}
+
+)
+
+);
+
+document
+.getElementById(
+'callDates'
+)
+
+.innerHTML=
+
+recent.length
+
+?
+
+recent.join("<br>")
+
+:
+
+"No calls";
+
+}
+
+ 
 // =========================
 // TIME TO MINUTES
 // =========================
@@ -606,86 +713,96 @@ function renderMedCompliance(){
 // =========================
 function renderMedicationAlerts(){
 
-  let html = "";
+let html="";
 
-  const missed =
-    dataGlobal.filter(
-      d => d.meds === "No"
-    );
+const missed=
 
-  if(missed.length){
+dataGlobal
 
-    html += `
+.filter(
+d=>
 
-      <div class="alert">
+d.meds==="No"
+)
 
-        ⚠ Medication missed
+.sort(
 
-        <br><br>
+(a,b)=>
 
-        <strong>Dates:</strong>
+new Date(
+b.timestamp
+)
 
-        ${missed.map(d=>
+-
 
-          new Date(d.timestamp)
-            .toLocaleDateString(
-              'en-US',
-              {
-                weekday:'long',
-                month:'long',
-                day:'numeric',
-                year:'numeric'
-              }
-            )
+new Date(
+a.timestamp
+)
 
-        ).join(", ")}
+);
 
-      </div>
+if(
+missed.length
+){
 
-    `;
+html+=`
 
-  }
+<div class="alert">
 
-  const notRecorded =
-    dataGlobal.filter(
-      d => !d.meds || d.meds.trim() === ""
-    );
+⚠ Medication missed
 
-  if(notRecorded.length){
+<br><br>
 
-    html += `
+${
 
-      <div class="alert">
+missed
 
-        ⚠ Medication not recorded
+.map(
 
-        <br><br>
+d=>
 
-        <strong>Dates:</strong>
+new Date(
+d.timestamp
+)
 
-        ${notRecorded.map(d=>
+.toLocaleDateString(
 
-          new Date(d.timestamp)
-            .toLocaleDateString(
-              'en-US',
-              {
-                weekday:'long',
-                month:'long',
-                day:'numeric',
-                year:'numeric'
-              }
-            )
+'en-US',
 
-        ).join(", ")}
+{
 
-      </div>
+weekday:'long',
 
-    `;
+month:'long',
 
-  }
+day:'numeric',
 
-  document.getElementById("medAlerts")
-    .innerHTML = html;
+year:'numeric'
+
+}
+
+)
+
+)
+
+.join("<br>")
+
+}
+
+</div>
+
+`;
+
+}
+
+document
+.getElementById(
+'medAlerts'
+)
+
+.innerHTML=
+
+html;
 
 }
 
@@ -694,48 +811,104 @@ function renderMedicationAlerts(){
 // =========================
 function renderMoodAlerts(){
 
-  let html = "";
+const struggling=
 
-  const struggling =
-    dataGlobal.filter(
-      d => d.mood === "Struggling"
-    );
+dataGlobal
 
-  if(struggling.length){
+.filter(
+d=>
 
-    html += `
+d.mood===
 
-      <div class="alert">
+"Struggling"
+)
 
-        ⚠ Struggling mood detected
+.sort(
 
-        <br><br>
+(a,b)=>
 
-        <strong>Dates:</strong>
+new Date(
+b.timestamp
+)
 
-        ${struggling.map(d=>
+-
 
-          new Date(d.timestamp)
-            .toLocaleDateString(
-              'en-US',
-              {
-                weekday:'long',
-                month:'long',
-                day:'numeric',
-                year:'numeric'
-              }
-            )
+new Date(
+a.timestamp
+)
 
-        ).join(", ")}
+);
 
-      </div>
+if(
+!struggling.length
+){
 
-    `;
+return;
 
-  }
+}
 
-  document.getElementById("moodAlerts")
-    .innerHTML = html;
+document
+.getElementById(
+'moodAlerts'
+)
+
+.innerHTML=
+
+`
+
+<div class="alert">
+
+⚠ Struggling mood detected
+
+<br><br>
+
+<strong>
+
+Dates:
+
+</strong>
+
+<br>
+
+${
+
+struggling
+
+.map(
+
+d=>
+
+new Date(
+d.timestamp
+)
+
+.toLocaleDateString(
+
+'en-US',
+
+{
+
+weekday:'long',
+
+month:'long',
+
+day:'numeric',
+
+year:'numeric'
+
+}
+
+)
+
+)
+
+.join("<br>")
+
+}
+
+</div>
+
+`;
 
 }
 

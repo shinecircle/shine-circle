@@ -1,7 +1,74 @@
 ```html
-<!-- KEEP ALL EXISTING HEAD / STYLE / SCRIPT EXACTLY THE SAME -->
+<!DOCTYPE html>
+<html>
 
-<!-- ONLY REPLACE THE CONTENT INSIDE <div class="page"> -->
+<head>
+
+<title>Family Dashboard</title>
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<link
+rel="stylesheet"
+href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+.page{
+max-width:1000px;
+margin:auto;
+padding:18px;
+}
+
+.card{
+padding:20px;
+margin:14px 0;
+border-radius:18px;
+background:white;
+box-shadow:0 4px 12px rgba(0,0,0,.06);
+}
+
+.stats-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:16px;
+}
+
+.stat-box{
+background:#f5f8ff;
+padding:22px;
+border-radius:16px;
+text-align:center;
+}
+
+.stat-number{
+font-size:38px;
+font-weight:800;
+color:#1E6FDB;
+}
+
+.chart-wrap{
+height:280px;
+}
+
+.alert{
+background:#ffe8e8;
+padding:16px;
+border-radius:14px;
+margin-top:14px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="header"></div>
 
 <div class="page">
 
@@ -9,7 +76,7 @@
 
 <div id="monitorHeader"></div>
 
-<!-- PHONE STATS -->
+<!-- PHONE -->
 
 <div class="card">
 
@@ -31,7 +98,7 @@ id="callMinutes">
 
 </div>
 
-<div class="stat-label">
+<div>
 
 Total Minutes
 
@@ -49,7 +116,7 @@ id="callCount">
 
 </div>
 
-<div class="stat-label">
+<div>
 
 Total Calls
 
@@ -60,16 +127,15 @@ Total Calls
 </div>
 
 <div
-style="margin-top:25px;">
+style="margin-top:20px">
 
 <h4>
 
-Most Recent Calls
+Most Recent 7 Calls
 
 </h4>
 
-<div
-id="callDates">
+<div id="callDates">
 
 No calls
 
@@ -83,7 +149,7 @@ No calls
 
 <div class="card">
 
-<h3 class="section-title">
+<h3>
 
 Mood
 
@@ -93,19 +159,17 @@ Mood
 
 <div class="chart-wrap">
 
-<canvas id="chart">
-
-</canvas>
+<canvas id="chart"></canvas>
 
 </div>
 
 </div>
 
-<!-- MEDICATION -->
+<!-- MED -->
 
 <div class="card">
 
-<h3 class="section-title">
+<h3>
 
 Medication
 
@@ -117,7 +181,7 @@ Medication
 
 </div>
 
-<!-- CALL SCHEDULE -->
+<!-- SCHEDULE -->
 
 <div class="card">
 
@@ -127,9 +191,240 @@ Preferred Call Schedule
 
 </h3>
 
-<p id="schedule"></p>
+<p id="schedule">
+
+Loading...
+
+</p>
 
 </div>
 
 </div>
+
+<script>
+
+let dataGlobal=[];
+let callsGlobal=[];
+
+fetch('/header')
+
+.then(r=>r.text())
+
+.then(html=>{
+
+document
+.getElementById(
+'header'
+)
+
+.innerHTML=
+
+html;
+
+});
+
+Promise.all([
+
+fetch('/family-data')
+.then(r=>r.json()),
+
+fetch('/api/calls')
+.then(r=>r.json())
+
+])
+
+.then(([data,calls])=>{
+
+dataGlobal=
+
+data.checkins||[];
+
+callsGlobal=
+
+calls||[];
+
+renderCalls();
+
+renderMood();
+
+renderMedication();
+
+renderChart();
+
+});
+
+function renderCalls(){
+
+const sorted=
+
+[...callsGlobal]
+
+.sort(
+
+(a,b)=>
+
+new Date(
+b.calldate
+)
+
+-
+
+new Date(
+a.calldate
+)
+
+);
+
+document
+.getElementById(
+'callCount'
+)
+
+.innerText=
+
+sorted.length;
+
+document
+.getElementById(
+'callDates'
+)
+
+.innerHTML=
+
+sorted
+
+.slice(0,7)
+
+.map(
+
+c=>
+
+new Date(
+c.calldate
+)
+
+.toLocaleDateString()
+
+)
+
+.join("<br>");
+
+}
+
+function renderMood(){
+
+const struggling=
+
+dataGlobal
+
+.filter(
+d=>
+
+d.mood==="Struggling"
+)
+
+.reverse();
+
+document
+.getElementById(
+'moodAlerts'
+)
+
+.innerHTML=
+
+struggling.length
+
+?
+
+`<div class="alert">
+
+${struggling
+
+.map(
+
+d=>
+
+new Date(
+d.timestamp
+)
+
+.toLocaleDateString()
+
+)
+
+.join("<br>")}
+
+</div>`
+
+:
+
+"";
+
+}
+
+function renderMedication(){
+
+const taken=
+
+dataGlobal
+
+.filter(
+d=>
+
+d.meds==="Yes"
+)
+
+.length;
+
+const total=
+
+dataGlobal.length;
+
+document
+.getElementById(
+'medRate'
+)
+
+.innerText=
+
+`${taken}/${total}`;
+
+}
+
+function renderChart(){
+
+new Chart(
+
+document
+.getElementById(
+'chart'
+),
+
+{
+
+type:'line',
+
+data:{
+
+labels:
+[],
+
+datasets:[{
+
+data:[]
+}]
+
+}
+
+}
+
+);
+
+}
+
+</script>
+
+</body>
+
+</html>
 ```

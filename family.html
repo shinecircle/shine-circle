@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html>
 
@@ -72,16 +72,14 @@ margin-top:14px;
 
 <div class="page">
 
-<h2 id="welcome"></h2>
-
-<div id="monitorHeader"></div>
+<h2 id="welcome">
+Family Dashboard
+</h2>
 
 <div class="card">
 
 <h3>
-
 Phone Call Statistics
-
 </h3>
 
 <div class="stats-grid">
@@ -97,9 +95,7 @@ id="callMinutes">
 </div>
 
 <div>
-
 Total Minutes
-
 </div>
 
 </div>
@@ -115,9 +111,7 @@ id="callCount">
 </div>
 
 <div>
-
 Total Calls
-
 </div>
 
 </div>
@@ -127,15 +121,11 @@ Total Calls
 <div style="margin-top:20px">
 
 <h4>
-
 Most Recent 7 Calls
-
 </h4>
 
 <div id="callDates">
-
 No calls
-
 </div>
 
 </div>
@@ -145,10 +135,8 @@ No calls
 <div class="card">
 
 <h3>
-
 Mood
-
-<h3>
+</h3>
 
 <div id="moodAlerts"></div>
 
@@ -163,12 +151,12 @@ Mood
 <div class="card">
 
 <h3>
-
 Medication
-
 </h3>
 
-<p id="medRate"></p>
+<p id="medRate">
+Loading...
+</p>
 
 <div id="medAlerts"></div>
 
@@ -177,9 +165,7 @@ Medication
 <div class="card">
 
 <h3>
-
 Preferred Call Schedule
-
 </h3>
 
 <p id="schedule">
@@ -195,8 +181,8 @@ Loading...
 <script>
 
 let dataGlobal=[];
-
 let callsGlobal=[];
+let userGlobal={};
 
 // HEADER
 
@@ -206,27 +192,24 @@ fetch('/header')
 
 .then(html=>{
 
-document
-.getElementById(
-'header'
-)
-
-.innerHTML=
-
-html;
+header.innerHTML=html;
 
 const buttons=
-
-document
-.getElementById(
+document.getElementById(
 'headerButtons'
 );
 
 if(buttons){
 
-buttons.innerHTML=
+buttons.innerHTML=`
 
-`
+<button
+class="btn"
+onclick="goHome()">
+
+Home
+
+</button>
 
 <button
 class="btn"
@@ -242,7 +225,7 @@ Logout
 
 });
 
-// DATA
+// LOAD
 
 Promise.all([
 
@@ -256,13 +239,16 @@ fetch('/api/calls')
 
 .then(([data,calls])=>{
 
-dataGlobal=
+userGlobal=
+data.user||{};
 
-data.checkins || [];
+dataGlobal=
+data.checkins||[];
 
 callsGlobal=
+calls||[];
 
-calls || [];
+renderUser();
 
 renderCalls();
 
@@ -270,33 +256,34 @@ renderMood();
 
 renderMedication();
 
+renderSchedule();
+
 renderChart();
 
 });
 
+// USER
+
+function renderUser(){
+
+if(userGlobal.firstName){
+
+document
+.getElementById(
+'welcome'
+)
+
+.innerText=
+
+`${userGlobal.firstName}'s Dashboard`;
+
+}
+
+}
+
 // CALLS
 
 function renderCalls(){
-
-const sorted=
-
-[...callsGlobal]
-
-.sort(
-
-(a,b)=>
-
-new Date(
-b.calldate
-)
-
--
-
-new Date(
-a.calldate
-)
-
-);
 
 document
 .getElementById(
@@ -305,7 +292,46 @@ document
 
 .innerText=
 
-sorted.length;
+callsGlobal.length;
+
+let total=0;
+
+callsGlobal.forEach(c=>{
+
+if(
+c.starttime &&
+c.endtime
+){
+
+const s=
+new Date(
+`2000-01-01 ${c.starttime}`
+);
+
+const e=
+new Date(
+`2000-01-01 ${c.endtime}`
+);
+
+total+=
+(e-s)
+/60000;
+
+}
+
+});
+
+document
+.getElementById(
+'callMinutes'
+)
+
+.innerText=
+
+Math.max(
+0,
+Math.round(total)
+);
 
 document
 .getElementById(
@@ -314,12 +340,11 @@ document
 
 .innerHTML=
 
-sorted
+callsGlobal
 
 .slice(0,7)
 
 .map(
-
 c=>
 
 new Date(
@@ -330,7 +355,11 @@ c.calldate
 
 )
 
-.join("<br>");
+.join('<br>')
+
+||
+
+'No calls';
 
 }
 
@@ -343,16 +372,14 @@ const struggling=
 dataGlobal
 
 .filter(
-
 d=>
 
 d.mood==="Struggling"
 
-)
-
-.reverse();
+);
 
 document
+
 .getElementById(
 'moodAlerts'
 )
@@ -365,9 +392,7 @@ struggling.length
 
 `<div class="alert">
 
-${struggling
-
-.map(
+${struggling.map(
 
 d=>
 
@@ -377,15 +402,13 @@ d.timestamp
 
 .toLocaleDateString()
 
-)
-
-.join("<br>")}
+).join("<br>")}
 
 </div>`
 
 :
 
-"";
+"None";
 
 }
 
@@ -398,7 +421,6 @@ const taken=
 dataGlobal
 
 .filter(
-
 d=>
 
 d.meds==="Yes"
@@ -414,7 +436,35 @@ document
 
 .innerText=
 
-`${taken}/${dataGlobal.length}`;
+`${taken}/${dataGlobal.length} days`;
+
+}
+
+// SCHEDULE
+
+function renderSchedule(){
+
+document
+
+.getElementById(
+'schedule'
+)
+
+.innerText=
+
+userGlobal.dayForCall
+
+?
+
+`${userGlobal.dayForCall}
+ •
+ ${userGlobal.timeForCall}
+ •
+ ${userGlobal.timezone}`
+
+:
+
+'Not configured';
 
 }
 
@@ -435,11 +485,35 @@ type:'line',
 
 data:{
 
-labels:[],
+labels:
+
+dataGlobal.map(
+d=>
+
+new Date(
+d.timestamp
+)
+
+.toLocaleDateString()
+),
 
 datasets:[{
 
-data:[]
+label:'Mood',
+
+data:
+
+dataGlobal.map(
+d=>
+
+d.mood==="Great"
+?3
+:
+
+d.mood==="Okay"
+?2
+:1
+)
 
 }]
 
@@ -451,7 +525,12 @@ data:[]
 
 }
 
-// LOGOUT
+function goHome(){
+
+window.location=
+'/home';
+
+}
 
 function logout(){
 
@@ -471,4 +550,4 @@ window.location=
 </body>
 
 </html>
-
+```

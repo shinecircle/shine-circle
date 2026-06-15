@@ -266,9 +266,25 @@ buttons.innerHTML=
 
 <button
 class="btn"
-onclick="logout()">
+onclick="goHome()">
 
-Logout
+Home
+
+</button>
+
+<button
+class="btn"
+onclick="goActivities()">
+
+Activities
+
+</button>
+
+<button
+class="btn"
+onclick="goCheckin()">
+
+Checkin
 
 </button>
 
@@ -332,11 +348,7 @@ r=>r.json()
 if(!data)
 return;
 
-// DAYS
-
-if(
-data.dayforcall
-){
+if(data.dayforcall){
 
 const days=
 
@@ -345,8 +357,7 @@ data.dayforcall
 .split(',')
 
 .map(
-d=>
-d.trim()
+d=>d.trim()
 );
 
 document
@@ -372,8 +383,6 @@ btn.classList.add(
 });
 
 }
-
-// TIME
 
 if(
 data.timeforcall
@@ -404,8 +413,6 @@ btn.classList.add(
 
 }
 
-// ZONE
-
 if(
 data.timezone
 ){
@@ -424,7 +431,7 @@ data.timezone;
 });
 
 // ======================
-// DAY BUTTONS
+// DAY SELECT
 // ======================
 
 document
@@ -448,7 +455,7 @@ btn.classList.toggle(
 });
 
 // ======================
-// TIME BUTTONS
+// TIME SELECT
 // ======================
 
 document
@@ -554,9 +561,7 @@ fetch(
 
 {
 
-method:
-
-'POST',
+method:'POST',
 
 headers:{
 
@@ -602,17 +607,15 @@ data.success
 
 ?
 
-'✓ Settings saved'
+'✓ Settings Saved'
 
 :
 
-'Unable to save';
+'Save failed';
 
 })
 
-.catch(err=>{
-
-console.log(err);
+.catch(()=>{
 
 document
 
@@ -622,26 +625,34 @@ document
 
 .innerText=
 
-'Save failed';
+'Unable to save';
 
 });
 
 }
 
 // ======================
-// LOGOUT
+// NAVIGATION
 // ======================
 
-function logout(){
-
-fetch('/logout')
-
-.then(()=>{
+function goHome(){
 
 window.location=
-'/login';
+'/home';
 
-});
+}
+
+function goActivities(){
+
+window.location=
+'/activities';
+
+}
+
+function goCheckin(){
+
+window.location=
+'/checkin';
 
 }
 

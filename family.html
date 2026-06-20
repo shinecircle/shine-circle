@@ -279,26 +279,61 @@ Logout
 
 // LOAD
 
-Promise.all([
+async function loadPage(){
 
-fetch('/family-data')
-.then(r=>r.json()),
+try{
 
-fetch('/api/calls')
-.then(r=>r.json())
+// FAMILY DATA
 
-])
+const familyResponse=
 
-.then(([data,calls])=>{
+await fetch(
+'/family-data'
+);
+
+const family=
+
+await familyResponse.json();
 
 userGlobal=
-data.user||{};
+
+family.user
+
+||
+
+{};
 
 dataGlobal=
-data.checkins||[];
+
+family.checkins
+
+||
+
+[];
+
+// CALL DATA
+
+try{
+
+const callResponse=
+
+await fetch(
+'/api/calls'
+);
 
 callsGlobal=
-calls||[];
+
+await callResponse.json();
+
+}
+
+catch{
+
+callsGlobal=[];
+
+}
+
+// RENDER
 
 renderUser();
 
@@ -312,7 +347,61 @@ renderSchedule();
 
 renderChart();
 
-});
+}
+
+catch(err){
+
+console.log(
+'PAGE LOAD ERROR',
+err
+);
+
+// FALLBACK
+
+document
+.getElementById(
+'medRate'
+)
+
+.innerText=
+
+'No medication data';
+
+document
+.getElementById(
+'schedule'
+)
+
+.innerText=
+
+'No schedule found';
+
+document
+.getElementById(
+'moodAlerts'
+)
+
+.innerHTML=
+
+`
+
+<div class="alert">
+
+Unable to load mood data
+
+</div>
+
+`;
+
+}
+
+}
+
+loadPage();
+
+
+
+
 
 
 .catch(err=>{

@@ -322,9 +322,6 @@ userGlobal.firstName
 
 "Family Dashboard";
 
-}
-
-// CALLS
 
 function renderCalls(){
 
@@ -332,14 +329,60 @@ document
 .getElementById(
 'callCount'
 )
-.innerText =
+.innerText=
 callsGlobal.length;
+
+let totalMinutes=0;
+
+callsGlobal.forEach(c=>{
+
+if(
+c.starttime &&
+c.endtime
+){
+
+const start=
+new Date(
+`2000-01-01 ${c.starttime}`
+);
+
+const end=
+new Date(
+`2000-01-01 ${c.endtime}`
+);
+
+const minutes=
+(end-start)/60000;
+
+if(
+!isNaN(minutes)
+){
+
+totalMinutes+=minutes;
+
+}
+
+}
+
+});
+
+document
+.getElementById(
+'callMinutes'
+)
+
+.innerText=
+
+Math.round(
+totalMinutes
+);
 
 document
 .getElementById(
 'callDates'
 )
-.innerHTML =
+
+.innerHTML=
 
 callsGlobal
 
@@ -363,6 +406,9 @@ c.calldate
 "No calls";
 
 }
+
+
+
 
 // MOOD
 
@@ -583,6 +629,30 @@ d.timestamp
 
 function renderSchedule(){
 
+const days=
+
+userGlobal.dayForCall
+
+||
+
+"Not configured";
+
+const time=
+
+userGlobal.timeForCall
+
+||
+
+"No time selected";
+
+const zone=
+
+userGlobal.timezone
+
+||
+
+"";
+
 document
 .getElementById(
 'schedule'
@@ -590,11 +660,7 @@ document
 
 .innerText=
 
-userGlobal.dayForCall
-
-?
-
-userGlobal.dayForCall
+days
 
 *
 
@@ -602,25 +668,32 @@ userGlobal.dayForCall
 
 *
 
-userGlobal.timeForCall
+time
 
 *
 
-" • "
+" "
 
 *
 
-userGlobal.timezone
-
-:
-
-"Not configured";
+zone;
 
 }
 
+
 // CHART
 
+
 function renderChart(){
+
+const moodMap={
+
+"Great":4,
+"Good":3,
+"Okay":2,
+"Struggling":1
+
+};
 
 new Chart(
 
@@ -635,13 +708,74 @@ type:'line',
 
 data:{
 
-labels:[],
+labels:
+
+dataGlobal.map(
+d=>
+
+new Date(
+d.timestamp
+)
+
+.toLocaleDateString()
+
+),
 
 datasets:[{
 
-data:[]
+label:'Mood',
+
+data:
+
+dataGlobal.map(
+d=>
+
+moodMap[
+d.mood
+]
+
+||
+
+2
+
+)
 
 }]
+
+},
+
+options:{
+
+scales:{
+
+y:{
+
+min:1,
+
+max:4,
+
+ticks:{
+
+stepSize:1,
+
+callback:function(value){
+
+return{
+
+1:"Struggling",
+2:"Okay",
+3:"Good",
+4:"Great"
+
+}[value];
+
+}
+
+}
+
+}
+
+}
 
 }
 
@@ -650,6 +784,7 @@ data:[]
 );
 
 }
+
 
 // NAV
 

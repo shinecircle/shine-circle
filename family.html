@@ -180,9 +180,9 @@ Loading...
 
 <script>
 
-let dataGlobal=[];
-let callsGlobal=[];
-let userGlobal={};
+let dataGlobal = [];
+let callsGlobal = [];
+let userGlobal = {};
 
 // HEADER
 
@@ -192,68 +192,18 @@ fetch('/header')
 
 .then(html=>{
 
-document
-.getElementById(
+document.getElementById(
 'header'
-)
+).innerHTML = html;
 
-.innerHTML=
-
-html;
-
-const buttons=
-
-document
-.getElementById(
-'headerButtons'
-);
-
-if(buttons){
-
-buttons.innerHTML=
-
-`
-
-<button
-class="btn"
-onclick="goHome()">
-
-Home
-
-</button>
-
-<button
-class="btn"
-onclick="logout()">
-
-Logout
-
-</button>
-
-`;
-
-}
-
-})
-
-.catch(err=>{
-
-console.log(
-'Header error',
-err
-);
-
-});
-
-
-const buttons=
+const buttons =
 document.getElementById(
 'headerButtons'
 );
 
 if(buttons){
 
-buttons.innerHTML=`
+buttons.innerHTML = `
 
 <button
 class="btn"
@@ -274,6 +224,14 @@ Logout
 `;
 
 }
+
+loadPage();
+
+})
+
+.catch(()=>{
+
+loadPage();
 
 });
 
@@ -283,47 +241,25 @@ async function loadPage(){
 
 try{
 
-// FAMILY DATA
-
-const familyResponse=
-
+const family =
 await fetch(
 '/family-data'
-);
+)
+.then(r=>r.json());
 
-const family=
+userGlobal =
+family.user || {};
 
-await familyResponse.json();
-
-userGlobal=
-
-family.user
-
-||
-
-{};
-
-dataGlobal=
-
-family.checkins
-
-||
-
-[];
-
-// CALL DATA
+dataGlobal =
+family.checkins || [];
 
 try{
 
-const callResponse=
-
+callsGlobal =
 await fetch(
 '/api/calls'
-);
-
-callsGlobal=
-
-await callResponse.json();
+)
+.then(r=>r.json());
 
 }
 
@@ -333,122 +269,58 @@ callsGlobal=[];
 
 }
 
-// RENDER
-
 renderUser();
-
 renderCalls();
-
 renderMood();
-
 renderMedication();
-
 renderSchedule();
-
 renderChart();
 
 }
 
 catch(err){
 
-console.log(
-'PAGE LOAD ERROR',
-err
-);
-
-// FALLBACK
+console.log(err);
 
 document
 .getElementById(
 'medRate'
 )
-
-.innerText=
-
-'No medication data';
-
-document
-.getElementById(
-'schedule'
-)
-
-.innerText=
-
-'No schedule found';
-
-document
-.getElementById(
-'moodAlerts'
-)
-
-.innerHTML=
-
-`
-
-<div class="alert">
-
-Unable to load mood data
-
-</div>
-
-`;
-
-}
-
-}
-
-loadPage();
-
-
-
-
-
-
-.catch(err=>{
-
-console.log(
-'Load error',
-err
-);
-
-document
-.getElementById(
-'medRate'
-)
-
-.innerText=
-
+.innerText =
 'Unable to load';
 
 document
 .getElementById(
 'schedule'
 )
-
-.innerText=
-
+.innerText =
 'Unable to load';
 
-});
+}
 
-
+}
 
 // USER
 
 function renderUser(){
 
-if(userGlobal.firstName){
-
 document
 .getElementById(
 'welcome'
 )
+.innerText =
 
-.innerText=
+userGlobal.firstName
 
-`${userGlobal.firstName}'s Dashboard`;
+?
 
-}
+userGlobal.firstName
++
+"'s Dashboard"
+
+:
+
+"Family Dashboard";
 
 }
 
@@ -460,56 +332,14 @@ document
 .getElementById(
 'callCount'
 )
-
-.innerText=
-
+.innerText =
 callsGlobal.length;
-
-let total=0;
-
-callsGlobal.forEach(c=>{
-
-if(
-c.starttime &&
-c.endtime
-){
-
-const s=
-new Date(
-`2000-01-01 ${c.starttime}`
-);
-
-const e=
-new Date(
-`2000-01-01 ${c.endtime}`
-);
-
-total+=
-(e-s)
-/60000;
-
-}
-
-});
-
-document
-.getElementById(
-'callMinutes'
-)
-
-.innerText=
-
-Math.max(
-0,
-Math.round(total)
-);
 
 document
 .getElementById(
 'callDates'
 )
-
-.innerHTML=
+.innerHTML =
 
 callsGlobal
 
@@ -526,34 +356,234 @@ c.calldate
 
 )
 
-.join('<br>')
+.join("<br>")
 
 ||
 
-'No calls';
+"No calls";
 
 }
 
-// MOOD 
+// MOOD
 
-function renderMood(){ 
-const struggling= 
+function renderMood(){
 
-dataGlobal.filter( d=> d.mood==="Struggling" ); document .getElementById( 'moodAlerts' ) .innerHTML= struggling.length ? ` <div class="alert"> <strong> ⚠ Reported "Struggling" Mood </strong> <br><br> These dates indicate the user selected <strong> Struggling </strong> during their daily check-in. <br><br> ${struggling .map( d=> new Date( d.timestamp ) .toLocaleDateString() ) .join("<br>")} </div> ` : ` <div style=" background:#ecfff0; padding:16px; border-radius:14px; "> ✓ No struggling moods reported </div> `; } 
+const struggling =
 
-// MEDICATION 
+dataGlobal.filter(
+d=>
+d.mood==="Struggling"
+);
 
-function renderMedication(){ const total= dataGlobal.length; const taken= dataGlobal.filter( d=> d.meds==="Yes" ); const missed= dataGlobal.filter( d=> d.meds==="No" ); const missing= dataGlobal.filter( d=> !d.meds ); const percent= total ? Math.round( ( taken.length / total ) * 100 ) : 0; // SUMMARY document .getElementById( 'medRate' ) .innerHTML= ` <div style=" font-size:32px; font-weight:800; color:#1E6FDB; "> ${percent}% </div> <div> Medication Reported Taken </div> <div style=" margin-top:10px; line-height:1.9; "> ✓ Taken: ${taken.length} <br> ✕ Not Taken: ${missed.length} <br> ○ Not Recorded: ${missing.length} </div> `; let alerts=''; // MISSED if( missed.length ){ alerts+= ` <div class="alert"> <strong> ⚠ Medication Missed </strong> <br><br> These dates indicate medication was marked <strong> No </strong> during check-in. <br><br> ${missed .map( d=> new Date( d.timestamp ) .toLocaleDateString() ) .join("<br>")} </div> `; } // NOT RECORDED if( missing.length ){ alerts+= ` <div style=" background:#fff8dd; padding:16px; border-radius:14px; margin-top:14px; "> <strong> Medication Not Recorded </strong> <br><br> ${missing .map( d=> new Date( d.timestamp ) .toLocaleDateString() ) .join("<br>")} </div> `; } // SUCCESS if( !alerts ){ alerts= ` <div style=" background:#ecfff0; padding:16px; border-radius:14px; "> ✓ Medication tracked for all days </div> `; } document .getElementById( 'medAlerts' ) .innerHTML= alerts; }
+document
+.getElementById(
+'moodAlerts'
+)
 
+.innerHTML =
 
+struggling.length
 
+?
+
+`
+
+<div class="alert">
+
+<strong>
+
+⚠ Reported Struggling Mood
+
+</strong>
+
+<br><br>
+
+These dates indicate the user selected
+Struggling.
+
+<br><br>
+
+${struggling
+
+.map(
+d=>
+
+new Date(
+d.timestamp
+)
+
+.toLocaleDateString()
+
+)
+
+.join("<br>")}
+
+</div>
+
+`
+
+:
+
+`
+
+<div
+style="
+background:#ecfff0;
+padding:16px;
+border-radius:14px;
+">
+
+✓ No struggling moods reported
+
+</div>
+
+`;
+
+}
+
+// MEDICATION
+
+function renderMedication(){
+
+const total =
+dataGlobal.length;
+
+const taken =
+dataGlobal.filter(
+d=>
+d.meds==="Yes"
+);
+
+const missed =
+dataGlobal.filter(
+d=>
+d.meds==="No"
+);
+
+const missing =
+dataGlobal.filter(
+d=>
+!d.meds
+);
+
+const percent =
+
+total
+
+?
+
+Math.round(
+(
+taken.length
+/
+total
+)
+*
+100
+)
+
+:
+
+0;
+
+document
+.getElementById(
+'medRate'
+)
+
+.innerHTML=
+
+`
+
+<div
+style="
+font-size:30px;
+font-weight:800;
+color:#1E6FDB;
+">
+
+${percent}%
+
+</div>
+
+<div>
+
+Medication Reported Taken
+
+</div>
+
+<div>
+
+✓ Taken:
+${taken.length}
+
+<br>
+
+✕ Missed:
+${missed.length}
+
+<br>
+
+○ Not Recorded:
+${missing.length}
+
+</div>
+
+`;
+
+document
+.getElementById(
+'medAlerts'
+)
+
+.innerHTML =
+
+missed.length
+
+?
+
+`
+
+<div class="alert">
+
+<strong>
+
+Medication Missed On:
+
+</strong>
+
+<br><br>
+
+${missed
+
+.map(
+d=>
+
+new Date(
+d.timestamp
+)
+
+.toLocaleDateString()
+
+)
+
+.join("<br>")}
+
+</div>
+
+`
+
+:
+
+'';
+
+}
 
 // SCHEDULE
 
 function renderSchedule(){
 
 document
-
 .getElementById(
 'schedule'
 )
@@ -564,15 +594,27 @@ userGlobal.dayForCall
 
 ?
 
-`${userGlobal.dayForCall}
- •
- ${userGlobal.timeForCall}
- •
- ${userGlobal.timezone}`
+userGlobal.dayForCall
+
+*
+
+" • "
+
+*
+
+userGlobal.timeForCall
+
+*
+
+" • "
+
+*
+
+userGlobal.timezone
 
 :
 
-'Not configured';
+"Not configured";
 
 }
 
@@ -593,35 +635,11 @@ type:'line',
 
 data:{
 
-labels:
-
-dataGlobal.map(
-d=>
-
-new Date(
-d.timestamp
-)
-
-.toLocaleDateString()
-),
+labels:[],
 
 datasets:[{
 
-label:'Mood',
-
-data:
-
-dataGlobal.map(
-d=>
-
-d.mood==="Great"
-?3
-:
-
-d.mood==="Okay"
-?2
-:1
-)
+data:[]
 
 }]
 
@@ -633,10 +651,11 @@ d.mood==="Okay"
 
 }
 
+// NAV
+
 function goHome(){
 
-window.location=
-'/home';
+window.location='/home';
 
 }
 
@@ -646,8 +665,7 @@ fetch('/logout')
 
 .then(()=>{
 
-window.location=
-'/login';
+window.location='/login';
 
 });
 

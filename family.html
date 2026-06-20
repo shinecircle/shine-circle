@@ -192,7 +192,59 @@ fetch('/header')
 
 .then(html=>{
 
-header.innerHTML=html;
+document
+.getElementById(
+'header'
+)
+
+.innerHTML=
+
+html;
+
+const buttons=
+
+document
+.getElementById(
+'headerButtons'
+);
+
+if(buttons){
+
+buttons.innerHTML=
+
+`
+
+<button
+class="btn"
+onclick="goHome()">
+
+Home
+
+</button>
+
+<button
+class="btn"
+onclick="logout()">
+
+Logout
+
+</button>
+
+`;
+
+}
+
+})
+
+.catch(err=>{
+
+console.log(
+'Header error',
+err
+);
+
+});
+
 
 const buttons=
 document.getElementById(
@@ -261,6 +313,36 @@ renderSchedule();
 renderChart();
 
 });
+
+
+.catch(err=>{
+
+console.log(
+'Load error',
+err
+);
+
+document
+.getElementById(
+'medRate'
+)
+
+.innerText=
+
+'Unable to load';
+
+document
+.getElementById(
+'schedule'
+)
+
+.innerText=
+
+'Unable to load';
+
+});
+
+
 
 // USER
 

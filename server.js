@@ -875,9 +875,11 @@ app.get('/family-data', async (req, res) => {
 
         "ON clients.id = activities.clientid " +
 
-        "WHERE clients.role='user' " +
+        "WHERE clients.id=$1",
 
-        "LIMIT 1"
+      [
+req.session.user.id
+]
 
       );
 

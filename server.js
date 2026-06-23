@@ -2,6 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const { Pool } = require('pg');
 const path = require('path');
+const nodemailer = require('nodemailer');
 
 const app = express();
 
@@ -52,16 +53,23 @@ async function initDB() {
     // =========================
     // CLIENTS TABLE
     // =========================
-    await pool.query(
-      "CREATE TABLE IF NOT EXISTS clients (" +
-      "id SERIAL PRIMARY KEY," +
-      "username TEXT," +
-      "firstname TEXT," +
-      "lastname TEXT," +
-      "role TEXT," +
-      "password TEXT" +
-      ");"
-    );
+await pool.query(
+  "CREATE TABLE IF NOT EXISTS clients (" +
+  "id SERIAL PRIMARY KEY," +
+  "username TEXT," +
+  "firstname TEXT," +
+  "lastname TEXT," +
+  "role TEXT," +
+  "password TEXT," +
+  "linkedclientid INTEGER" +
+  ");"
+);
+
+// add column if older database already exists
+await pool.query(`
+ALTER TABLE clients
+ADD COLUMN IF NOT EXISTS linkedclientid INTEGER
+`);
 
     // =========================
     // CHECKINS TABLE
@@ -336,69 +344,196 @@ app.post('/login', async (req, res) => {
 
 
 // =========================
-// CREATE ACCOUNT API
+// CREATE LINKED ACCOUNTS
 // =========================
+
 app.post(
-'/api/create-account',
+'/api/create-linked-accounts',
 
-async (req, res) => {
+async (req,res)=>{
 
-try {
+const client=
+await pool.connect();
+
+try{
 
 const {
-firstname,
-lastname,
-username,
-password,
-role
+user,
+caregiver,
+email
 }
 
 =
 
 req.body;
 
-// CHECK EXISTING
-const existing =
+await client.query(
+'BEGIN'
+);
 
-await pool.query(
+// USERNAME CHECK
 
-"SELECT id FROM clients WHERE LOWER(username)=LOWER($1)",
+const existing=
+
+await client.query(
+
+`
+SELECT id
+FROM clients
+WHERE
+LOWER(username)=LOWER($1)
+OR
+LOWER(username)=LOWER($2)
+`,
 
 [
-username
+user.username,
+caregiver.username
 ]
 
 );
 
-if (
+if(
 existing.rows.length
-) {
+){
+
+await client.query(
+'ROLLBACK'
+);
 
 return res.json({
 
 success:false,
 
 message:
-"Username already exists"
+'Username already exists'
 
 });
 
 }
 
 // CREATE USER
-await pool.query(
 
-"INSERT INTO clients (firstname, lastname, username, role, password) VALUES ($1,$2,$3,$4,$5)",
+const userInsert=
 
-[
+await client.query(
+
+`
+INSERT INTO clients
+(
 firstname,
 lastname,
 username,
 role,
 password
+)
+
+VALUES
+($1,$2,$3,$4,$5)
+
+RETURNING id
+`,
+
+[
+user.firstname,
+user.lastname,
+user.username,
+user.role,
+user.password
 ]
 
 );
+
+const userId=
+
+userInsert.rows[0].id;
+
+// CREATE CAREGIVER
+
+await client.query(
+
+`
+INSERT INTO clients
+(
+firstname,
+lastname,
+username,
+role,
+password,
+linkedclientid
+)
+
+VALUES
+($1,$2,$3,$4,$5,$6)
+`,
+
+[
+caregiver.firstname,
+caregiver.lastname,
+caregiver.username,
+caregiver.role,
+caregiver.password,
+userId
+]
+
+);
+
+await client.query(
+'COMMIT'
+);
+
+// EMAIL
+
+const transporter=
+
+nodemailer.createTransport({
+
+service:'gmail',
+
+auth:{
+
+user:
+process.env.EMAIL_USER,
+
+pass:
+process.env.EMAIL_PASS
+
+}
+
+});
+
+await transporter.sendMail({
+
+from:
+process.env.EMAIL_USER,
+
+to:
+email,
+
+subject:
+'Shine Circle Account Created',
+
+html:`
+
+<h2>Welcome to Shine Circle</h2>
+
+<p>
+User:
+${user.username}
+</p>
+
+<p>
+Caregiver:
+${caregiver.username}
+</p>
+
+<p>
+Accounts linked successfully.
+</p>
+
+`
+
+});
 
 res.json({
 
@@ -410,6 +545,10 @@ success:true
 
 catch(err){
 
+await client.query(
+'ROLLBACK'
+);
+
 console.log(err);
 
 res.json({
@@ -417,14 +556,19 @@ res.json({
 success:false,
 
 message:
-"Unable to create account"
+'Unable to create accounts'
 
 });
 
 }
 
-});
+finally{
 
+client.release();
+
+}
+
+});
 
 
 

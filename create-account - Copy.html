@@ -132,7 +132,7 @@ id="familyPassword"
 type="password"
 placeholder="Password">
 
-<br><br>
+<br>
 
 <button
 class="btn submit-btn"
@@ -150,9 +150,7 @@ Create Accounts
 
 <script>
 
-// ======================
-// LOAD HEADER
-// ======================
+// HEADER
 
 fetch('/header')
 
@@ -164,7 +162,9 @@ document
 .getElementById(
 'header'
 )
+
 .innerHTML=
+
 html;
 
 const buttons=
@@ -194,9 +194,7 @@ Login
 
 });
 
-// ======================
 // CREATE LINKED ACCOUNTS
-// ======================
 
 async function createAccounts(){
 
@@ -286,23 +284,21 @@ role:
 if(
 
 Object
-.values(
-payload.user
-)
+.values(payload.user)
 .some(v=>!v)
 
 ||
 
 Object
-.values(
-payload.caregiver
-)
+.values(payload.caregiver)
 .some(v=>!v)
 
 ){
 
 showError(
+
 "Please complete all fields."
+
 );
 
 return;
@@ -319,18 +315,14 @@ await fetch(
 
 {
 
-method:
-'POST',
+method:'POST',
 
 headers:{
-
 'Content-Type':
 'application/json'
-
 },
 
 body:
-
 JSON.stringify(
 payload
 )
@@ -340,7 +332,6 @@ payload
 );
 
 const data=
-
 await result.json();
 
 if(
@@ -361,7 +352,7 @@ return;
 
 showSuccess(
 
-"Accounts created successfully."
+"Accounts created successfully. Confirmation email sent."
 
 );
 
@@ -379,16 +370,14 @@ catch(err){
 console.log(err);
 
 showError(
+
 "Server error"
+
 );
 
 }
 
 }
-
-// ======================
-// UI HELPERS
-// ======================
 
 function showSuccess(text){
 

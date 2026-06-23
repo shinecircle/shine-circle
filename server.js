@@ -54,22 +54,24 @@ async function initDB() {
     // CLIENTS TABLE
     // =========================
 await pool.query(
-  "CREATE TABLE IF NOT EXISTS clients (" +
-  "id SERIAL PRIMARY KEY," +
-  "username TEXT," +
-  "firstname TEXT," +
-  "lastname TEXT," +
-  "role TEXT," +
-  "password TEXT," +
-  "linkedclientid INTEGER" +
-  ");"
+`
+CREATE TABLE IF NOT EXISTS clients (
+id SERIAL PRIMARY KEY,
+username TEXT,
+firstname TEXT,
+lastname TEXT,
+role TEXT,
+password TEXT,
+linkedclientid INTEGER
+)
+`
 );
 
-// add column if older database already exists
 await pool.query(`
 ALTER TABLE clients
 ADD COLUMN IF NOT EXISTS linkedclientid INTEGER
 `);
+
 
     // =========================
     // CHECKINS TABLE
@@ -484,6 +486,13 @@ await client.query(
 
 // EMAIL
 
+// EMAIL (optional)
+
+if(
+process.env.EMAIL_USER &&
+process.env.EMAIL_PASS
+){
+
 const transporter=
 
 nodemailer.createTransport({
@@ -513,27 +522,18 @@ email,
 subject:
 'Shine Circle Account Created',
 
-html:`
-
+html:
+`
 <h2>Welcome to Shine Circle</h2>
-
-<p>
-User:
-${user.username}
-</p>
-
-<p>
-Caregiver:
-${caregiver.username}
-</p>
 
 <p>
 Accounts linked successfully.
 </p>
-
 `
 
 });
+
+}
 
 res.json({
 
